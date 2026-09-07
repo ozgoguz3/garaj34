@@ -25,7 +25,8 @@ export function NewJobForm() {
   const [services, setServices] = useState<string[]>([])
   const [lastLink, setLastLink] = useState<{ wa: string; track: string; plate: string } | null>(null)
 
-  const canSubmit = customerName.trim() && plate.trim() && phone.trim() && services.length > 0
+  // Artık sadece Plaka zorunlu ve en az 1 hizmet seçilmiş olmalı. İsim ve telefon isteğe bağlı!
+  const canSubmit = plate.trim().length > 0 && services.length > 0
 
   function toggleService(service: string) {
     setServices((prev) =>
@@ -36,13 +37,22 @@ export function NewJobForm() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!canSubmit) return
+
     const job = addJob({ customerName, plate, phone, services })
     const origin = window.location.origin
+    const waLink = buildWhatsAppLink(job.phone, job.plate, origin)
+
     setLastLink({
-      wa: buildWhatsAppLink(job.phone, job.plate, origin),
+      wa: waLink,
       track: `/${plateToSlug(job.plate)}`,
       plate: job.plate,
     })
+
+    // Telefon girilmişse direkt WhatsApp'ı sekmede aç
+    if (waLink) {
+      window.open(waLink, '_blank', 'noopener,noreferrer')
+    }
+
     setCustomerName('')
     setPlate('')
     setPhone('')
@@ -52,12 +62,12 @@ export function NewJobForm() {
   return (
     <SectionCard
       title="Yeni İşlem Ekle"
-      description="Aracı kaydedin, hizmetleri seçin ve müşteriye linki gönderin."
+      description="Plaka girin, hizmetleri seçin ve tek tıkla sisteme kaydedin."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="customerName">Müşteri Adı</Label>
+            <Label htmlFor="customerName">Müşteri Adı <span className="text-muted-foreground text-xs">(İsteğe bağlı)</span></Label>
             <Input
               id="customerName"
               value={customerName}
@@ -68,7 +78,7 @@ export function NewJobForm() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="plate">Plaka</Label>
+            <Label htmlFor="plate">Plaka <span className="text-neon">*</span></Label>
             <Input
               id="plate"
               value={plate}
@@ -79,7 +89,7 @@ export function NewJobForm() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="phone">Telefon</Label>
+            <Label htmlFor="phone">Telefon <span className="text-muted-foreground text-xs">(İsteğe bağlı)</span></Label>
             <Input
               id="phone"
               type="tel"
@@ -93,7 +103,7 @@ export function NewJobForm() {
           </div>
         </div>
 
-        {/* Hizmet Seçimi - Yeni Eklendi */}
+        {/* Hizmet Seçimi */}
         <div className="flex flex-col gap-3">
           <Label>Hizmet Tipi (En az 1 seçim yapın)</Label>
           <div className="flex flex-wrap gap-2">
@@ -134,18 +144,20 @@ export function NewJobForm() {
             <span className="flex items-center gap-2 text-neon">
               <CheckCircle2 className="size-5 shrink-0" />
               <span>
-                <span className="font-mono font-bold">{lastLink.plate}</span> kaydedildi.
+                <span className="font-mono font-bold">{lastLink.plate}</span> başarıyla kaydedildi.
               </span>
             </span>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-neon/40 text-neon hover:bg-neon/10 hover:text-neon sm:w-auto"
-                render={<a href={lastLink.wa} target="_blank" rel="noopener noreferrer" />}
-              >
-                <Send className="mr-2 size-4" /> WhatsApp'ta Aç
-              </Button>
+              {lastLink.wa && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-neon/40 text-neon hover:bg-neon/10 hover:text-neon sm:w-auto"
+                  render={<a href={lastLink.wa} target="_blank" rel="noopener noreferrer" />}
+                >
+                  <Send className="mr-2 size-4" /> WhatsApp'ta Aç
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

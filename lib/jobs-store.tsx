@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react'
 
-// Artık sadece 3 adım var: 0 (Sırada), 1 (İşlemde), 2 (Hazır)
 export type StepIndex = 0 | 1 | 2
 
 export type Job = {
@@ -17,7 +16,7 @@ export type Job = {
   customerName: string
   plate: string
   phone: string
-  services: string[] // Yeni: Seçilen hizmetler dizisi
+  services: string[]
   step: StepIndex
   createdAt: string
 }
@@ -27,7 +26,7 @@ export type ArchivedJob = {
   customerName: string
   plate: string
   phone: string
-  services: string[] // Yeni: Arşivde de yapılan işlemleri tutuyoruz
+  services: string[]
   serviceDate: string
 }
 
@@ -68,33 +67,33 @@ export function buildWhatsAppLink(phone: string, plate: string, origin: string) 
   const intl = digits.startsWith('0') ? `90${digits.slice(1)}` : digits
   const url = `${origin}/${plateToSlug(plate)}`
   const text = `Merhaba! Aracınız Garaj34'te işleme alındı. Canlı takip: ${url}`
-  return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`
+  return phone ? `https://wa.me/${intl}?text=${encodeURIComponent(text)}` : ''
 }
 
 type JobsContextValue = {
   jobs: Job[]
   archive: ArchivedJob[]
-  addJob: (input: { customerName: string; plate: string; phone: string; services: string[] }) => Job
+  addJob: (input: { customerName?: string; plate: string; phone?: string; services: string[] }) => Job
   setStep: (id: string, step: StepIndex) => void
   archiveJob: (id: string) => void
   recallCustomer: (id: string) => void
   findByPlate: (slug: string) => Job | undefined
+  getHistoryByPlate: (plate: string) => ArchivedJob[]
 }
 
 const JobsContext = createContext<JobsContextValue | null>(null)
 
 export function JobsProvider({ children }: { children: ReactNode }) {
-  // Satışa hazır sıfır veritabanı (boş array)
   const [jobs, setJobs] = useState<Job[]>([])
   const [archive, setArchive] = useState<ArchivedJob[]>([])
 
   const addJob = useCallback<JobsContextValue['addJob']>((input) => {
     const job: Job = {
       id: crypto.randomUUID(),
-      customerName: input.customerName.trim(),
+      customerName: input.customerName?.trim() || 'İsimsiz Müşteri',
       plate: normalizePlate(input.plate),
-      phone: input.phone.trim(),
-      services: input.services, // Hizmetleri kaydet
+      phone: input.phone?.trim() || '',
+      services: input.services,
       step: 0,
       createdAt: new Date().toISOString(),
     }
@@ -116,7 +115,7 @@ export function JobsProvider({ children }: { children: ReactNode }) {
             customerName: job.customerName,
             plate: job.plate,
             phone: job.phone,
-            services: job.services, // Arşive hizmetleri de taşı
+            services: job.services,
             serviceDate: new Date().toISOString(),
           },
           ...a,
@@ -129,7 +128,7 @@ export function JobsProvider({ children }: { children: ReactNode }) {
   const recallCustomer = useCallback<JobsContextValue['recallCustomer']>(
     (id) => {
       const entry = archive.find((a) => a.id === id)
-      if (!entry) return
+      if (!entry || !entry.phone) return
       const link = buildWhatsAppLink(
         entry.phone,
         entry.plate,
@@ -145,9 +144,18 @@ export function JobsProvider({ children }: { children: ReactNode }) {
     [jobs],
   )
 
+  // Aynı plakanın geçmiş tüm ziyaretlerini bulmak için yardımcı fonksiyon
+  const getHistoryByPlate = useCallback(
+    (plate: string) => {
+      const normalized = normalizePlate(plate)
+      return archive.filter((a) => a.plate === normalized)
+    },
+    [archive],
+  )
+
   const value = useMemo(
-    () => ({ jobs, archive, addJob, setStep, archiveJob, recallCustomer, findByPlate }),
-    [jobs, archive, addJob, setStep, archiveJob, recallCustomer, findByPlate],
+    () => ({ jobs, archive, addJob, setStep, archiveJob, recallCustomer, findByPlate, getHistoryByPlate }),
+    [jobs, archive, addJob, setStep, archiveJob, recallCustomer, findByPlate, getHistoryByPlate],
   )
 
   return <JobsContext.Provider value={value}>{children}</JobsContext.Provider>
