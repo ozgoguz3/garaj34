@@ -1,6 +1,5 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { JobsProvider } from '@/lib/jobs-store'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -24,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="tr" className="dark bg-background">
       <body className="font-sans antialiased">
-        <JobsProvider>{children}</JobsProvider>
+        {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

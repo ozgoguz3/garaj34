@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageCircle, Users, Calendar, History, X, Car } from 'lucide-react'
+import { MessageCircle, Users, Calendar, History, X, Car, TrendingDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
 import { SectionCard } from '@/components/admin/section-card'
-import { useJobs, type ArchivedJob } from '@/lib/jobs-store'
+import { buildWhatsAppLink } from '@/lib/jobs-store'
+import type { ArchivedJob } from '@/lib/jobs-store'
+import type { RetentionInsight } from '@/lib/data'
 
 const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
   day: '2-digit',
@@ -18,12 +20,17 @@ const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
 
 type FilterType = 'all' | 'week' | 'month'
 
-export function CustomerDatabase({ className }: { className?: string }) {
-  const { archive, recallCustomer, getHistoryByPlate } = useJobs()
+type CustomerDatabaseProps = {
+  archive: ArchivedJob[]
+  insights: RetentionInsight[]
+  businessSlug: string
+  className?: string
+}
+
+export function CustomerDatabase({ archive, insights, businessSlug, className }: CustomerDatabaseProps) {
   const [filter, setFilter] = useState<FilterType>('all')
   const [selectedPlateForModal, setSelectedPlateForModal] = useState<string | null>(null)
 
-  // Filtreleme Mantığı
   const filteredArchive = archive.filter((item) => {
     if (filter === 'all') return true
     const itemDate = new Date(item.serviceDate).getTime()
@@ -35,11 +42,58 @@ export function CustomerDatabase({ className }: { className?: string }) {
     return true
   })
 
-  // Detay modalı için seçilen plakanın geçmiş kayıtları
-  const modalHistory = selectedPlateForModal ? getHistoryByPlate(selectedPlateForModal) : []
+  const modalHistory = selectedPlateForModal
+    ? archive.filter((a) => a.plate === selectedPlateForModal)
+    : []
+
+  function recall(phone: string, plate: string) {
+    const link = buildWhatsAppLink(phone, plate, businessSlug, window.location.origin)
+    if (link) window.open(link, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <>
+      {insights.length > 0 && (
+        <SectionCard
+          className={className ? `${className} mb-6` : 'mb-6'}
+          title="Geri Kazanım Adayları"
+          description="Eskiden düzenli gelip son zamanlarda uğramayan müşteriler."
+          action={
+            <Badge variant="outline" className="gap-1 border-amber-500/40 font-mono text-amber-400">
+              <TrendingDown className="size-3" />
+              {insights.length}
+            </Badge>
+          }
+        >
+          <ul className="flex flex-col gap-2">
+            {insights.slice(0, 5).map((c) => (
+              <li
+                key={c.plate}
+                className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2"
+              >
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-semibold">{c.customerName}</span>
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    Son ziyaret: {dateFormatter.format(new Date(c.lastVisit))} · {c.visitCount} ziyaret
+                  </span>
+                </div>
+                {c.phone && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => recall(c.phone, c.plate)}
+                    className="shrink-0 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 hover:text-amber-400"
+                  >
+                    <MessageCircle className="mr-1.5 size-3.5" />
+                    Ulaş
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      )}
+
       <SectionCard
         className={className}
         title="Müşteri Veritabanı"
@@ -51,7 +105,6 @@ export function CustomerDatabase({ className }: { className?: string }) {
           </Badge>
         }
       >
-        {/* Filtreleme Butonları */}
         <div className="mb-4 flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
           <button
             onClick={() => setFilter('all')}
@@ -86,8 +139,7 @@ export function CustomerDatabase({ className }: { className?: string }) {
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {filteredArchive.map((c) => {
-              // Bu plakanın toplam kaç kez geldiğini hesapla
-              const totalVisits = getHistoryByPlate(c.plate).length
+              const totalVisits = archive.filter((a) => a.plate === c.plate).length
 
               return (
                 <li
@@ -111,7 +163,7 @@ export function CustomerDatabase({ className }: { className?: string }) {
                       <time dateTime={c.serviceDate} className="font-mono text-xs text-muted-foreground">
                         {dateFormatter.format(new Date(c.serviceDate))}
                       </time>
-                      
+
                       {c.services && c.services.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {c.services.map((s, i) => (
@@ -130,7 +182,7 @@ export function CustomerDatabase({ className }: { className?: string }) {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation()
-                        recallCustomer(c.id)
+                        recall(c.phone, c.plate)
                       }}
                       className="w-full border-neon/50 bg-transparent text-neon hover:border-neon hover:bg-neon/10 hover:text-neon sm:w-auto"
                     >
@@ -145,7 +197,6 @@ export function CustomerDatabase({ className }: { className?: string }) {
         )}
       </SectionCard>
 
-      {/* Müşteri Detay / Ziyaret Geçmişi Modalı */}
       {selectedPlateForModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="flex w-full max-w-lg flex-col gap-6 rounded-2xl border border-border bg-background p-6 shadow-2xl">
@@ -183,7 +234,7 @@ export function CustomerDatabase({ className }: { className?: string }) {
                     </span>
                     <span className="font-mono">Kayıt #{modalHistory.length - idx}</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">{historyItem.customerName}</span>
                     <span className="font-mono text-xs text-muted-foreground">{historyItem.phone || 'Telefon yok'}</span>

@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useTransition, type FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { Send, CheckCircle2, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SectionCard } from '@/components/admin/section-card'
-import { buildWhatsAppLink, plateToSlug, useJobs } from '@/lib/jobs-store'
+import { buildWhatsAppLink, plateToSlug } from '@/lib/jobs-store'
+import { addJobAction } from '@/lib/actions'
 
 const SERVICE_OPTIONS = [
   'İç/Dış Yıkama',
@@ -17,15 +19,20 @@ const SERVICE_OPTIONS = [
   'Kaput Filmi'
 ]
 
-export function NewJobForm() {
-  const { addJob } = useJobs()
+type NewJobFormProps = {
+  businessId: string
+  businessSlug: string
+}
+
+export function NewJobForm({ businessId, businessSlug }: NewJobFormProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [customerName, setCustomerName] = useState('')
   const [plate, setPlate] = useState('')
   const [phone, setPhone] = useState('')
   const [services, setServices] = useState<string[]>([])
   const [lastLink, setLastLink] = useState<{ wa: string; track: string; plate: string } | null>(null)
 
-  // Artık sadece Plaka zorunlu ve en az 1 hizmet seçilmiş olmalı. İsim ve telefon isteğe bağlı!
   const canSubmit = plate.trim().length > 0 && services.length > 0
 
   function toggleService(service: string) {
@@ -38,25 +45,38 @@ export function NewJobForm() {
     e.preventDefault()
     if (!canSubmit) return
 
-    const job = addJob({ customerName, plate, phone, services })
-    const origin = window.location.origin
-    const waLink = buildWhatsAppLink(job.phone, job.plate, origin)
+    const inputPlate = plate
+    const inputPhone = phone
+    const inputName = customerName
+    const inputServices = services
 
-    setLastLink({
-      wa: waLink,
-      track: `/${plateToSlug(job.plate)}`,
-      plate: job.plate,
+    startTransition(async () => {
+      const job = await addJobAction(businessSlug, businessId, {
+        customerName: inputName,
+        plate: inputPlate,
+        phone: inputPhone,
+        services: inputServices,
+      })
+
+      const origin = window.location.origin
+      const waLink = buildWhatsAppLink(job.phone, job.plate, businessSlug, origin)
+
+      setLastLink({
+        wa: waLink,
+        track: `/${businessSlug}/${plateToSlug(job.plate)}`,
+        plate: job.plate,
+      })
+
+      if (waLink) {
+        window.open(waLink, '_blank', 'noopener,noreferrer')
+      }
+
+      setCustomerName('')
+      setPlate('')
+      setPhone('')
+      setServices([])
+      router.refresh()
     })
-
-    // Telefon girilmişse direkt WhatsApp'ı sekmede aç
-    if (waLink) {
-      window.open(waLink, '_blank', 'noopener,noreferrer')
-    }
-
-    setCustomerName('')
-    setPlate('')
-    setPhone('')
-    setServices([])
   }
 
   return (
@@ -103,7 +123,6 @@ export function NewJobForm() {
           </div>
         </div>
 
-        {/* Hizmet Seçimi */}
         <div className="flex flex-col gap-3">
           <Label>Hizmet Tipi (En az 1 seçim yapın)</Label>
           <div className="flex flex-wrap gap-2">
@@ -129,11 +148,11 @@ export function NewJobForm() {
 
         <Button
           type="submit"
-          disabled={!canSubmit}
+          disabled={!canSubmit || isPending}
           className="glow-neon h-14 w-full rounded-xl bg-neon text-sm font-bold text-neon-foreground transition-all hover:bg-neon hover:brightness-110 disabled:shadow-none sm:text-base [&_svg]:size-5"
         >
           <Send className="mr-2 hidden sm:block" />
-          Sisteme Kaydet & WhatsApp Linki Gönder
+          {isPending ? 'Kaydediliyor...' : 'Sisteme Kaydet & WhatsApp Linki Gönder'}
         </Button>
 
         {lastLink && (

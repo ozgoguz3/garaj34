@@ -10,9 +10,10 @@ import { STEPS, type Job } from '@/lib/jobs-store'
 
 type TrackingViewProps = {
   job: Job
+  businessName?: string
 }
 
-export function TrackingView({ job }: TrackingViewProps) {
+export function TrackingView({ job, businessName = 'Garaj34 Premium Detailing' }: TrackingViewProps) {
   const current = STEPS[job.step]
 
   return (
@@ -29,7 +30,7 @@ export function TrackingView({ job }: TrackingViewProps) {
             Canlı Takip
           </Badge>
           <h1 className="text-balance text-2xl font-bold tracking-tight">
-            Garaj34 <span className="text-muted-foreground">Premium Detailing</span>
+            {businessName}
           </h1>
           <p className="text-sm text-muted-foreground">
             Merhaba {job.customerName.split(' ')[0]}, aracınız güvenli ellerde.
@@ -97,7 +98,7 @@ export function TrackingView({ job }: TrackingViewProps) {
             className="glow-neon h-14 w-full rounded-xl bg-neon text-base font-bold text-neon-foreground transition-transform hover:scale-[1.02] hover:bg-neon active:scale-[0.99]"
             render={
               <a
-                href="https://www.google.com/maps/search/?api=1&query=Garaj34+Premium+Detailing"
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(businessName)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               />
@@ -110,7 +111,7 @@ export function TrackingView({ job }: TrackingViewProps) {
         <footer className="flex flex-col items-center gap-2 pt-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="size-3.5 text-neon" />
-            Garaj34 · Premium Oto Detaylama
+            {businessName}
           </span>
         </footer>
       </div>

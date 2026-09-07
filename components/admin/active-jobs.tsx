@@ -4,11 +4,15 @@ import { CarFront } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { JobCard } from '@/components/admin/job-card'
 import { SectionCard } from '@/components/admin/section-card'
-import { useJobs } from '@/lib/jobs-store'
+import type { Job } from '@/lib/jobs-store'
 
-export function ActiveJobs() {
-  const { jobs } = useJobs()
+type ActiveJobsProps = {
+  jobs: Job[]
+  businessId: string
+  businessSlug: string
+}
 
+export function ActiveJobs({ jobs, businessId, businessSlug }: ActiveJobsProps) {
   return (
     <SectionCard
       title="Aktif İşlemler"
@@ -27,7 +31,7 @@ export function ActiveJobs() {
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {jobs.map((job) => (
-            <JobCard key={job.id} job={job} />
+            <JobCard key={job.id} job={job} businessId={businessId} businessSlug={businessSlug} />
           ))}
         </div>
       )
