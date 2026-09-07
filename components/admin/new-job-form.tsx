@@ -8,19 +8,35 @@ import { Label } from '@/components/ui/label'
 import { SectionCard } from '@/components/admin/section-card'
 import { buildWhatsAppLink, plateToSlug, useJobs } from '@/lib/jobs-store'
 
+const SERVICE_OPTIONS = [
+  'İç/Dış Yıkama',
+  'Detaylı Temizlik',
+  'Pasta & Cila',
+  'Seramik Kaplama',
+  'Motor Yıkama',
+  'Kaput Filmi'
+]
+
 export function NewJobForm() {
   const { addJob } = useJobs()
   const [customerName, setCustomerName] = useState('')
   const [plate, setPlate] = useState('')
   const [phone, setPhone] = useState('')
+  const [services, setServices] = useState<string[]>([])
   const [lastLink, setLastLink] = useState<{ wa: string; track: string; plate: string } | null>(null)
 
-  const canSubmit = customerName.trim() && plate.trim() && phone.trim()
+  const canSubmit = customerName.trim() && plate.trim() && phone.trim() && services.length > 0
+
+  function toggleService(service: string) {
+    setServices((prev) =>
+      prev.includes(service) ? prev.filter((s) => s !== service) : [...prev, service]
+    )
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!canSubmit) return
-    const job = addJob({ customerName, plate, phone })
+    const job = addJob({ customerName, plate, phone, services })
     const origin = window.location.origin
     setLastLink({
       wa: buildWhatsAppLink(job.phone, job.plate, origin),
@@ -30,14 +46,15 @@ export function NewJobForm() {
     setCustomerName('')
     setPlate('')
     setPhone('')
+    setServices([])
   }
 
   return (
     <SectionCard
       title="Yeni İşlem Ekle"
-      description="Aracı sisteme kaydedin ve müşteriye takip linkini gönderin."
+      description="Aracı kaydedin, hizmetleri seçin ve müşteriye linki gönderin."
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
             <Label htmlFor="customerName">Müşteri Adı</Label>
@@ -45,13 +62,13 @@ export function NewJobForm() {
               id="customerName"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="Ahmet Yılmaz"
+              placeholder="Örn: Ahmet Yılmaz"
               autoComplete="name"
               className="h-11 bg-input/40"
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="plate">PLAKA</Label>
+            <Label htmlFor="plate">Plaka</Label>
             <Input
               id="plate"
               value={plate}
@@ -76,39 +93,66 @@ export function NewJobForm() {
           </div>
         </div>
 
+        {/* Hizmet Seçimi - Yeni Eklendi */}
+        <div className="flex flex-col gap-3">
+          <Label>Hizmet Tipi (En az 1 seçim yapın)</Label>
+          <div className="flex flex-wrap gap-2">
+            {SERVICE_OPTIONS.map((service) => {
+              const isSelected = services.includes(service)
+              return (
+                <button
+                  key={service}
+                  type="button"
+                  onClick={() => toggleService(service)}
+                  className={`rounded-full border px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${
+                    isSelected
+                      ? 'border-neon bg-neon/10 text-neon'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  {service}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         <Button
           type="submit"
           disabled={!canSubmit}
-          className="glow-neon h-14 w-full rounded-xl bg-neon text-base font-bold text-neon-foreground transition-all hover:bg-neon hover:brightness-110 disabled:shadow-none [&_svg]:size-5"
+          className="glow-neon h-14 w-full rounded-xl bg-neon text-sm font-bold text-neon-foreground transition-all hover:bg-neon hover:brightness-110 disabled:shadow-none sm:text-base [&_svg]:size-5"
         >
-          <Send />
-          Sisteme Kaydet &amp; WhatsApp Linki Gönder
+          <Send className="mr-2 hidden sm:block" />
+          Sisteme Kaydet & WhatsApp Linki Gönder
         </Button>
 
         {lastLink && (
           <div
             role="status"
-            className="flex flex-col gap-3 rounded-xl border border-neon/30 bg-neon/10 p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-4 rounded-xl border border-neon/30 bg-neon/10 p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
           >
             <span className="flex items-center gap-2 text-neon">
-              <CheckCircle2 className="size-4" />
-              <span className="font-mono font-semibold">{lastLink.plate}</span> kaydedildi.
+              <CheckCircle2 className="size-5 shrink-0" />
+              <span>
+                <span className="font-mono font-bold">{lastLink.plate}</span> kaydedildi.
+              </span>
             </span>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 variant="outline"
                 size="sm"
-                className="border-neon/40 text-neon hover:bg-neon/10 hover:text-neon"
+                className="w-full border-neon/40 text-neon hover:bg-neon/10 hover:text-neon sm:w-auto"
                 render={<a href={lastLink.wa} target="_blank" rel="noopener noreferrer" />}
               >
-                <Send /> WhatsApp&apos;ta Aç
+                <Send className="mr-2 size-4" /> WhatsApp'ta Aç
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
+                className="w-full sm:w-auto"
                 render={<a href={lastLink.track} target="_blank" rel="noopener noreferrer" />}
               >
-                <ExternalLink /> Takip Sayfası
+                <ExternalLink className="mr-2 size-4" /> Takip Sayfası
               </Button>
             </div>
           </div>

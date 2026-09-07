@@ -22,7 +22,7 @@ export function ActiveJobs() {
       {jobs.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-14 text-center text-muted-foreground">
           <CarFront className="size-8" />
-          <p className="text-sm">Aktif işlem yok. Yeni bir araç ekleyin.</p>
+          <p className="text-sm">Aktif işlem yok. Yukarıdan yeni bir araç ekleyin.</p>
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
@@ -30,7 +30,8 @@ export function ActiveJobs() {
             <JobCard key={job.id} job={job} />
           ))}
         </div>
-      )}
+      )
+    }
     </SectionCard>
   )
 }

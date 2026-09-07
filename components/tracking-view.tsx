@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Sparkles, Star, ShieldCheck } from 'lucide-react'
+import { Sparkles, Star, ShieldCheck, Wrench } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
@@ -41,7 +41,23 @@ export function TrackingView({ job }: TrackingViewProps) {
             Araç Plakası
           </h2>
           <LicensePlate plate={job.plate} size="lg" className="shadow-2xl" />
-          <div className="flex items-center gap-2 text-sm">
+          
+          {/* Seçilen Hizmetler Rozeti */}
+          {job.services && job.services.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+              {job.services.map((s, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-1 rounded-full border border-neon/30 bg-neon/10 px-3 py-1 text-xs font-medium text-neon"
+                >
+                  <Wrench className="size-3" />
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 pt-1 text-sm">
             <span className="text-muted-foreground">Güncel durum:</span>
             <span className="text-glow-neon font-semibold text-neon">{current.title}</span>
           </div>
@@ -96,9 +112,6 @@ export function TrackingView({ job }: TrackingViewProps) {
             <ShieldCheck className="size-3.5 text-neon" />
             Garaj34 · Premium Oto Detaylama
           </span>
-          <Link href="/admin" className="underline-offset-4 hover:text-foreground hover:underline">
-            Yönetim paneline git
-          </Link>
         </footer>
       </div>
     </main>

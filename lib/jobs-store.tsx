@@ -9,13 +9,15 @@ import {
   type ReactNode,
 } from 'react'
 
-export type StepIndex = 0 | 1 | 2 | 3
+// Artık sadece 3 adım var: 0 (Sırada), 1 (İşlemde), 2 (Hazır)
+export type StepIndex = 0 | 1 | 2
 
 export type Job = {
   id: string
   customerName: string
   plate: string
   phone: string
+  services: string[] // Yeni: Seçilen hizmetler dizisi
   step: StepIndex
   createdAt: string
 }
@@ -25,6 +27,7 @@ export type ArchivedJob = {
   customerName: string
   plate: string
   phone: string
+  services: string[] // Yeni: Arşivde de yapılan işlemleri tutuyoruz
   serviceDate: string
 }
 
@@ -36,22 +39,16 @@ export const STEPS = [
     description: 'Aracınız teslim alındı, sıraya eklendi.',
   },
   {
-    key: 'washing',
-    adminLabel: 'Yıkama',
-    title: 'Köpük & Yıkama',
-    description: 'pH dengeli köpük ve basınçlı durulama.',
-  },
-  {
-    key: 'drying',
-    adminLabel: 'Kurulama',
-    title: 'Kurulama & Detay',
-    description: 'Mikrofiber kurulama, iç detay ve cila.',
+    key: 'processing',
+    adminLabel: 'İşlemde',
+    title: 'İşleme Alındı',
+    description: 'Seçtiğiniz hizmetler özenle uygulanıyor.',
   },
   {
     key: 'ready',
     adminLabel: 'Hazır!',
     title: 'Teslime Hazır!',
-    description: 'Anahtarınız sizi bekliyor.',
+    description: 'Aracınızın işlemleri tamamlandı, sizi bekliyor.',
   },
 ] as const
 
@@ -74,66 +71,10 @@ export function buildWhatsAppLink(phone: string, plate: string, origin: string) 
   return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`
 }
 
-// Seed timestamps are anchored to the top of the current hour so SSR and client render identical HTML.
-const anchor = new Date()
-anchor.setMinutes(0, 0, 0)
-const minutesAgo = (m: number) => new Date(anchor.getTime() - m * 60_000).toISOString()
-
-const seedActive: Job[] = [
-  {
-    id: 'j1',
-    customerName: 'Mert Kaya',
-    plate: '34 ABC 123',
-    phone: '0532 111 22 33',
-    step: 1,
-    createdAt: minutesAgo(48),
-  },
-  {
-    id: 'j2',
-    customerName: 'Elif Demir',
-    plate: '34 DTL 007',
-    phone: '0541 444 55 66',
-    step: 0,
-    createdAt: minutesAgo(12),
-  },
-  {
-    id: 'j3',
-    customerName: 'Can Yılmaz',
-    plate: '06 GRJ 34',
-    phone: '0555 777 88 99',
-    step: 2,
-    createdAt: minutesAgo(95),
-  },
-]
-
-const seedArchive: ArchivedJob[] = [
-  {
-    id: 'a1',
-    customerName: 'Ayşe Öztürk',
-    plate: '34 KLM 456',
-    phone: '0533 222 33 44',
-    serviceDate: '2026-08-29T14:10:00.000Z',
-  },
-  {
-    id: 'a2',
-    customerName: 'Burak Şahin',
-    plate: '41 XYZ 890',
-    phone: '0544 555 66 77',
-    serviceDate: '2026-08-21T10:30:00.000Z',
-  },
-  {
-    id: 'a3',
-    customerName: 'Zeynep Arslan',
-    plate: '34 PRM 001',
-    phone: '0505 888 99 00',
-    serviceDate: '2026-08-14T16:45:00.000Z',
-  },
-]
-
 type JobsContextValue = {
   jobs: Job[]
   archive: ArchivedJob[]
-  addJob: (input: { customerName: string; plate: string; phone: string }) => Job
+  addJob: (input: { customerName: string; plate: string; phone: string; services: string[] }) => Job
   setStep: (id: string, step: StepIndex) => void
   archiveJob: (id: string) => void
   recallCustomer: (id: string) => void
@@ -143,8 +84,9 @@ type JobsContextValue = {
 const JobsContext = createContext<JobsContextValue | null>(null)
 
 export function JobsProvider({ children }: { children: ReactNode }) {
-  const [jobs, setJobs] = useState<Job[]>(seedActive)
-  const [archive, setArchive] = useState<ArchivedJob[]>(seedArchive)
+  // Satışa hazır sıfır veritabanı (boş array)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [archive, setArchive] = useState<ArchivedJob[]>([])
 
   const addJob = useCallback<JobsContextValue['addJob']>((input) => {
     const job: Job = {
@@ -152,6 +94,7 @@ export function JobsProvider({ children }: { children: ReactNode }) {
       customerName: input.customerName.trim(),
       plate: normalizePlate(input.plate),
       phone: input.phone.trim(),
+      services: input.services, // Hizmetleri kaydet
       step: 0,
       createdAt: new Date().toISOString(),
     }
@@ -173,6 +116,7 @@ export function JobsProvider({ children }: { children: ReactNode }) {
             customerName: job.customerName,
             plate: job.plate,
             phone: job.phone,
+            services: job.services, // Arşive hizmetleri de taşı
             serviceDate: new Date().toISOString(),
           },
           ...a,
