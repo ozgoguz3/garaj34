@@ -1,7 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import * as data from '@/lib/data'
 import type { StepIndex, PaymentStatus } from '@/lib/jobs-store'
 
@@ -14,14 +14,14 @@ function authCookieName(slug: string) {
 // ---------- GÜÇLÜ LOGIN SİSTEMİ ----------
 export async function loginAction(slug: string, pin: string) {
   try {
-    const result = await data.verifyBusinessPin(slug, pin)
+    const business = await data.verifyBusinessPin(slug, pin)
     
-    if (!result) {
+    if (!business) {
       return { ok: false as const, error: 'Hatalı PIN kodu. Lütfen tekrar deneyin.' }
     }
 
     const jar = await cookies()
-    jar.set(authCookieName(slug), result.business.id, {
+    jar.set(authCookieName(slug), business.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -29,13 +29,12 @@ export async function loginAction(slug: string, pin: string) {
       maxAge: COOKIE_MAX_AGE,
     })
 
-    revalidateTag(`business-${slug}`)
     revalidatePath(`/admin/${slug}`, 'layout')
     
     return { 
       ok: true as const, 
-      business: result.business,
-      role: result.role 
+      business: business,
+      role: 'boss' as const 
     }
   } catch (error: any) {
     console.error('Login error:', error)
@@ -61,7 +60,6 @@ export async function getAuthedBusiness(slug: string) {
     const business = await data.getBusinessBySlug(slug)
     if (!business || business.id !== cookieBusinessId) return null
     
-    // Auth olduysa boss olarak dön (Personel mantığı genişletilebilir)
     return { business, role: 'boss' as const }
   } catch {
     return null
@@ -75,10 +73,7 @@ export async function addJobAction(
   input: Parameters<typeof data.addJob>[1],
 ) {
   const job = await data.addJob(businessId, input)
-  
   revalidatePath(`/admin/${businessSlug}`, 'layout')
-  revalidateTag(`jobs-${businessId}`)
-  
   return job
 }
 
@@ -90,7 +85,6 @@ export async function setStepAction(
 ) {
   await data.setJobStep(businessId, jobId, step)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
-  revalidateTag(`jobs-${businessId}`)
 }
 
 export async function setPaymentStatusAction(
@@ -101,7 +95,6 @@ export async function setPaymentStatusAction(
 ) {
   await data.setJobPaymentStatus(businessId, jobId, status)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
-  revalidateTag(`jobs-${businessId}`)
 }
 
 export async function archiveJobAction(
@@ -111,8 +104,6 @@ export async function archiveJobAction(
 ) {
   await data.archiveJob(businessId, jobId)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
-  revalidateTag(`jobs-${businessId}`)
-  revalidateTag(`archive-${businessId}`)
 }
 
 // ---------- AYARLAR & KAMPANYA & FOTO ----------
@@ -124,12 +115,11 @@ export async function updateBrandingAction(
   await data.updateBusinessBranding(businessId, input)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
   revalidatePath(`/${businessSlug}`, 'layout')
-  revalidateTag(`business-${businessSlug}`)
 }
 
 export async function getCampaignSegmentAction(
   businessId: string, 
-  segment: any // data.CampaignSegment tipini any ile esnetiyoruz ki hata fırlatmasın
+  segment: any
 ) {
   return data.getCampaignSegment(businessId, segment)
 }
