@@ -124,11 +124,9 @@ export function TrackingView({
             <Button
               size="lg"
               className="glow-neon h-14 w-full rounded-xl bg-neon text-base font-bold text-neon-foreground transition-all hover:scale-105"
-              asChild
+              render={<a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" />}
             >
-              <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
-                Bizi Google'da Değerlendirin
-              </a>
+              Bizi Google'da Değerlendirin
             </Button>
           </section>
         )}

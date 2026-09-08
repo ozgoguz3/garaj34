@@ -22,7 +22,7 @@ export async function loginAction(slug: string, pin: string) {
     })
 
     revalidatePath(`/admin/${slug}`, 'layout')
-    return { ok: true as const, business, role: 'boss' as const }
+    return { ok: true as const, business, role: 'boss' as const } // BURASI DÜZELTİLDİ
   } catch (error) {
     return { ok: false as const, error: 'Sunucu hatası oluştu.' }
   }
@@ -43,7 +43,7 @@ export async function getAuthedBusiness(slug: string) {
     const business = await data.getBusinessBySlug(slug)
     if (!business || String(business.id) !== String(cookieBusinessId)) return null
     
-    return { business, role: 'boss' as const }
+    return { business, role: 'boss' as const } // BURASI DÜZELTİLDİ
   } catch {
     return null
   }

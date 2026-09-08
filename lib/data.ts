@@ -283,7 +283,17 @@ export async function getCampaignSegment(businessId: string, segment: CampaignSe
   const rows = await base
   const now = Date.now()
 
-  const mapped = rows.map((r: any) => ({
+  type MappedTarget = {
+    plate: string
+    customerName: string
+    phone: string
+    lastVisit: string
+    services: string[]
+    daysSince: number
+    totalVisits: number
+  }
+
+  const mapped: MappedTarget[] = rows.map((r: any) => ({
     plate: String(r.plate || ''),
     customerName: String(r.customer_name || ''),
     phone: String(r.phone || ''),
@@ -293,19 +303,19 @@ export async function getCampaignSegment(businessId: string, segment: CampaignSe
     totalVisits: Number(r.total_visits || 0)
   }))
 
-  let filtered = mapped
+  let filtered: MappedTarget[] = mapped
 
   if (segment === 'inactive_30') {
-    filtered = mapped.filter(c => c.daysSince >= 30 && c.daysSince < 60)
+    filtered = mapped.filter((c) => c.daysSince >= 30 && c.daysSince < 60)
   } else if (segment === 'inactive_60') {
-    filtered = mapped.filter(c => c.daysSince >= 60)
+    filtered = mapped.filter((c) => c.daysSince >= 60)
   } else if (segment === 'ceramic_ppf_only') {
-    filtered = mapped.filter(c => c.services.some(s => s.includes('Seramik') || s.includes('Film')))
+    filtered = mapped.filter((c) => c.services.some((s) => s.includes('Seramik') || s.includes('Film')))
   } else if (segment === 'high_value') {
-    filtered = mapped.sort((a, b) => b.totalVisits - a.totalVisits).slice(0, 20)
+    filtered = [...mapped].sort((a, b) => b.totalVisits - a.totalVisits).slice(0, 20)
   }
 
-  return filtered.map(f => ({
+  return filtered.map((f) => ({
     plate: f.plate,
     customerName: f.customerName,
     phone: f.phone,
