@@ -23,7 +23,7 @@ export default async function PlateTrackingPage({ params }: PageProps) {
     return <NotFoundScreen />
   }
 
-  return <TrackingView job={job} businessName={business.name} />
+  return <TrackingView job={job} businessName={business.name} primaryColor={business.primaryColor} logoUrl={business.logoUrl} />
 }
 
 function NotFoundScreen() {

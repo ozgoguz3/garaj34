@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import * as data from '@/lib/data'
-import type { StepIndex } from '@/lib/jobs-store'
+import type { StepIndex, PaymentStatus } from '@/lib/jobs-store'
 
 function authCookieName(slug: string) {
   return `garaj34_auth_${slug}`
@@ -32,9 +32,6 @@ export async function logoutAction(slug: string) {
   jar.delete(authCookieName(slug))
 }
 
-// Sayfa/layout tarafında admin oturumunu doğrulamak için kullanılır.
-// Cookie'deki business id, URL'deki slug'a ait işletmeyle eşleşmiyorsa
-// (örn. biri başka işletmenin admin linkini denerse) oturum geçersiz sayılır.
 export async function getAuthedBusiness(slug: string) {
   const jar = await cookies()
   const cookieBusinessId = jar.get(authCookieName(slug))?.value
@@ -46,25 +43,58 @@ export async function getAuthedBusiness(slug: string) {
 }
 
 // ---------- İş (job) mutasyonları ----------
-// Her fonksiyon businessId parametresi alır ve sorguları buna göre
-// filtreler, böylece bir işletme asla başka işletmenin verisine yazamaz.
 
 export async function addJobAction(
   businessSlug: string,
   businessId: string,
-  input: { customerName?: string; plate: string; phone?: string; services: string[] },
+  input: {
+    customerName?: string
+    plate: string
+    phone?: string
+    services: string[]
+    price?: number
+    warrantyMonths?: number
+  },
 ) {
   const job = await data.addJob(businessId, input)
-  revalidatePath(`/admin/${businessSlug}`)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
   return job
 }
 
 export async function setStepAction(businessSlug: string, businessId: string, jobId: string, step: StepIndex) {
   await data.setJobStep(businessId, jobId, step)
-  revalidatePath(`/admin/${businessSlug}`)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
+}
+
+export async function setPaymentStatusAction(
+  businessSlug: string,
+  businessId: string,
+  jobId: string,
+  status: PaymentStatus,
+) {
+  await data.setJobPaymentStatus(businessId, jobId, status)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
 }
 
 export async function archiveJobAction(businessSlug: string, businessId: string, jobId: string) {
   await data.archiveJob(businessId, jobId)
-  revalidatePath(`/admin/${businessSlug}`)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
+}
+
+// ---------- Ayarlar / Marka ----------
+
+export async function updateBrandingAction(
+  businessSlug: string,
+  businessId: string,
+  input: { logoUrl?: string; primaryColor?: string; tagline?: string },
+) {
+  await data.updateBusinessBranding(businessId, input)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
+  revalidatePath(`/${businessSlug}`, 'layout')
+}
+
+// ---------- Kampanya ----------
+
+export async function getCampaignSegmentAction(businessId: string, segment: data.CampaignSegment) {
+  return data.getCampaignSegment(businessId, segment)
 }

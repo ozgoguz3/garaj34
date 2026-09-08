@@ -2,12 +2,12 @@
 
 import { useState, useTransition, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, CheckCircle2, ExternalLink } from 'lucide-react'
+import { Send, CheckCircle2, ExternalLink, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SectionCard } from '@/components/admin/section-card'
-import { buildWhatsAppLink, plateToSlug } from '@/lib/jobs-store'
+import { buildWhatsAppLink, plateToSlug, WARRANTY_ELIGIBLE_SERVICES } from '@/lib/jobs-store'
 import { addJobAction } from '@/lib/actions'
 
 const SERVICE_OPTIONS = [
@@ -17,6 +17,12 @@ const SERVICE_OPTIONS = [
   'Seramik Kaplama',
   'Motor Yıkama',
   'Kaput Filmi'
+]
+
+const WARRANTY_PRESETS = [
+  { label: '12 Ay', months: 12 },
+  { label: '24 Ay', months: 24 },
+  { label: '36 Ay', months: 36 },
 ]
 
 type NewJobFormProps = {
@@ -30,10 +36,13 @@ export function NewJobForm({ businessId, businessSlug }: NewJobFormProps) {
   const [customerName, setCustomerName] = useState('')
   const [plate, setPlate] = useState('')
   const [phone, setPhone] = useState('')
+  const [price, setPrice] = useState('')
   const [services, setServices] = useState<string[]>([])
+  const [warrantyMonths, setWarrantyMonths] = useState<number | null>(null)
   const [lastLink, setLastLink] = useState<{ wa: string; track: string; plate: string } | null>(null)
 
   const canSubmit = plate.trim().length > 0 && services.length > 0
+  const showWarranty = services.some((s) => (WARRANTY_ELIGIBLE_SERVICES as readonly string[]).includes(s))
 
   function toggleService(service: string) {
     setServices((prev) =>
@@ -49,6 +58,8 @@ export function NewJobForm({ businessId, businessSlug }: NewJobFormProps) {
     const inputPhone = phone
     const inputName = customerName
     const inputServices = services
+    const inputPrice = Number(price) || 0
+    const inputWarranty = showWarranty ? warrantyMonths ?? undefined : undefined
 
     startTransition(async () => {
       const job = await addJobAction(businessSlug, businessId, {
@@ -56,6 +67,8 @@ export function NewJobForm({ businessId, businessSlug }: NewJobFormProps) {
         plate: inputPlate,
         phone: inputPhone,
         services: inputServices,
+        price: inputPrice,
+        warrantyMonths: inputWarranty,
       })
 
       const origin = window.location.origin
@@ -74,7 +87,9 @@ export function NewJobForm({ businessId, businessSlug }: NewJobFormProps) {
       setCustomerName('')
       setPlate('')
       setPhone('')
+      setPrice('')
       setServices([])
+      setWarrantyMonths(null)
       router.refresh()
     })
   }
@@ -85,7 +100,7 @@ export function NewJobForm({ businessId, businessSlug }: NewJobFormProps) {
       description="Plaka girin, hizmetleri seçin ve tek tıkla sisteme kaydedin."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="customerName">Müşteri Adı <span className="text-muted-foreground text-xs">(İsteğe bağlı)</span></Label>
             <Input
@@ -121,6 +136,19 @@ export function NewJobForm({ businessId, businessSlug }: NewJobFormProps) {
               className="h-11 bg-input/40 font-mono"
             />
           </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="price">Tutar (₺) <span className="text-muted-foreground text-xs">(İsteğe bağlı)</span></Label>
+            <Input
+              id="price"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="0"
+              className="h-11 bg-input/40 font-mono"
+            />
+          </div>
         </div>
 
         <div className="flex flex-col gap-3">
@@ -145,6 +173,30 @@ export function NewJobForm({ businessId, businessSlug }: NewJobFormProps) {
             })}
           </div>
         </div>
+
+        {showWarranty && (
+          <div className="flex flex-col gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <Label className="flex items-center gap-1.5 text-amber-400">
+              <ShieldCheck className="size-4" /> Garanti Süresi (kaplama hizmeti seçildi)
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {WARRANTY_PRESETS.map((preset) => (
+                <button
+                  key={preset.months}
+                  type="button"
+                  onClick={() => setWarrantyMonths(preset.months)}
+                  className={`rounded-full border px-4 py-1.5 text-xs font-medium transition-colors ${
+                    warrantyMonths === preset.months
+                      ? 'border-amber-400 bg-amber-500/15 text-amber-400'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Button
           type="submit"

@@ -2,14 +2,17 @@
 
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Archive, Clock, ExternalLink } from 'lucide-react'
+import { Archive, Clock, ExternalLink, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
-import { STEPS, plateToSlug, type Job, type StepIndex } from '@/lib/jobs-store'
-import { setStepAction, archiveJobAction } from '@/lib/actions'
+import { STEPS, PAYMENT_STATUS_LABELS, plateToSlug, type Job, type StepIndex, type PaymentStatus } from '@/lib/jobs-store'
+import { setStepAction, archiveJobAction, setPaymentStatusAction } from '@/lib/actions'
 import { cn } from '@/lib/utils'
 
 const timeFormatter = new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit' })
+const currency = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 })
+
+const PAYMENT_CYCLE: PaymentStatus[] = ['unpaid', 'partial', 'paid']
 
 type JobCardProps = {
   job: Job
@@ -34,6 +37,21 @@ export function JobCard({ job, businessId, businessSlug }: JobCardProps) {
       await archiveJobAction(businessSlug, businessId, job.id)
       router.refresh()
     })
+  }
+
+  function cyclePaymentStatus() {
+    const currentIndex = PAYMENT_CYCLE.indexOf(job.paymentStatus)
+    const next = PAYMENT_CYCLE[(currentIndex + 1) % PAYMENT_CYCLE.length]
+    startTransition(async () => {
+      await setPaymentStatusAction(businessSlug, businessId, job.id, next)
+      router.refresh()
+    })
+  }
+
+  const paymentStyles: Record<PaymentStatus, string> = {
+    unpaid: 'border-red-500/30 bg-red-500/10 text-red-400',
+    partial: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
+    paid: 'border-neon/30 bg-neon/10 text-neon',
   }
 
   return (
@@ -70,8 +88,21 @@ export function JobCard({ job, businessId, businessSlug }: JobCardProps) {
           )}
         </div>
 
-        <div className="shrink-0">
+        <div className="flex shrink-0 flex-col items-end gap-2">
           <LicensePlate plate={job.plate} />
+          {job.price > 0 && (
+            <button
+              onClick={cyclePaymentStatus}
+              disabled={isPending}
+              className={cn(
+                'flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors',
+                paymentStyles[job.paymentStatus],
+              )}
+            >
+              <Wallet className="size-3" />
+              {currency.format(job.price)} · {PAYMENT_STATUS_LABELS[job.paymentStatus]}
+            </button>
+          )}
         </div>
       </div>
 

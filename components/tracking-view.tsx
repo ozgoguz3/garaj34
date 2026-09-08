@@ -11,13 +11,23 @@ import { STEPS, type Job } from '@/lib/jobs-store'
 type TrackingViewProps = {
   job: Job
   businessName?: string
+  primaryColor?: string
+  logoUrl?: string | null
 }
 
-export function TrackingView({ job, businessName = 'Garaj34 Premium Detailing' }: TrackingViewProps) {
+export function TrackingView({
+  job,
+  businessName = 'Garaj34 Premium Detailing',
+  primaryColor,
+  logoUrl,
+}: TrackingViewProps) {
   const current = STEPS[job.step]
 
   return (
-    <main className="bg-grid relative min-h-dvh overflow-hidden">
+    <main
+      className="bg-grid relative min-h-dvh overflow-hidden"
+      style={primaryColor ? ({ '--neon': primaryColor } as React.CSSProperties) : undefined}
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.18),transparent_65%)]"
@@ -25,6 +35,10 @@ export function TrackingView({ job, businessName = 'Garaj34 Premium Detailing' }
 
       <div className="relative mx-auto flex w-full max-w-md flex-col gap-8 px-5 pb-12 pt-8">
         <header className="flex flex-col items-center gap-3 text-center">
+          {logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={businessName} className="size-14 rounded-xl object-cover" />
+          )}
           <Badge className="glow-neon gap-1.5 border-neon/40 bg-neon/15 px-3 py-1 text-neon">
             <Sparkles className="size-3.5" />
             Canlı Takip

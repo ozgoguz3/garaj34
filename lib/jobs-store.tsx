@@ -3,6 +3,7 @@
 // barındırıyor. Gerçek veri artık lib/data.ts üzerinden veritabanından geliyor.
 
 export type StepIndex = 0 | 1 | 2
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid'
 
 export type Job = {
   id: string
@@ -12,6 +13,9 @@ export type Job = {
   phone: string
   services: string[]
   step: StepIndex
+  price: number
+  paymentStatus: PaymentStatus
+  warrantyEndDate: string | null
   createdAt: string
 }
 
@@ -22,7 +26,20 @@ export type ArchivedJob = {
   plate: string
   phone: string
   services: string[]
+  price: number
+  paymentStatus: PaymentStatus
+  warrantyEndDate: string | null
   serviceDate: string
+}
+
+// Garanti süresi sorulan hizmetler (kaplama/koruma türü işler).
+// Bunlardan biri seçildiğinde admin formunda garanti süresi alanı çıkar.
+export const WARRANTY_ELIGIBLE_SERVICES = ['Seramik Kaplama', 'Kaput Filmi'] as const
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  unpaid: 'Ödenmedi',
+  partial: 'Kısmi Ödendi',
+  paid: 'Ödendi',
 }
 
 export const STEPS = [

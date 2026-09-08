@@ -177,6 +177,11 @@ export function CustomerDatabase({ archive, insights, businessSlug, className }:
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {c.price > 0 && (
+                      <span className="hidden font-mono text-sm font-semibold text-muted-foreground sm:inline">
+                        {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(c.price)}
+                      </span>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
