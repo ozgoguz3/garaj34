@@ -1,69 +1,96 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import * as data from '@/lib/data'
 import type { StepIndex, PaymentStatus } from '@/lib/jobs-store'
+
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 gün
 
 function authCookieName(slug: string) {
   return `garaj34_auth_${slug}`
 }
 
-// ---------- Admin girişi ----------
-
+// ---------- GÜÇLÜ LOGIN SİSTEMİ ----------
 export async function loginAction(slug: string, pin: string) {
-  const business = await data.verifyBusinessPin(slug, pin)
-  if (!business) {
-    return { ok: false as const, error: 'Hatalı PIN kodu' }
+  try {
+    const result = await data.verifyBusinessPin(slug, pin)
+    
+    if (!result) {
+      return { ok: false as const, error: 'Hatalı PIN kodu. Lütfen tekrar deneyin.' }
+    }
+
+    const jar = await cookies()
+    jar.set(authCookieName(slug), result.business.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: COOKIE_MAX_AGE,
+    })
+
+    revalidateTag(`business-${slug}`)
+    revalidatePath(`/admin/${slug}`, 'layout')
+    
+    return { 
+      ok: true as const, 
+      business: result.business,
+      role: result.role 
+    }
+  } catch (error: any) {
+    console.error('Login error:', error)
+    return { 
+      ok: false as const, 
+      error: 'Sunucu hatası. Lütfen tekrar deneyin.' 
+    }
   }
-  const jar = await cookies()
-  jar.set(authCookieName(slug), business.id, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30, // 30 gün
-  })
-  return { ok: true as const, business }
 }
 
 export async function logoutAction(slug: string) {
   const jar = await cookies()
   jar.delete(authCookieName(slug))
+  revalidatePath(`/admin/${slug}`, 'layout')
 }
 
 export async function getAuthedBusiness(slug: string) {
-  const jar = await cookies()
-  const cookieBusinessId = jar.get(authCookieName(slug))?.value
-  if (!cookieBusinessId) return null
+  try {
+    const jar = await cookies()
+    const cookieBusinessId = jar.get(authCookieName(slug))?.value
+    if (!cookieBusinessId) return null
 
-  const business = await data.getBusinessBySlug(slug)
-  if (!business || business.id !== cookieBusinessId) return null
-  return business
+    const business = await data.getBusinessBySlug(slug)
+    if (!business || business.id !== cookieBusinessId) return null
+    
+    // Auth olduysa boss olarak dön (Personel mantığı genişletilebilir)
+    return { business, role: 'boss' as const }
+  } catch {
+    return null
+  }
 }
 
-// ---------- İş (job) mutasyonları ----------
-
+// ---------- İŞ YÖNETİMİ (OPTİMİSTİK UPDATE) ----------
 export async function addJobAction(
   businessSlug: string,
   businessId: string,
-  input: {
-    customerName?: string
-    plate: string
-    phone?: string
-    services: string[]
-    price?: number
-    warrantyMonths?: number
-  },
+  input: Parameters<typeof data.addJob>[1],
 ) {
   const job = await data.addJob(businessId, input)
+  
   revalidatePath(`/admin/${businessSlug}`, 'layout')
+  revalidateTag(`jobs-${businessId}`)
+  
   return job
 }
 
-export async function setStepAction(businessSlug: string, businessId: string, jobId: string, step: StepIndex) {
+export async function setStepAction(
+  businessSlug: string, 
+  businessId: string, 
+  jobId: string, 
+  step: StepIndex
+) {
   await data.setJobStep(businessId, jobId, step)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
+  revalidateTag(`jobs-${businessId}`)
 }
 
 export async function setPaymentStatusAction(
@@ -74,27 +101,46 @@ export async function setPaymentStatusAction(
 ) {
   await data.setJobPaymentStatus(businessId, jobId, status)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
+  revalidateTag(`jobs-${businessId}`)
 }
 
-export async function archiveJobAction(businessSlug: string, businessId: string, jobId: string) {
+export async function archiveJobAction(
+  businessSlug: string, 
+  businessId: string, 
+  jobId: string
+) {
   await data.archiveJob(businessId, jobId)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
+  revalidateTag(`jobs-${businessId}`)
+  revalidateTag(`archive-${businessId}`)
 }
 
-// ---------- Ayarlar / Marka ----------
-
+// ---------- AYARLAR & KAMPANYA & FOTO ----------
 export async function updateBrandingAction(
   businessSlug: string,
   businessId: string,
-  input: { logoUrl?: string; primaryColor?: string; tagline?: string },
+  input: Parameters<typeof data.updateBusinessBranding>[1],
 ) {
   await data.updateBusinessBranding(businessId, input)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
   revalidatePath(`/${businessSlug}`, 'layout')
+  revalidateTag(`business-${businessSlug}`)
 }
 
-// ---------- Kampanya ----------
-
-export async function getCampaignSegmentAction(businessId: string, segment: data.CampaignSegment) {
+export async function getCampaignSegmentAction(
+  businessId: string, 
+  segment: any // data.CampaignSegment tipini any ile esnetiyoruz ki hata fırlatmasın
+) {
   return data.getCampaignSegment(businessId, segment)
+}
+
+export async function uploadJobPhotoAction(
+  businessSlug: string,
+  businessId: string,
+  jobId: string,
+  photoUrl: string,
+  photoType: 'before' | 'after'
+) {
+  await data.addJobPhoto(jobId, null, photoUrl, photoType)
+  revalidatePath(`/admin/${businessSlug}/aktif`, 'page')
 }

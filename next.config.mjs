@@ -1,11 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'i.imgur.com',
+      },
+    ],
+    formats: ['image/avif', 'image/webp'],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

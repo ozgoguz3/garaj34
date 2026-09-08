@@ -3,6 +3,9 @@ import bcrypt from 'bcryptjs'
 import { sql } from '@/lib/db'
 import { normalizePlate, plateToSlug, type StepIndex, type PaymentStatus } from '@/lib/jobs-store'
 
+// Bu dosya sadece sunucuda çalışır (server-only). Tarayıcıya asla
+// gönderilmez, veritabanı sorguları burada toplanır.
+
 export type Business = {
   id: string
   slug: string
@@ -10,7 +13,6 @@ export type Business = {
   logoUrl: string | null
   primaryColor: string
   tagline: string
-  googleMapsUrl: string | null
 }
 
 export type Job = {
@@ -18,14 +20,12 @@ export type Job = {
   businessId: string
   customerName: string
   plate: string
-  carModel: string | null
   phone: string
   services: string[]
   step: StepIndex
   price: number
   paymentStatus: PaymentStatus
   warrantyEndDate: string | null
-  damageNote: string | null
   createdAt: string
 }
 
@@ -34,13 +34,11 @@ export type ArchivedJob = {
   businessId: string
   customerName: string
   plate: string
-  carModel: string | null
   phone: string
   services: string[]
   price: number
   paymentStatus: PaymentStatus
   warrantyEndDate: string | null
-  damageNote: string | null
   serviceDate: string
 }
 
@@ -80,34 +78,26 @@ function mapBusinessRow(r: any): Business {
     logoUrl: r.logo_url,
     primaryColor: r.primary_color,
     tagline: r.tagline,
-    googleMapsUrl: r.google_maps_url ?? null,
   }
 }
 
 export async function getBusinessBySlug(slug: string): Promise<Business | null> {
   const rows = await sql`
-    SELECT id, slug, name, logo_url, primary_color, tagline, google_maps_url FROM businesses WHERE slug = ${slug} LIMIT 1
+    SELECT id, slug, name, logo_url, primary_color, tagline FROM businesses WHERE slug = ${slug} LIMIT 1
   `
   if (rows.length === 0) return null
   return mapBusinessRow(rows[0])
 }
 
-export async function verifyBusinessPin(slug: string, pin: string): Promise<{ business: Business; role: 'boss' | 'employee' } | null> {
+export async function verifyBusinessPin(slug: string, pin: string): Promise<Business | null> {
   const rows = await sql`
-    SELECT id, slug, name, logo_url, primary_color, tagline, google_maps_url, pin_hash, employee_pin_hash FROM businesses WHERE slug = ${slug} LIMIT 1
+    SELECT id, slug, name, logo_url, primary_color, tagline, pin_hash FROM businesses WHERE slug = ${slug} LIMIT 1
   `
   if (rows.length === 0) return null
   const r = rows[0] as any
-  
-  const isBoss = await bcrypt.compare(pin, r.pin_hash)
-  if (isBoss) return { business: mapBusinessRow(r), role: 'boss' }
-
-  if (r.employee_pin_hash) {
-    const isEmployee = await bcrypt.compare(pin, r.employee_pin_hash)
-    if (isEmployee) return { business: mapBusinessRow(r), role: 'employee' }
-  }
-
-  return null
+  const ok = await bcrypt.compare(pin, r.pin_hash)
+  if (!ok) return null
+  return mapBusinessRow(r)
 }
 
 export async function createBusiness(slug: string, name: string, pin: string) {
@@ -115,21 +105,20 @@ export async function createBusiness(slug: string, name: string, pin: string) {
   const rows = await sql`
     INSERT INTO businesses (slug, name, pin_hash)
     VALUES (${slug}, ${name}, ${pinHash})
-    RETURNING id, slug, name, logo_url, primary_color, tagline, google_maps_url
+    RETURNING id, slug, name, logo_url, primary_color, tagline
   `
   return mapBusinessRow(rows[0])
 }
 
 export async function updateBusinessBranding(
   businessId: string,
-  input: { logoUrl?: string; primaryColor?: string; tagline?: string; googleMapsUrl?: string },
+  input: { logoUrl?: string; primaryColor?: string; tagline?: string },
 ) {
   await sql`
     UPDATE businesses SET
       logo_url = COALESCE(${input.logoUrl ?? null}, logo_url),
       primary_color = COALESCE(${input.primaryColor ?? null}, primary_color),
-      tagline = COALESCE(${input.tagline ?? null}, tagline),
-      google_maps_url = COALESCE(${input.googleMapsUrl ?? null}, google_maps_url)
+      tagline = COALESCE(${input.tagline ?? null}, tagline)
     WHERE id = ${businessId}
   `
 }
@@ -142,14 +131,12 @@ function mapJobRow(r: any): Job {
     businessId: r.business_id,
     customerName: r.customer_name,
     plate: r.plate,
-    carModel: r.car_model ?? null,
     phone: r.phone,
     services: r.services ?? [],
     step: r.step as StepIndex,
     price: Number(r.price),
     paymentStatus: r.payment_status as PaymentStatus,
     warrantyEndDate: r.warranty_end_date,
-    damageNote: r.damage_note ?? null,
     createdAt: r.created_at,
   }
 }
@@ -174,12 +161,10 @@ export async function addJob(
   input: {
     customerName?: string
     plate: string
-    carModel?: string
     phone?: string
     services: string[]
     price?: number
     warrantyMonths?: number
-    damageNote?: string
   },
 ): Promise<Job> {
   const warrantyEndDate = input.warrantyMonths
@@ -187,18 +172,16 @@ export async function addJob(
     : null
 
   const rows = await sql`
-    INSERT INTO jobs (business_id, customer_name, plate, car_model, phone, services, step, price, warranty_end_date, damage_note)
+    INSERT INTO jobs (business_id, customer_name, plate, phone, services, step, price, warranty_end_date)
     VALUES (
       ${businessId},
       ${input.customerName?.trim() || 'İsimsiz Müşteri'},
       ${normalizePlate(input.plate)},
-      ${input.carModel?.trim() || null},
       ${input.phone?.trim() || ''},
       ${input.services},
       0,
       ${input.price ?? 0},
-      ${warrantyEndDate},
-      ${input.damageNote?.trim() || null}
+      ${warrantyEndDate}
     )
     RETURNING *
   `
@@ -219,6 +202,7 @@ export async function setJobPaymentStatus(businessId: string, jobId: string, sta
   `
 }
 
+// İşi arşive taşır (teslim edildi) ve aktif listeden kaldırır
 export async function archiveJob(businessId: string, jobId: string) {
   const rows = await sql`
     SELECT * FROM jobs WHERE id = ${jobId} AND business_id = ${businessId}
@@ -227,8 +211,8 @@ export async function archiveJob(businessId: string, jobId: string) {
   const job = mapJobRow(rows[0])
 
   await sql`
-    INSERT INTO archived_jobs (business_id, customer_name, plate, car_model, phone, services, price, payment_status, warranty_end_date, damage_note, service_date)
-    VALUES (${businessId}, ${job.customerName}, ${job.plate}, ${job.carModel}, ${job.phone}, ${job.services}, ${job.price}, ${job.paymentStatus}, ${job.warrantyEndDate}, ${job.damageNote}, now())
+    INSERT INTO archived_jobs (business_id, customer_name, plate, phone, services, price, payment_status, warranty_end_date, service_date)
+    VALUES (${businessId}, ${job.customerName}, ${job.plate}, ${job.phone}, ${job.services}, ${job.price}, ${job.paymentStatus}, ${job.warrantyEndDate}, now())
   `
   await sql`DELETE FROM jobs WHERE id = ${jobId} AND business_id = ${businessId}`
 }
@@ -241,13 +225,11 @@ function mapArchiveRow(r: any): ArchivedJob {
     businessId: r.business_id,
     customerName: r.customer_name,
     plate: r.plate,
-    carModel: r.car_model ?? null,
     phone: r.phone,
     services: r.services ?? [],
     price: Number(r.price),
     paymentStatus: r.payment_status as PaymentStatus,
     warrantyEndDate: r.warranty_end_date,
-    damageNote: r.damage_note ?? null,
     serviceDate: r.service_date,
   }
 }
@@ -269,6 +251,7 @@ export async function getHistoryByPlate(businessId: string, plate: string): Prom
   return rows.map(mapArchiveRow)
 }
 
+// CRM sinyali: bu müşteri eskiden sık geliyordu ama son zamanlarda gelmiyor mu?
 export async function getRetentionInsights(businessId: string): Promise<RetentionInsight[]> {
   const rows = await sql`
     SELECT plate, customer_name, phone, array_agg(service_date ORDER BY service_date DESC) AS visits
@@ -298,6 +281,7 @@ export async function getRetentionInsights(businessId: string): Promise<Retentio
     .sort((a, b) => new Date(a.lastVisit).getTime() - new Date(b.lastVisit).getTime())
 }
 
+// Garantisi 45 gün içinde bitecek müşteriler (seramik/PPF gibi hizmetler için)
 export async function getExpiringWarranties(businessId: string): Promise<ExpiringWarranty[]> {
   const rows = await sql`
     SELECT plate, customer_name, phone, services, warranty_end_date
@@ -319,6 +303,7 @@ export async function getExpiringWarranties(businessId: string): Promise<Expirin
   }))
 }
 
+// Panelin en üstündeki özet rakamlar: bu ay ciro, toplam alacak, ortalama fiş
 export async function getDashboardSummary(businessId: string): Promise<DashboardSummary> {
   const [revenueRows, debtRows, activeRows] = await Promise.all([
     sql`
@@ -349,6 +334,7 @@ export async function getDashboardSummary(businessId: string): Promise<Dashboard
   }
 }
 
+// Son N müşteri (panel ana ekranında hızlı önizleme için)
 export async function getRecentCustomers(businessId: string, limit = 5): Promise<ArchivedJob[]> {
   const rows = await sql`
     SELECT * FROM archived_jobs WHERE business_id = ${businessId}
@@ -359,7 +345,7 @@ export async function getRecentCustomers(businessId: string, limit = 5): Promise
 
 // ---------- Kampanya segmentleri ----------
 
-export type CampaignSegment = 'inactive_30' | 'inactive_60' | 'all_customers' | 'high_value' | 'ceramic_ppf_only'
+export type CampaignSegment = 'inactive_30' | 'inactive_60' | 'all_customers' | 'high_value'
 
 export type CampaignTarget = {
   plate: string
@@ -369,41 +355,37 @@ export type CampaignTarget = {
 }
 
 export async function getCampaignSegment(businessId: string, segment: CampaignSegment): Promise<CampaignTarget[]> {
-  const rows = await sql`
-    SELECT plate, customer_name, phone, MAX(service_date) AS last_visit, SUM(price) AS total_spent, array_agg(DISTINCT s) AS all_services
-    FROM archived_jobs, unnest(services) AS s
+  const base = sql`
+    SELECT plate, customer_name, phone, MAX(service_date) AS last_visit, SUM(price) AS total_spent
+    FROM archived_jobs
     WHERE business_id = ${businessId} AND phone != ''
     GROUP BY plate, customer_name, phone
   `
+  const rows = await base
 
   const now = Date.now()
-  const withData = rows.map((r: any) => ({
+  const withGap = rows.map((r: any) => ({
     plate: r.plate,
     customerName: r.customer_name,
     phone: r.phone,
     lastVisit: r.last_visit,
     totalSpent: Number(r.total_spent),
-    services: (r.all_services || []) as string[],
     daysSince: (now - new Date(r.last_visit).getTime()) / (1000 * 60 * 60 * 24),
   }))
 
   switch (segment) {
     case 'inactive_30':
-      return withData.filter((c) => c.daysSince >= 30 && c.daysSince < 60)
+      return withGap.filter((c) => c.daysSince >= 30 && c.daysSince < 60)
     case 'inactive_60':
-      return withData.filter((c) => c.daysSince >= 60)
+      return withGap.filter((c) => c.daysSince >= 60)
     case 'high_value':
-      return withData
+      return withGap
         .filter((c) => c.totalSpent > 0)
         .sort((a, b) => b.totalSpent - a.totalSpent)
         .slice(0, 20)
-    case 'ceramic_ppf_only':
-      return withData.filter((c) =>
-        c.services.some((s) => s.toLowerCase().includes('seramik') || s.toLowerCase().includes('film')),
-      )
     case 'all_customers':
     default:
-      return withData
+      return withGap
   }
 }
 
@@ -453,4 +435,61 @@ export async function getMonthlyRevenueTrend(businessId: string) {
     ORDER BY month ASC
   `
   return rows.map((r: any) => ({ month: r.month, revenue: Number(r.revenue) }))
+}
+// ---------- YENİ: Gelişmiş Analitik Fonksiyonlar ----------
+
+export async function getAverageServiceTime(businessId: string): Promise<number> {
+  const rows = await sql`
+    SELECT 
+      AVG(EXTRACT(EPOCH FROM (archived_at - created_at))/3600) as avg_hours
+    FROM jobs
+    WHERE business_id = ${businessId}
+      AND archived_at IS NOT NULL
+  `
+  return Number(rows[0]?.avg_hours || 0)
+}
+
+export async function getCustomerLifetimeValue(businessId: string): Promise<{ plate: string; customerName: string; totalSpent: number; visitCount: number }[]> {
+  const rows = await sql`
+    SELECT 
+      plate,
+      customer_name,
+      SUM(price) as total_spent,
+      COUNT(*) as visit_count
+    FROM archived_jobs
+    WHERE business_id = ${businessId}
+    GROUP BY plate, customer_name
+    ORDER BY total_spent DESC
+    LIMIT 20
+  `
+  return rows.map((r: any) => ({
+    plate: r.plate,
+    customerName: r.customer_name,
+    totalSpent: Number(r.total_spent),
+    visitCount: Number(r.visit_count),
+  }))
+}
+
+export async function addJobPhoto(
+  jobId: string | null,
+  archivedJobId: string | null,
+  photoUrl: string,
+  photoType: 'before' | 'after'
+) {
+  await sql`
+    INSERT INTO job_photos (job_id, archived_job_id, photo_url, photo_type)
+    VALUES (${jobId}, ${archivedJobId}, ${photoUrl}, ${photoType})
+  `
+}
+
+export async function logReminder(
+  businessId: string,
+  plate: string,
+  customerPhone: string,
+  reminderType: string
+) {
+  await sql`
+    INSERT INTO reminder_log (business_id, plate, customer_phone, reminder_type)
+    VALUES (${businessId}, ${plate}, ${customerPhone}, ${reminderType})
+  `
 }

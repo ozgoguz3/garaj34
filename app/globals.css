@@ -1,142 +1,105 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
-
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --font-sans: 'Geist', 'Geist Fallback', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
-
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
-  --color-neon: var(--neon);
-  --color-neon-foreground: var(--neon-foreground);
-  --color-cyan: var(--cyan);
-  --color-cyan-foreground: var(--cyan-foreground);
-  --color-gold: var(--gold);
-  --color-plate: var(--plate);
-  --color-plate-foreground: var(--plate-foreground);
-  --color-plate-stripe: var(--plate-stripe);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+/* Performans optimizasyonları ve Pürüzsüz Scroll */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Garaj34 is dark-mode only: a single token set, zinc-950 base with neon green + cyan accents. */
-:root {
-  color-scheme: dark;
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: rgba(24, 24, 27, 0.6);
-  --card-foreground: #fafafa;
-  --popover: #18181b;
-  --popover-foreground: #fafafa;
-  --primary: #10b981;
-  --primary-foreground: #052e1c;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
-  --accent: #06b6d4;
-  --accent-foreground: #042f37;
-  --destructive: #f87171;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.06);
-  --ring: #10b981;
-  --chart-1: #10b981;
-  --chart-2: #06b6d4;
-  --chart-3: #a1a1aa;
-  --chart-4: #52525b;
-  --chart-5: #27272a;
-  --radius: 0.875rem;
-  --sidebar: #0c0c0f;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #10b981;
-  --sidebar-primary-foreground: #052e1c;
-  --sidebar-accent: #18181b;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #10b981;
-
-  --neon: #10b981;
-  --neon-foreground: #052e1c;
-  --cyan: #06b6d4;
-  --cyan-foreground: #042f37;
-  --gold: #fbbf24;
-  --plate: #ffffff;
-  --plate-foreground: #0a0a0a;
-  --plate-stripe: #003399;
+html {
+  scroll-behavior: smooth;
+}
+/* Performans optimizasyonları */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hardware acceleration */
+.glass,
+.glow-neon,
+button,
+[role="button"] {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Animasyon optimizasyonları */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
   }
-  body {
-    @apply bg-background text-foreground;
+  100% {
+    background-position: 1000px 0;
   }
 }
 
-@utility glass {
-  background: rgba(24, 24, 27, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.skeleton {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 1000px 100%;
 }
 
-@utility glow-neon {
-  box-shadow:
-    0 0 15px rgba(16, 185, 129, 0.55),
-    0 0 40px rgba(16, 185, 129, 0.25);
+/* Hover efektleri */
+button:hover,
+[role="button"]:hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@utility glow-cyan {
-  box-shadow:
-    0 0 15px rgba(6, 182, 212, 0.55),
-    0 0 40px rgba(6, 182, 212, 0.2);
+/* Smooth scroll bar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-@utility text-glow-neon {
-  text-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
 }
 
-@utility bg-grid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 40px 40px;
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--neon) / 0.5);
+}
+
+/* Loading states */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Focus visible */
+*:focus-visible {
+  outline: 2px solid hsl(var(--neon));
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
