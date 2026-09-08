@@ -1,121 +1,81 @@
-'use server'
+'use client'
 
-import { cookies } from 'next/headers'
-import { revalidatePath } from 'next/cache'
-import * as data from '@/lib/data'
-import type { StepIndex, PaymentStatus } from '@/lib/jobs-store'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { Lock, ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { loginAction } from '@/lib/actions'
 
-function authCookieName(slug: string) {
-  return `garaj34_auth_${slug}`
+type AdminLoginProps = {
+  slug: string
+  businessName: string
 }
 
-// ---------- Admin girişi ----------
+export function AdminLogin({ slug, businessName }: AdminLoginProps) {
+  const [pin, setPin] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
-export async function loginAction(slug: string, pin: string) {
-  // data.verifyBusinessPin artık { business, role } dönüyor
-  const authResult = await data.verifyBusinessPin(slug, pin)
-  if (!authResult) {
-    return { ok: false as const, error: 'Hatalı PIN kodu' }
+  function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setErrorMessage(null)
+
+    startTransition(async () => {
+      try {
+        const result = await loginAction(slug, pin)
+        console.log('Login sonucu:', result)
+
+        if (result.ok) {
+          // Sayfayı zorla yenileyerek yeni cookie ile layout'un tetiklenmesini sağla
+          window.location.reload()
+        } else {
+          setErrorMessage(result.error || 'Hatalı PIN kodu')
+          setPin('')
+        }
+      } catch (err: any) {
+        console.error('Giriş hatası:', err)
+        setErrorMessage(err.message || 'Sunucu bağlantı hatası oluştu')
+      }
+    })
   }
-  
-  const jar = await cookies()
-  
-  // Cookie'ye hem işletme ID'sini hem de giriş yapanın rolünü kaydediyoruz
-  const cookieValue = JSON.stringify({ 
-    id: authResult.business.id, 
-    role: authResult.role 
-  })
-  
-  jar.set(authCookieName(slug), cookieValue, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30, // 30 gün
-  })
-  
-  return { ok: true as const, business: authResult.business, role: authResult.role }
-}
 
-export async function logoutAction(slug: string) {
-  const jar = await cookies()
-  jar.delete(authCookieName(slug))
-}
+  return (
+    <div className="bg-grid flex min-h-dvh items-center justify-center p-4">
+      <div className="flex w-full max-w-sm flex-col gap-6 rounded-2xl border border-neon/20 bg-background/60 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="glow-neon flex size-12 items-center justify-center rounded-xl bg-neon text-neon-foreground">
+            <Lock className="size-6" />
+          </div>
+          <h1 className="mt-4 text-xl font-bold tracking-tight">{businessName}</h1>
+          <p className="text-sm text-muted-foreground">Panele erişmek için 4 haneli PIN kodunu girin.</p>
+        </div>
 
-export async function getAuthedBusiness(slug: string) {
-  const jar = await cookies()
-  const cookieString = jar.get(authCookieName(slug))?.value
-  if (!cookieString) return null
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <Input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="••••"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            className={`h-14 text-center text-2xl tracking-[1em] ${errorMessage ? 'border-red-500 bg-red-500/10' : 'bg-input/40'}`}
+            autoFocus
+          />
+          {errorMessage && (
+            <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>
+          )}
 
-  try {
-    const parsed = JSON.parse(cookieString)
-    const business = await data.getBusinessBySlug(slug)
-    
-    if (!business || business.id !== parsed.id) return null
-    
-    // Güvenlik: Sayfalara işletme verisiyle birlikte rolü de (boss/employee) yolluyoruz
-    return { business, role: parsed.role as 'boss' | 'employee' }
-  } catch (e) {
-    // Tarayıcıda eski bozuk çerez kaldıysa sıfırlar ve tekrar giriş ister
-    return null
-  }
-}
-
-// ---------- İş (job) mutasyonları ----------
-
-export async function addJobAction(
-  businessSlug: string,
-  businessId: string,
-  input: {
-    customerName?: string
-    plate: string
-    carModel?: string // YENİ: Araç Modeli
-    phone?: string
-    services: string[]
-    price?: number
-    warrantyMonths?: number
-    damageNote?: string // YENİ: Hasar Notu
-  },
-) {
-  const job = await data.addJob(businessId, input)
-  revalidatePath(`/admin/${businessSlug}`, 'layout')
-  return job
-}
-
-export async function setStepAction(businessSlug: string, businessId: string, jobId: string, step: StepIndex) {
-  await data.setJobStep(businessId, jobId, step)
-  revalidatePath(`/admin/${businessSlug}`, 'layout')
-}
-
-export async function setPaymentStatusAction(
-  businessSlug: string,
-  businessId: string,
-  jobId: string,
-  status: PaymentStatus,
-) {
-  await data.setJobPaymentStatus(businessId, jobId, status)
-  revalidatePath(`/admin/${businessSlug}`, 'layout')
-}
-
-export async function archiveJobAction(businessSlug: string, businessId: string, jobId: string) {
-  await data.archiveJob(businessId, jobId)
-  revalidatePath(`/admin/${businessSlug}`, 'layout')
-}
-
-// ---------- Ayarlar / Marka ----------
-
-export async function updateBrandingAction(
-  businessSlug: string,
-  businessId: string,
-  input: { logoUrl?: string; primaryColor?: string; tagline?: string; googleMapsUrl?: string },
-) {
-  await data.updateBusinessBranding(businessId, input)
-  revalidatePath(`/admin/${businessSlug}`, 'layout')
-  revalidatePath(`/${businessSlug}`, 'layout')
-}
-
-// ---------- Kampanya ----------
-
-export async function getCampaignSegmentAction(businessId: string, segment: data.CampaignSegment) {
-  return data.getCampaignSegment(businessId, segment)
+          <Button
+            type="submit"
+            disabled={isPending || pin.length === 0}
+            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:bg-neon hover:brightness-110"
+          >
+            {isPending ? 'Kontrol ediliyor...' : <>Giriş Yap <ArrowRight className="ml-2 size-5" /></>}
+          </Button>
+        </form>
+      </div>
+    </div>
+  )
 }
