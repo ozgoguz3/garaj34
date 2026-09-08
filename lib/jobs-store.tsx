@@ -17,6 +17,8 @@ export type Job = {
   paymentStatus: PaymentStatus
   warrantyEndDate: string | null
   createdAt: string
+  carModel?: string | null;
+  damageNote?: string | null;
 }
 
 export type ArchivedJob = {

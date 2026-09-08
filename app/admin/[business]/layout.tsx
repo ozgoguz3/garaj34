@@ -23,14 +23,15 @@ export default async function AdminLayout({ children, params }: LayoutProps) {
     )
   }
 
-  const authed = await getAuthedBusiness(slug)
+  // YENİ: Artık auth objesi { role: 'boss' | 'employee' } döndürüyor
+  const authState = await getAuthedBusiness(slug)
 
-  if (!authed) {
+  if (!authState) {
     return <AdminLogin slug={slug} businessName={business.name} />
   }
 
   return (
-    <AdminShell business={business} slug={slug}>
+    <AdminShell business={business} slug={slug} role={authState.role}>
       {children}
     </AdminShell>
   )

@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { Sparkles, Star, ShieldCheck, Wrench } from 'lucide-react'
+import { Sparkles, Star, ShieldCheck, Wrench, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
@@ -13,6 +12,7 @@ type TrackingViewProps = {
   businessName?: string
   primaryColor?: string
   logoUrl?: string | null
+  googleMapsUrl?: string | null
 }
 
 export function TrackingView({
@@ -20,12 +20,14 @@ export function TrackingView({
   businessName = 'Garaj34 Premium Detailing',
   primaryColor,
   logoUrl,
+  googleMapsUrl
 }: TrackingViewProps) {
   const current = STEPS[job.step]
+  const isCompleted = job.step === STEPS.length - 1 // Teslim aşamasında mı?
 
   return (
     <main
-      className="bg-grid relative min-h-dvh overflow-hidden"
+      className="bg-grid relative min-h-dvh overflow-hidden pb-12"
       style={primaryColor ? ({ '--neon': primaryColor } as React.CSSProperties) : undefined}
     >
       <div
@@ -33,11 +35,11 @@ export function TrackingView({
         className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.18),transparent_65%)]"
       />
 
-      <div className="relative mx-auto flex w-full max-w-md flex-col gap-8 px-5 pb-12 pt-8">
+      <div className="relative mx-auto flex w-full max-w-md flex-col gap-8 px-5 pt-8">
         <header className="flex flex-col items-center gap-3 text-center">
           {logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={businessName} className="size-14 rounded-xl object-cover" />
+            <img src={logoUrl} alt={businessName} className="size-16 rounded-2xl object-cover shadow-lg border border-white/10" />
           )}
           <Badge className="glow-neon gap-1.5 border-neon/40 bg-neon/15 px-3 py-1 text-neon">
             <Sparkles className="size-3.5" />
@@ -47,17 +49,20 @@ export function TrackingView({
             {businessName}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Merhaba {job.customerName.split(' ')[0]}, aracınız güvenli ellerde.
+            Sayın {job.customerName.split(' ')[0]}, aracınız güvenli ellerde.
           </p>
         </header>
 
-        <section className="flex flex-col items-center gap-4" aria-labelledby="plate-heading">
-          <h2 id="plate-heading" className="sr-only">
-            Araç Plakası
-          </h2>
+        <section className="flex flex-col items-center gap-4">
           <LicensePlate plate={job.plate} size="lg" className="shadow-2xl" />
           
-          {/* Seçilen Hizmetler Rozeti */}
+          {/* YENİ: Araç Modeli Gösterimi */}
+          {job.carModel && (
+            <div className="font-semibold text-lg text-white/90">
+              {job.carModel}
+            </div>
+          )}
+          
           {job.services && job.services.length > 0 && (
             <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
               {job.services.map((s, i) => (
@@ -72,60 +77,66 @@ export function TrackingView({
             </div>
           )}
 
-          <div className="flex items-center gap-2 pt-1 text-sm">
-            <span className="text-muted-foreground">Güncel durum:</span>
-            <span className="text-glow-neon font-semibold text-neon">{current.title}</span>
-          </div>
+          {/* YENİ: Yasal Hasar/Tespit Notu (Müşteri Baştan Görsün Diye) */}
+          {job.damageNote && (
+            <div className="mt-2 flex w-full items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-left text-sm text-amber-200">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
+              <div>
+                <span className="font-semibold text-amber-500">Teslim Alma Notu: </span>
+                {job.damageNote}
+              </div>
+            </div>
+          )}
         </section>
 
-        <section className="glass rounded-2xl p-6" aria-labelledby="progress-heading">
+        <section className="glass rounded-2xl p-6">
           <div className="mb-6 flex items-center justify-between">
-            <h2 id="progress-heading" className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
               İşlem Adımları
             </h2>
-            <span className="font-mono text-xs text-cyan">
+            <span className="font-mono text-xs text-neon">
               {job.step + 1}/{STEPS.length}
             </span>
           </div>
           <StatusTracker step={job.step} />
         </section>
 
-        <section className="flex flex-col items-center gap-5 pt-2 text-center" aria-labelledby="review-heading">
-          <div className="flex gap-1.5" aria-label="5 yıldız">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className="size-7 fill-gold text-gold drop-shadow-[0_0_10px_rgba(251,191,36,0.6)]"
-              />
-            ))}
-          </div>
-          <div className="flex flex-col gap-1">
-            <h2 id="review-heading" className="text-lg font-semibold">
-              Deneyiminizden memnun kaldınız mı?
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Bir dakikanızı ayırarak bizi destekleyin.
-            </p>
-          </div>
-          <Button
-            size="lg"
-            className="glow-neon h-14 w-full rounded-xl bg-neon text-base font-bold text-neon-foreground transition-transform hover:scale-[1.02] hover:bg-neon active:scale-[0.99]"
-            render={
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(businessName)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              />
-            }
-          >
-            Bizi Google&apos;da Değerlendirin
-          </Button>
-        </section>
+        {/* YENİ: Google Yorum Butonu Sadece İş Bittiğinde Şov Yapar */}
+        {isCompleted && googleMapsUrl && (
+          <section className="flex flex-col items-center gap-5 pt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex gap-1.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className="size-7 fill-gold text-gold drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                />
+              ))}
+            </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold">
+                Aracınız Teslimata Hazır!
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Hizmetimizden memnun kaldıysanız bize 5 yıldız vererek destek olabilirsiniz.
+              </p>
+            </div>
+            <Button
+              size="lg"
+              className="glow-neon h-14 w-full rounded-xl bg-neon text-base font-bold text-neon-foreground transition-all hover:scale-105"
+              asChild
+            >
+              <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                Bizi Google'da Değerlendirin
+              </a>
+            </Button>
+          </section>
+        )}
 
-        <footer className="flex flex-col items-center gap-2 pt-4 text-xs text-muted-foreground">
+        <footer className="flex flex-col items-center gap-2 pt-6 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="size-3.5 text-neon" />
-            {businessName}
+            {businessName} - Premium Takip Sistemi
           </span>
         </footer>
       </div>
