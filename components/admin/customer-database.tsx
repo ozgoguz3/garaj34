@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageCircle, Users, Calendar, History, X, Car, TrendingDown } from 'lucide-react'
+import { MessageCircle, Users, Calendar, X, Car, TrendingDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
@@ -177,11 +177,6 @@ export function CustomerDatabase({ archive, insights, businessSlug, className }:
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {c.price > 0 && (
-                      <span className="hidden font-mono text-sm font-semibold text-muted-foreground sm:inline">
-                        {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(c.price)}
-                      </span>
-                    )}
                     <Button
                       variant="outline"
                       size="sm"

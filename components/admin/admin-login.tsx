@@ -28,8 +28,8 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
         console.log('Login sonucu:', result)
 
         if (result.ok) {
-          // Sayfayı zorla yenileyerek yeni cookie ile layout'un tetiklenmesini sağla
-          window.location.reload()
+          // reload yerine adresi zorla panele yönlendiriyoruz ki cache'de kalmasın
+          window.location.href = `/admin/${slug}`
         } else {
           setErrorMessage(result.error || 'Hatalı PIN kodu')
           setPin('')

@@ -1,10 +1,6 @@
-// Bu dosya artık veri tutmuyor (Context/Provider kaldırıldı) — sadece
-// birden fazla yerde kullanılan saf yardımcı fonksiyonları ve tipleri
-// barındırıyor. Gerçek veri artık lib/data.ts üzerinden veritabanından geliyor.
-
 export type StepIndex = 0 | 1 | 2
-export type PaymentStatus = 'unpaid' | 'partial' | 'paid'
 
+// Finans/Para tipleri tamamen kaldırıldı!
 export type Job = {
   id: string
   businessId: string
@@ -13,12 +9,11 @@ export type Job = {
   phone: string
   services: string[]
   step: StepIndex
-  price: number
-  paymentStatus: PaymentStatus
   warrantyEndDate: string | null
   createdAt: string
-  carModel?: string | null;
-  damageNote?: string | null;
+  carModel?: string | null
+  damageNote?: string | null
+  customerNotes?: string | null
 }
 
 export type ArchivedJob = {
@@ -28,21 +23,14 @@ export type ArchivedJob = {
   plate: string
   phone: string
   services: string[]
-  price: number
-  paymentStatus: PaymentStatus
   warrantyEndDate: string | null
   serviceDate: string
+  carModel?: string | null
+  damageNote?: string | null
+  customerNotes?: string | null
 }
 
-// Garanti süresi sorulan hizmetler (kaplama/koruma türü işler).
-// Bunlardan biri seçildiğinde admin formunda garanti süresi alanı çıkar.
-export const WARRANTY_ELIGIBLE_SERVICES = ['Seramik Kaplama', 'Kaput Filmi'] as const
-
-export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  unpaid: 'Ödenmedi',
-  partial: 'Kısmi Ödendi',
-  paid: 'Ödendi',
-}
+export const WARRANTY_ELIGIBLE_SERVICES = ['Seramik Kaplama', 'Kaput Filmi', 'Cam Filmi'] as const
 
 export const STEPS = [
   {
@@ -77,9 +65,10 @@ export function plateToSlug(plate: string) {
 }
 
 export function buildWhatsAppLink(phone: string, plate: string, businessSlug: string, origin: string) {
+  if (!phone) return ''
   const digits = phone.replace(/\D/g, '')
-  const intl = digits.startsWith('0') ? `90${digits.slice(1)}` : digits
+  const intl = digits.startsWith('0') ? `90${digits.slice(1)}` : digits.startsWith('90') ? digits : `90${digits}`
   const url = `${origin}/${businessSlug}/${plateToSlug(plate)}`
-  const text = `Merhaba! Aracınız işleme alındı. Canlı takip: ${url}`
-  return phone ? `https://wa.me/${intl}?text=${encodeURIComponent(text)}` : ''
+  const text = `Merhaba! Aracınız işleme alındı. Canlı takip linkiniz: ${url}`
+  return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`
 }

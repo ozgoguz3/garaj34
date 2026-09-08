@@ -3,45 +3,28 @@
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import * as data from '@/lib/data'
-import type { StepIndex, PaymentStatus } from '@/lib/jobs-store'
+import type { StepIndex } from '@/lib/jobs-store'
 
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 gün
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
 function authCookieName(slug: string) {
   return `garaj34_auth_${slug}`
 }
 
-// ---------- GÜÇLÜ LOGIN SİSTEMİ ----------
 export async function loginAction(slug: string, pin: string) {
   try {
     const business = await data.verifyBusinessPin(slug, pin)
-    
-    if (!business) {
-      return { ok: false as const, error: 'Hatalı PIN kodu. Lütfen tekrar deneyin.' }
-    }
+    if (!business) return { ok: false as const, error: 'Hatalı PIN kodu.' }
 
     const jar = await cookies()
-    jar.set(authCookieName(slug), business.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: COOKIE_MAX_AGE,
+    jar.set(authCookieName(slug), String(business.id), {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: COOKIE_MAX_AGE,
     })
 
     revalidatePath(`/admin/${slug}`, 'layout')
-    
-    return { 
-      ok: true as const, 
-      business: business,
-      role: 'boss' as const 
-    }
-  } catch (error: any) {
-    console.error('Login error:', error)
-    return { 
-      ok: false as const, 
-      error: 'Sunucu hatası. Lütfen tekrar deneyin.' 
-    }
+    return { ok: true as const, business, role: 'boss' as const }
+  } catch (error) {
+    return { ok: false as const, error: 'Sunucu hatası oluştu.' }
   }
 }
 
@@ -58,7 +41,7 @@ export async function getAuthedBusiness(slug: string) {
     if (!cookieBusinessId) return null
 
     const business = await data.getBusinessBySlug(slug)
-    if (!business || business.id !== cookieBusinessId) return null
+    if (!business || String(business.id) !== String(cookieBusinessId)) return null
     
     return { business, role: 'boss' as const }
   } catch {
@@ -66,71 +49,45 @@ export async function getAuthedBusiness(slug: string) {
   }
 }
 
-// ---------- İŞ YÖNETİMİ (OPTİMİSTİK UPDATE) ----------
-export async function addJobAction(
-  businessSlug: string,
-  businessId: string,
-  input: Parameters<typeof data.addJob>[1],
-) {
+async function requireAuth(slug: string, businessId: string) {
+  const auth = await getAuthedBusiness(slug)
+  if (!auth || String(auth.business.id) !== String(businessId)) {
+    throw new Error('Yetkisiz islem. Lutfen tekrar giris yapin.')
+  }
+}
+
+export async function addJobAction(businessSlug: string, businessId: string, input: Parameters<typeof data.addJob>[1]) {
+  await requireAuth(businessSlug, businessId)
   const job = await data.addJob(businessId, input)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
   return job
 }
 
-export async function setStepAction(
-  businessSlug: string, 
-  businessId: string, 
-  jobId: string, 
-  step: StepIndex
-) {
+export async function setStepAction(businessSlug: string, businessId: string, jobId: string, step: StepIndex) {
+  await requireAuth(businessSlug, businessId)
   await data.setJobStep(businessId, jobId, step)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
 }
 
-export async function setPaymentStatusAction(
-  businessSlug: string,
-  businessId: string,
-  jobId: string,
-  status: PaymentStatus,
-) {
-  await data.setJobPaymentStatus(businessId, jobId, status)
-  revalidatePath(`/admin/${businessSlug}`, 'layout')
-}
-
-export async function archiveJobAction(
-  businessSlug: string, 
-  businessId: string, 
-  jobId: string
-) {
+export async function archiveJobAction(businessSlug: string, businessId: string, jobId: string) {
+  await requireAuth(businessSlug, businessId)
   await data.archiveJob(businessId, jobId)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
 }
 
-// ---------- AYARLAR & KAMPANYA & FOTO ----------
-export async function updateBrandingAction(
-  businessSlug: string,
-  businessId: string,
-  input: Parameters<typeof data.updateBusinessBranding>[1],
-) {
+export async function updateBrandingAction(businessSlug: string, businessId: string, input: Parameters<typeof data.updateBusinessBranding>[1]) {
+  await requireAuth(businessSlug, businessId)
   await data.updateBusinessBranding(businessId, input)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
   revalidatePath(`/${businessSlug}`, 'layout')
 }
 
-export async function getCampaignSegmentAction(
-  businessId: string, 
-  segment: any
-) {
-  return data.getCampaignSegment(businessId, segment)
+export async function uploadJobPhotoAction(businessSlug: string, businessId: string, jobId: string, photoUrl: string, photoType: 'before' | 'after') {
+  await requireAuth(businessSlug, businessId)
+  await data.addJobPhoto(jobId, photoUrl, photoType)
+  revalidatePath(`/admin/${businessSlug}/aktif`, 'page')
 }
 
-export async function uploadJobPhotoAction(
-  businessSlug: string,
-  businessId: string,
-  jobId: string,
-  photoUrl: string,
-  photoType: 'before' | 'after'
-) {
-  await data.addJobPhoto(jobId, null, photoUrl, photoType)
-  revalidatePath(`/admin/${businessSlug}/aktif`, 'page')
+export async function getCampaignSegmentAction(businessId: string, segment: any) {
+  return data.getCampaignSegment(businessId, segment)
 }

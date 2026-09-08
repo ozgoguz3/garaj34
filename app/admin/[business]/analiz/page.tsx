@@ -1,43 +1,40 @@
-import { BarChart3, Users2, Calendar, TrendingUp, DollarSign, Target, Award, Clock } from 'lucide-react'
+import { Users2, TrendingUp, Target, Award, Car, CalendarDays } from 'lucide-react'
 import {
   getBusinessBySlug,
   getServicePopularity,
   getBusiestWeekday,
   getNewVsReturningRatio,
-  getMonthlyRevenueTrend,
-  getAverageServiceTime,
-  getCustomerLifetimeValue,
+  getMonthlyVisitTrend,
 } from '@/lib/data'
 import { SectionCard } from '@/components/admin/section-card'
 import { Badge } from '@/components/ui/badge'
 
 const WEEKDAYS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
-const currency = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 })
 const monthFormatter = new Intl.DateTimeFormat('tr-TR', { month: 'short', year: '2-digit' })
+
+// TS'in kafasının karışmaması için tipleri açıkça tanımlıyoruz
+type ServicePop = { service: string; count: number }
+type WeekdayPop = { weekday: number; count: number }
+type TrendPop = { month: string; visits: number }
 
 export default async function AnalizPage({ params }: { params: Promise<{ business: string }> }) {
   const { business: slug } = await params
   const business = await getBusinessBySlug(slug)
   if (!business) return null
 
+  // Promise.all içinde dönen verilerin tipini TS'e zorla söylüyoruz
   const [services, weekdays, ratio, trend] = await Promise.all([
-    getServicePopularity(business.id),
-    getBusiestWeekday(business.id),
+    getServicePopularity(business.id) as Promise<ServicePop[]>,
+    getBusiestWeekday(business.id) as Promise<WeekdayPop[]>,
     getNewVsReturningRatio(business.id),
-    getMonthlyRevenueTrend(business.id),
+    getMonthlyVisitTrend(business.id) as Promise<TrendPop[]>,
   ])
 
   const maxServiceCount = Math.max(...services.map((s) => s.count), 1)
   const maxWeekdayCount = Math.max(...weekdays.map((w) => w.count), 1)
-  const maxRevenue = Math.max(...trend.map((t) => t.revenue), 1)
+  const maxVisits = Math.max(...trend.map((t) => t.visits), 1)
   const returningPct = ratio.total > 0 ? Math.round((ratio.returning / ratio.total) * 100) : 0
   
-  // Ortalama işlem süresi hesabı (son 30 işlem)
-  const avgDays = trend.length > 0 
-    ? Math.round(trend.reduce((acc, t) => acc + t.revenue, 0) / trend.length / 1000)
-    : 0
-
-  // En karlı hizmet
   const topService = services.length > 0 ? services[0] : null
 
   return (
@@ -52,8 +49,8 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
           color="cyan"
         />
         <MetricCard
-          icon={TrendingUp}
-          label="Toplam Müşteri"
+          icon={Car}
+          label="Toplam Araç"
           value={String(ratio.total)}
           subtext={`${ratio.new} yeni müşteri`}
           color="neon"
@@ -66,10 +63,10 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
           color="amber"
         />
         <MetricCard
-          icon={Clock}
-          label="Ort. Müşteri Aralığı"
-          value={avgDays > 0 ? `${avgDays} gün` : 'Veri yok'}
-          subtext="Ziyaretler arası"
+          icon={TrendingUp}
+          label="Aylık Ziyaret"
+          value={trend.length > 0 ? String(trend[trend.length - 1]?.visits || 0) : '0'}
+          subtext="Bu ayki araç sayısı"
           color="cyan"
         />
       </div>
@@ -78,11 +75,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
       <SectionCard 
         title="En Çok Tercih Edilen Hizmetler" 
         description="Arşivdeki tüm işlemlere göre."
-        action={
-          <Badge variant="outline" className="font-mono">
-            {services.length} hizmet
-          </Badge>
-        }
+        action={<Badge variant="outline" className="font-mono">{services.length} hizmet</Badge>}
       >
         {services.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Henüz yeterli veri yok.</p>
@@ -129,14 +122,14 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
         )}
       </SectionCard>
 
-      {/* Aylık Ciro Trendi */}
+      {/* Aylık Ziyaret Trendi */}
       <SectionCard 
-        title="Aylık Ciro Trendi" 
-        description="Son 6 ay."
+        title="Aylık Ziyaret Trendi" 
+        description="Son 6 ayda gelen araç sayısı."
         action={
           trend.length > 0 && (
             <Badge variant="outline" className="font-mono text-neon">
-              {currency.format(trend.reduce((acc, t) => acc + t.revenue, 0))}
+              {trend.reduce((acc, t) => acc + t.visits, 0)} Toplam Araç
             </Badge>
           )
         }
@@ -146,17 +139,17 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
         ) : (
           <div className="flex items-end justify-between gap-2 h-40">
             {trend.map((t) => {
-              const heightPct = Math.max((t.revenue / maxRevenue) * 100, 5)
+              const heightPct = Math.max((t.visits / maxVisits) * 100, 5)
               return (
                 <div key={t.month} className="group flex flex-1 flex-col items-center gap-2">
                   <div className="relative w-full">
                     <div
                       className="w-full rounded-t-lg bg-gradient-to-t from-neon to-cyan transition-all duration-500 hover:brightness-110 cursor-pointer"
                       style={{ height: `${heightPct}%`, minHeight: '32px' }}
-                      title={`${currency.format(t.revenue)} - ${monthFormatter.format(new Date(t.month))}`}
+                      title={`${t.visits} Araç - ${monthFormatter.format(new Date(t.month))}`}
                     >
                       <span className="absolute inset-x-0 -top-6 text-center text-xs font-semibold opacity-0 transition-opacity group-hover:opacity-100">
-                        {currency.format(t.revenue)}
+                        {t.visits}
                       </span>
                     </div>
                   </div>
@@ -171,34 +164,31 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
       </SectionCard>
 
       {/* Stratejik Öneriler */}
-      <SectionCard
-        title="Stratejik Öneriler"
-        description="Verilerinize göre aksiyon önerileri."
-      >
+      <SectionCard title="Stratejik Öneriler" description="Verilerinize göre CRM aksiyon önerileri.">
         <div className="flex flex-col gap-3">
           {returningPct < 40 && (
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
               <div className="flex items-start gap-3">
                 <Target className="size-5 shrink-0 text-amber-400 mt-0.5" />
                 <div className="flex flex-col gap-1">
-                  <p className="font-semibold text-amber-400">Müşteri Sadakati Düşük</p>
+                  <p className="font-semibold text-amber-400">Müşteri Sadakati Geliştirilebilir</p>
                   <p className="text-sm text-muted-foreground">
-                    Müşterilerinizin %{100 - returningPct}'si tek seferde geliyor. 
-                    Sadakat programı veya hatırlatma kampanyası düşünebilirsiniz.
+                    Müşterilerinizin %{100 - returningPct}'si tek seferde kalıyor. 
+                    "Kampanya" menüsünden 60+ gün gelmeyenlere bir hatırlatma mesajı atabilirsiniz.
                   </p>
                 </div>
               </div>
             </div>
           )}
           
-          {trend.length >= 2 && trend[trend.length - 1].revenue < trend[trend.length - 2].revenue && (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+          {trend.length >= 2 && trend[trend.length - 1].visits < trend[trend.length - 2].visits && (
+            <div className="rounded-lg border border-cyan/20 bg-cyan/5 p-4">
               <div className="flex items-start gap-3">
-                <TrendingUp className="size-5 shrink-0 text-red-400 mt-0.5" />
+                <CalendarDays className="size-5 shrink-0 text-cyan mt-0.5" />
                 <div className="flex flex-col gap-1">
-                  <p className="font-semibold text-red-400">Ciro Düşüş Eğiliminde</p>
+                  <p className="font-semibold text-cyan">Araç Girişleri Azalıyor</p>
                   <p className="text-sm text-muted-foreground">
-                    Son ay bir önceki aya göre daha düşük ciro. Kampanya/promosyon zamanı olabilir.
+                    Bu ay bir önceki aya göre daha az araç kabul edilmiş. Eski müşterilerinize bakım hatırlatması yapmak için tam zamanı.
                   </p>
                 </div>
               </div>
@@ -206,14 +196,14 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
           )}
 
           {services.length > 0 && services[0].count > services.slice(1).reduce((acc, s) => acc + s.count, 0) && (
-            <div className="rounded-lg border border-cyan/20 bg-cyan/5 p-4">
+            <div className="rounded-lg border border-neon/20 bg-neon/5 p-4">
               <div className="flex items-start gap-3">
-                <Award className="size-5 shrink-0 text-cyan mt-0.5" />
+                <Award className="size-5 shrink-0 text-neon mt-0.5" />
                 <div className="flex flex-col gap-1">
-                  <p className="font-semibold text-cyan">Bir Hizmet Çok Popüler</p>
+                  <p className="font-semibold text-neon">Bir Hizmet Çok Popüler</p>
                   <p className="text-sm text-muted-foreground">
                     "{services[0].service}" hizmetiniz çok tercih ediliyor. 
-                    Bu hizmette paket fiyat veya cross-sell stratejisi düşünebilirsiniz.
+                    Müşteriler bu hizmete geldiklerinde yanına ufak bir "cam filmi" paketini "WhatsApp Kampanya" üzerinden önerebilirsiniz (Cross-sell).
                   </p>
                 </div>
               </div>
@@ -225,19 +215,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
   )
 }
 
-function MetricCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  subtext,
-  color = 'neon'
-}: { 
-  icon: React.ElementType
-  label: string
-  value: string
-  subtext?: string
-  color?: 'neon' | 'cyan' | 'amber'
-}) {
+function MetricCard({ icon: Icon, label, value, subtext, color = 'neon' }: { icon: React.ElementType, label: string, value: string, subtext?: string, color?: 'neon' | 'cyan' | 'amber' }) {
   const colorClasses = {
     neon: 'text-neon bg-neon/10 border-neon/20',
     cyan: 'text-cyan bg-cyan/10 border-cyan/20',
