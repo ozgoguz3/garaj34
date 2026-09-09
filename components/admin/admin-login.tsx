@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Lock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { loginAction } from '@/lib/actions'
 
 type AdminLoginProps = {
@@ -14,10 +13,10 @@ type AdminLoginProps = {
 }
 
 export function AdminLogin({ slug, businessName }: AdminLoginProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [pin, setPin] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -25,14 +24,15 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
 
     startTransition(async () => {
       try {
-        const result = await loginAction(slug, email, password)
+        const result = await loginAction(slug, pin)
         if (result.ok) {
           window.location.href = `/admin/${slug}`
         } else {
-          setErrorMessage(result.error || 'Geçersiz giriş bilgileri')
+          setErrorMessage(result.error || 'Hatalı PIN kodu')
+          setPin('')
         }
-      } catch (err) {
-        setErrorMessage('Sunucu bağlantı hatası oluştu')
+      } catch (err: any) {
+        setErrorMessage(err.message || 'Sunucu bağlantı hatası oluştu')
       }
     })
   }
@@ -45,36 +45,29 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
             <Lock className="size-6" />
           </div>
           <h1 className="mt-4 text-xl font-bold tracking-tight">{businessName}</h1>
-          <p className="text-sm text-muted-foreground">Panele erişmek için hesap bilgilerinizi girin.</p>
+          <p className="text-sm text-muted-foreground">Panele erişmek için 4 haneli PIN kodunu girin.</p>
         </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4 text-left">
-          <div className="flex flex-col gap-2">
-            <Label>E-posta Adresi</Label>
-            <Input 
-              type="email" 
-              placeholder="admin@garaj34.com" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              required 
-              className="h-12 bg-input/40" 
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>Şifre</Label>
-            <Input 
-              type="password" 
-              placeholder="••••••••" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-              required 
-              className="h-12 bg-input/40" 
-            />
-          </div>
-          
-          {errorMessage && <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>}
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <Input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="••••"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            className={`h-14 text-center text-2xl tracking-[1em] ${errorMessage ? 'border-red-500 bg-red-500/10' : 'bg-input/40'}`}
+            autoFocus
+          />
+          {errorMessage && (
+            <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>
+          )}
 
-          <Button type="submit" disabled={isPending} className="glow-neon h-12 w-full mt-2 bg-neon text-base font-bold text-neon-foreground hover:brightness-110">
+          <Button
+            type="submit"
+            disabled={isPending || pin.length === 0}
+            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:brightness-110"
+          >
             {isPending ? 'Kontrol ediliyor...' : <>Giriş Yap <ArrowRight className="ml-2 size-5" /></>}
           </Button>
         </form>

@@ -1,4 +1,5 @@
 import 'server-only'
+import bcrypt from 'bcryptjs'
 import { sql } from '@/lib/db'
 import { normalizePlate } from '@/lib/jobs-store'
 
@@ -394,4 +395,153 @@ export async function getMonthlyVisitTrend(orgId: string) {
     ORDER BY month ASC
   `
   return rows.map((r: any) => ({ month: String(r.month), visits: Number(r.visits) }))
+}
+
+// --- EKSİK ESKİ OPERASYONEL FONKSİYONLAR (Actions uyumluluğu için) ---
+
+export async function verifyBusinessPin(slug: string, pin: string): Promise<Business | null> {
+  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
+  if (!rows.length) return null
+  const ok = await bcrypt.compare(pin, rows[0].pin_hash)
+  return ok ? mapBusinessRow(rows[0]) : null
+}
+
+export async function getBusinessBySlug(slug: string): Promise<Business | null> {
+  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
+  return rows.length ? mapBusinessRow(rows[0]) : null
+}
+
+export type Business = {
+  id: string
+  slug: string
+  name: string
+  logoUrl: string | null
+  primaryColor: string
+  tagline: string
+  googleMapsUrl: string | null
+}
+
+function mapBusinessRow(r: any): Business {
+  return {
+    id: String(r.id),
+    slug: String(r.slug),
+    name: String(r.name),
+    logoUrl: r.logo_url || null,
+    primaryColor: String(r.primary_color || '#10b981'),
+    tagline: String(r.tagline || ''),
+    googleMapsUrl: r.google_maps_url || null,
+  }
+}
+
+export async function addJob(
+  businessId: string,
+  input: {
+    customerName?: string
+    plate: string
+    carModel?: string
+    phone?: string
+    services: string[]
+    warrantyMonths?: number
+    damageNote?: string
+    customerNotes?: string
+  },
+) {
+  let warrantyEndDate = null
+  if (input.warrantyMonths) {
+    const d = new Date()
+    d.setMonth(d.getMonth() + input.warrantyMonths)
+    warrantyEndDate = d.toISOString()
+  }
+
+  const customerName = input.customerName?.trim() || 'İsimsiz Müşteri'
+  const plate = normalizePlate(input.plate)
+  const carModel = input.carModel?.trim() || null
+  const phone = input.phone?.trim() || ''
+  const damageNote = input.damageNote?.trim() || null
+  const customerNotes = input.customerNotes?.trim() || null
+
+  const rows = await sql`
+    INSERT INTO jobs (
+      business_id, customer_name, plate, car_model, phone, services, step, 
+      warranty_end_date, damage_note, customer_notes, price, payment_status
+    )
+    VALUES (
+      ${businessId}, ${customerName}, ${plate}, ${carModel}, ${phone}, 
+      ${input.services}, 0, ${warrantyEndDate}, ${damageNote}, ${customerNotes}, 0, 'paid'
+    )
+    RETURNING *
+  `
+  return rows[0]
+}
+
+export async function setJobStep(businessId: string, jobId: string, step: any) {
+  await sql`UPDATE jobs SET step = ${step} WHERE id = ${jobId} AND business_id = ${businessId}`
+}
+
+export async function archiveJob(businessId: string, jobId: string) {
+  await sql`
+    WITH moved_job AS (
+      DELETE FROM jobs WHERE id = ${jobId} AND business_id = ${businessId} RETURNING *
+    )
+    INSERT INTO archived_jobs (
+      business_id, customer_name, plate, phone, services, warranty_end_date, 
+      service_date, car_model, damage_note, customer_notes, price, payment_status
+    )
+    SELECT 
+      business_id, customer_name, plate, phone, services, warranty_end_date, 
+      now(), car_model, damage_note, customer_notes, 0, 'paid'
+    FROM moved_job;
+  `
+}
+
+export async function updateBusinessBranding(
+  businessId: string,
+  input: { logoUrl?: string; primaryColor?: string; tagline?: string; googleMapsUrl?: string },
+) {
+  await sql`
+    UPDATE businesses SET
+      logo_url = COALESCE(${input.logoUrl ?? null}, logo_url),
+      primary_color = COALESCE(${input.primaryColor ?? null}, primary_color),
+      tagline = COALESCE(${input.tagline ?? null}, tagline),
+      google_maps_url = COALESCE(${input.googleMapsUrl ?? null}, google_maps_url)
+    WHERE id = ${businessId}
+  `
+}
+
+export async function addJobPhoto(jobId: string, photoUrl: string, photoType: 'before' | 'after') {
+  await sql`INSERT INTO job_photos (job_id, photo_url, photo_type) VALUES (${jobId}, ${photoUrl}, ${photoType})`
+}
+
+export type Business = {
+  id: string
+  slug: string
+  name: string
+  logoUrl: string | null
+  primaryColor: string
+  tagline: string
+  googleMapsUrl: string | null
+}
+
+function mapBusinessRow(r: any): Business {
+  return {
+    id: String(r.id),
+    slug: String(r.slug),
+    name: String(r.name),
+    logoUrl: r.logo_url || null,
+    primaryColor: String(r.primary_color || '#10b981'),
+    tagline: String(r.tagline || ''),
+    googleMapsUrl: r.google_maps_url || null,
+  }
+}
+
+export async function getBusinessBySlug(slug: string): Promise<Business | null> {
+  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
+  return rows.length ? mapBusinessRow(rows[0]) : null
+}
+
+export async function verifyBusinessPin(slug: string, pin: string): Promise<Business | null> {
+  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
+  if (!rows.length) return null
+  const ok = await bcrypt.compare(pin, rows[0].pin_hash)
+  return ok ? mapBusinessRow(rows[0]) : null
 }
