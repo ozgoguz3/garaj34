@@ -1,11 +1,11 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { LayoutDashboard, CarFront, Users, Megaphone, Settings, LogOut, Sparkles, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { logoutAction } from '@/lib/actions'
-import type { Business } from '@/lib/data'
+import type { Organization } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -17,49 +17,39 @@ const NAV_ITEMS = [
 ]
 
 type AdminShellProps = {
-  business: Business
+  organization: Organization
   slug: string
   role?: 'boss' | 'employee'
   children: React.ReactNode
 }
 
-export function AdminShell({ business, slug, role = 'boss', children }: AdminShellProps) {
+export function AdminShell({ organization, slug, role = 'boss', children }: AdminShellProps) {
   const pathname = usePathname()
-  const router = useRouter()
   const base = `/admin/${slug}`
+  const primaryColor = organization.metadata?.primaryColor || '#10b981'
+  const tagline = organization.metadata?.tagline || ''
 
   function handleLogout() {
-    logoutAction(slug).then(() => {
-      window.location.reload()
-    })
+    logoutAction(slug).then(() => window.location.reload())
   }
 
   const allowedNavItems = NAV_ITEMS.filter((item) => item.roles.includes(role))
 
   return (
-    <div className="bg-grid flex min-h-dvh flex-col" style={{ '--neon': business.primaryColor } as React.CSSProperties}>
+    <div className="bg-grid flex min-h-dvh flex-col" style={{ '--neon': primaryColor } as React.CSSProperties}>
       <header className="glass sticky top-0 z-20 border-x-0 border-t-0">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-3">
-            {business.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={business.logoUrl} alt={business.name} className="size-9 rounded-lg object-cover" />
+            {organization.logoUrl ? (
+              <img src={organization.logoUrl} alt={organization.name} className="size-9 rounded-lg object-cover" />
             ) : (
-              <div className="glow-neon flex size-9 items-center justify-center rounded-lg bg-neon text-neon-foreground">
-                <Sparkles className="size-4.5" />
-              </div>
+              <div className="glow-neon flex size-9 items-center justify-center rounded-lg bg-neon text-neon-foreground"><Sparkles className="size-4.5" /></div>
             )}
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold leading-tight sm:text-base">{business.name}</h1>
-                {role === 'employee' && (
-                  <span className="flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-500">
-                    <ShieldAlert className="size-3" />
-                    Personel
-                  </span>
-                )}
+                <h1 className="text-sm font-bold leading-tight sm:text-base">{organization.name}</h1>
               </div>
-              <p className="hidden text-[11px] text-muted-foreground sm:block">{business.tagline}</p>
+              {tagline && <p className="hidden text-[11px] text-muted-foreground sm:block">{tagline}</p>}
             </div>
           </div>
 
@@ -68,17 +58,8 @@ export function AdminShell({ business, slug, role = 'boss', children }: AdminShe
               const href = `${base}${item.href}`
               const isActive = item.href === '' ? pathname === base : pathname.startsWith(href)
               return (
-                <Link
-                  key={item.href}
-                  href={href}
-                  prefetch={true}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                    isActive ? 'bg-neon/15 text-neon' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                  )}
-                >
-                  <item.icon className="size-4" />
-                  {item.label}
+                <Link key={item.href} href={href} className={cn('flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', isActive ? 'bg-neon/15 text-neon' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
+                  <item.icon className="size-4" />{item.label}
                 </Link>
               )
             })}
@@ -90,31 +71,7 @@ export function AdminShell({ business, slug, role = 'boss', children }: AdminShe
           </Button>
         </div>
       </header>
-
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-6 sm:pb-8">{children}</main>
-
-      <nav className="glass fixed inset-x-0 bottom-0 z-20 border-x-0 border-b-0 md:hidden">
-        <div className={cn('mx-auto grid max-w-6xl', role === 'employee' ? 'grid-cols-2' : 'grid-cols-5')}>
-          {allowedNavItems.map((item) => {
-            const href = `${base}${item.href}`
-            const isActive = item.href === '' ? pathname === base : pathname.startsWith(href)
-            return (
-              <Link
-                key={item.href}
-                href={href}
-                prefetch={true}
-                className={cn(
-                  'flex flex-col items-center gap-1 py-3 text-[10px] font-medium transition-colors',
-                  isActive ? 'text-neon' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                <item.icon className={cn('size-5', isActive && 'glow-neon-text')} />
-                {item.label}
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
     </div>
   )
 }

@@ -1,38 +1,15 @@
-export type StepIndex = 0 | 1 | 2
-
-// Finans/Para tipleri tamamen kaldırıldı!
-export type Job = {
-  id: string
-  businessId: string
-  customerName: string
-  plate: string
-  phone: string
-  services: string[]
-  step: StepIndex
-  warrantyEndDate: string | null
-  createdAt: string
-  carModel?: string | null
-  damageNote?: string | null
-  customerNotes?: string | null
-}
-
-export type ArchivedJob = {
-  id: string
-  businessId: string
-  customerName: string
-  plate: string
-  phone: string
-  services: string[]
-  warrantyEndDate: string | null
-  serviceDate: string
-  carModel?: string | null
-  damageNote?: string | null
-  customerNotes?: string | null
-}
+import type { VisitStatus } from '@/lib/data'
 
 export const WARRANTY_ELIGIBLE_SERVICES = ['Seramik Kaplama', 'Kaput Filmi', 'Cam Filmi'] as const
 
-export const STEPS = [
+export type StepConfig = {
+  key: VisitStatus
+  adminLabel: string
+  title: string
+  description: string
+}
+
+export const STEPS: StepConfig[] = [
   {
     key: 'queued',
     adminLabel: 'Sırada',
@@ -51,7 +28,16 @@ export const STEPS = [
     title: 'Teslime Hazır!',
     description: 'Aracınızın işlemleri tamamlandı, sizi bekliyor.',
   },
-] as const
+]
+
+// Status değerlerinin indeks karşılıkları (İlerlemeyi hesaplamak için)
+export const STATUS_INDEX: Record<VisitStatus, number> = {
+  queued: 0,
+  processing: 1,
+  ready: 2,
+  completed: 3,
+  cancelled: 4
+}
 
 export function normalizePlate(input: string) {
   return input
@@ -64,7 +50,7 @@ export function plateToSlug(plate: string) {
   return plate.replace(/\s+/g, '').toUpperCase()
 }
 
-export function buildWhatsAppLink(phone: string, plate: string, businessSlug: string, origin: string) {
+export function buildWhatsAppLink(phone: string | undefined | null, plate: string, businessSlug: string, origin: string) {
   if (!phone) return ''
   const digits = phone.replace(/\D/g, '')
   const intl = digits.startsWith('0') ? `90${digits.slice(1)}` : digits.startsWith('90') ? digits : `90${digits}`

@@ -9,12 +9,12 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { SectionCard } from '@/components/admin/section-card'
 import { buildWhatsAppLink, plateToSlug, WARRANTY_ELIGIBLE_SERVICES } from '@/lib/jobs-store'
-import { addJobAction } from '@/lib/actions'
+import { addVisitAction } from '@/lib/actions'
 
 const SERVICE_OPTIONS = ['İç/Dış Yıkama', 'Detaylı Temizlik', 'Pasta & Cila', 'Seramik Kaplama', 'Motor Yıkama', 'Kaput Filmi', 'Cam Filmi', 'Far Bakımı', 'Torpedo Kuaför']
 const WARRANTY_PRESETS = [{ label: '12 Ay', months: 12 }, { label: '24 Ay', months: 24 }, { label: '36 Ay', months: 36 }]
 
-export function NewJobForm({ businessId, businessSlug }: { businessId: string, businessSlug: string }) {
+export function NewJobForm({ organizationId, businessSlug }: { organizationId: string, businessSlug: string }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   
@@ -25,7 +25,7 @@ export function NewJobForm({ businessId, businessSlug }: { businessId: string, b
   const [services, setServices] = useState<string[]>([])
   const [warrantyMonths, setWarrantyMonths] = useState<number | null>(null)
   const [damageNote, setDamageNote] = useState('')
-  const [customerNotes, setCustomerNotes] = useState('')
+  const [internalNote, setInternalNote] = useState('')
   const [lastLink, setLastLink] = useState<{ wa: string; track: string; plate: string } | null>(null)
 
   const canSubmit = plate.trim().length > 0 && services.length > 0
@@ -40,23 +40,25 @@ export function NewJobForm({ businessId, businessSlug }: { businessId: string, b
     if (!canSubmit) return
 
     startTransition(async () => {
-      const job = await addJobAction(businessSlug, businessId, {
-        customerName: customerName,
+      const visit = await addVisitAction(businessSlug, organizationId, {
+        customerName,
         plate,
         carModel,
         phone,
         services,
         warrantyMonths: showWarranty ? (warrantyMonths ?? undefined) : undefined,
         damageNote,
-        customerNotes,
+        internalNote,
       })
 
-      const waLink = buildWhatsAppLink(job.phone, job.plate, businessSlug, window.location.origin)
-      setLastLink({ wa: waLink, track: `/${businessSlug}/${plateToSlug(job.plate)}`, plate: job.plate })
+      const displayPlate = visit.plate || plate
+      const waLink = buildWhatsAppLink(visit.phone, displayPlate, businessSlug, window.location.origin)
+      
+      setLastLink({ wa: waLink, track: `/${businessSlug}/${plateToSlug(displayPlate)}`, plate: displayPlate })
       if (waLink) window.open(waLink, '_blank', 'noopener,noreferrer')
 
       setCustomerName(''); setPlate(''); setCarModel(''); setPhone('');
-      setServices([]); setWarrantyMonths(null); setDamageNote(''); setCustomerNotes('');
+      setServices([]); setWarrantyMonths(null); setDamageNote(''); setInternalNote('');
       router.refresh()
     })
   }
@@ -116,7 +118,7 @@ export function NewJobForm({ businessId, businessSlug }: { businessId: string, b
           </div>
           <div className="flex flex-col gap-2">
             <Label>Dahili Notlar (Sadece siz göreceksiniz)</Label>
-            <Textarea value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="Özel talepler vs..." rows={2} />
+            <Textarea value={internalNote} onChange={(e) => setInternalNote(e.target.value)} placeholder="Özel talepler vs..." rows={2} />
           </div>
         </div>
 

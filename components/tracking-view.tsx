@@ -5,10 +5,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
 import { StatusTracker } from '@/components/status-tracker'
-import { STEPS, type Job } from '@/lib/jobs-store'
+import { STEPS, STATUS_INDEX } from '@/lib/jobs-store'
+import type { Visit } from '@/lib/data'
 
 type TrackingViewProps = {
-  job: Job
+  visit: Visit
   businessName?: string
   primaryColor?: string
   logoUrl?: string | null
@@ -16,14 +17,17 @@ type TrackingViewProps = {
 }
 
 export function TrackingView({
-  job,
+  visit,
   businessName = 'Garaj34 Premium Detailing',
   primaryColor,
   logoUrl,
   googleMapsUrl
 }: TrackingViewProps) {
-  const current = STEPS[job.step]
-  const isCompleted = job.step === STEPS.length - 1 // Teslim aşamasında mı?
+  const currentIndex = STATUS_INDEX[visit.status] ?? 0
+  const isCompleted = visit.status === 'completed' || visit.status === 'ready'
+  
+  const displayPlate = visit.plate || 'BİLİNMİYOR'
+  const firstName = visit.customerName ? visit.customerName.split(' ')[0] : 'Değerli Müşterimiz'
 
   return (
     <main
@@ -49,23 +53,22 @@ export function TrackingView({
             {businessName}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Sayın {job.customerName.split(' ')[0]}, aracınız güvenli ellerde.
+            Sayın {firstName}, aracınız güvenli ellerde.
           </p>
         </header>
 
         <section className="flex flex-col items-center gap-4">
-          <LicensePlate plate={job.plate} size="lg" className="shadow-2xl" />
+          <LicensePlate plate={displayPlate} size="lg" className="shadow-2xl" />
           
-          {/* YENİ: Araç Modeli Gösterimi */}
-          {job.carModel && (
+          {visit.carModel && (
             <div className="font-semibold text-lg text-white/90">
-              {job.carModel}
+              {visit.carModel}
             </div>
           )}
           
-          {job.services && job.services.length > 0 && (
+          {visit.services && visit.services.length > 0 && (
             <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
-              {job.services.map((s, i) => (
+              {visit.services.map((s, i) => (
                 <span
                   key={i}
                   className="flex items-center gap-1 rounded-full border border-neon/30 bg-neon/10 px-3 py-1 text-xs font-medium text-neon"
@@ -77,13 +80,12 @@ export function TrackingView({
             </div>
           )}
 
-          {/* YENİ: Yasal Hasar/Tespit Notu (Müşteri Baştan Görsün Diye) */}
-          {job.damageNote && (
+          {visit.damageNote && (
             <div className="mt-2 flex w-full items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-left text-sm text-amber-200">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
               <div>
                 <span className="font-semibold text-amber-500">Teslim Alma Notu: </span>
-                {job.damageNote}
+                {visit.damageNote}
               </div>
             </div>
           )}
@@ -95,13 +97,12 @@ export function TrackingView({
               İşlem Adımları
             </h2>
             <span className="font-mono text-xs text-neon">
-              {job.step + 1}/{STEPS.length}
+              {Math.min(currentIndex + 1, STEPS.length)}/{STEPS.length}
             </span>
           </div>
-          <StatusTracker step={job.step} />
+          <StatusTracker status={visit.status} />
         </section>
 
-        {/* YENİ: Google Yorum Butonu Sadece İş Bittiğinde Şov Yapar */}
         {isCompleted && googleMapsUrl && (
           <section className="flex flex-col items-center gap-5 pt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex gap-1.5">

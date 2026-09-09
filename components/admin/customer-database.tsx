@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
 import { SectionCard } from '@/components/admin/section-card'
 import { buildWhatsAppLink } from '@/lib/jobs-store'
-import type { ArchivedJob } from '@/lib/jobs-store'
-import type { RetentionInsight } from '@/lib/data'
+import type { Visit, RetentionInsight } from '@/lib/data'
 
 const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
   day: '2-digit',
@@ -21,19 +20,19 @@ const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
 type FilterType = 'all' | 'week' | 'month'
 
 type CustomerDatabaseProps = {
-  archive: ArchivedJob[]
+  completedVisits: Visit[]
   insights: RetentionInsight[]
   businessSlug: string
   className?: string
 }
 
-export function CustomerDatabase({ archive, insights, businessSlug, className }: CustomerDatabaseProps) {
+export function CustomerDatabase({ completedVisits, insights, businessSlug, className }: CustomerDatabaseProps) {
   const [filter, setFilter] = useState<FilterType>('all')
   const [selectedPlateForModal, setSelectedPlateForModal] = useState<string | null>(null)
 
-  const filteredArchive = archive.filter((item) => {
+  const filteredArchive = completedVisits.filter((item) => {
     if (filter === 'all') return true
-    const itemDate = new Date(item.serviceDate).getTime()
+    const itemDate = new Date(item.createdAt).getTime()
     const now = new Date().getTime()
     const diffDays = (now - itemDate) / (1000 * 60 * 60 * 24)
 
@@ -43,10 +42,11 @@ export function CustomerDatabase({ archive, insights, businessSlug, className }:
   })
 
   const modalHistory = selectedPlateForModal
-    ? archive.filter((a) => a.plate === selectedPlateForModal)
+    ? completedVisits.filter((a) => a.plate === selectedPlateForModal)
     : []
 
-  function recall(phone: string, plate: string) {
+  function recall(phone: string | undefined | null, plate: string | undefined) {
+    if (!plate) return
     const link = buildWhatsAppLink(phone, plate, businessSlug, window.location.origin)
     if (link) window.open(link, '_blank', 'noopener,noreferrer')
   }
@@ -101,7 +101,7 @@ export function CustomerDatabase({ archive, insights, businessSlug, className }:
         action={
           <Badge variant="outline" className="gap-1 font-mono text-muted-foreground">
             <Users className="size-3" />
-            {archive.length}
+            {completedVisits.length}
           </Badge>
         }
       >
@@ -112,7 +112,7 @@ export function CustomerDatabase({ archive, insights, businessSlug, className }:
               filter === 'all' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'
             }`}
           >
-            Tümü ({archive.length})
+            Tümü ({completedVisits.length})
           </button>
           <button
             onClick={() => setFilter('week')}
@@ -139,17 +139,18 @@ export function CustomerDatabase({ archive, insights, businessSlug, className }:
         ) : (
           <ul className="flex flex-col divide-y divide-border">
             {filteredArchive.map((c) => {
-              const totalVisits = archive.filter((a) => a.plate === c.plate).length
+              const totalVisits = completedVisits.filter((a) => a.plate === c.plate).length
+              const displayPlate = c.plate || 'BİLİNMİYOR'
 
               return (
                 <li
                   key={c.id}
-                  onClick={() => setSelectedPlateForModal(c.plate)}
+                  onClick={() => setSelectedPlateForModal(displayPlate)}
                   className="group flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between cursor-pointer rounded-lg px-2 transition-colors hover:bg-muted/40"
                 >
                   <div className="flex items-start gap-4 sm:items-center">
                     <div className="mt-1 sm:mt-0">
-                      <LicensePlate plate={c.plate} />
+                      <LicensePlate plate={displayPlate} />
                     </div>
                     <div className="flex min-w-0 flex-col gap-1">
                       <div className="flex items-center gap-2">
@@ -160,8 +161,8 @@ export function CustomerDatabase({ archive, insights, businessSlug, className }:
                           </span>
                         )}
                       </div>
-                      <time dateTime={c.serviceDate} className="font-mono text-xs text-muted-foreground">
-                        {dateFormatter.format(new Date(c.serviceDate))}
+                      <time dateTime={c.createdAt} className="font-mono text-xs text-muted-foreground">
+                        {dateFormatter.format(new Date(c.createdAt))}
                       </time>
 
                       {c.services && c.services.length > 0 && (
@@ -230,7 +231,7 @@ export function CustomerDatabase({ archive, insights, businessSlug, className }:
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span className="flex items-center gap-1 font-mono">
                       <Calendar className="size-3.5" />
-                      {dateFormatter.format(new Date(historyItem.serviceDate))}
+                      {dateFormatter.format(new Date(historyItem.createdAt))}
                     </span>
                     <span className="font-mono">Kayıt #{modalHistory.length - idx}</span>
                   </div>
