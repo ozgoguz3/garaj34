@@ -9,12 +9,17 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
   if (!auth) redirect(`/admin/${business}`)
   const org = auth.organization
   const [activeVisits, completedVisits, insights] = await Promise.all([
-    listActiveVisits(org.id), listCompletedVisits(org.id), getRetentionInsights(org.id),
+    listActiveVisits(org.id),
+    listCompletedVisits(org.id),
+    getRetentionInsights(org.id),
   ])
   return (
     <AdminDashboard
-      organizationId={org.id} businessSlug={org.slug} businessName={org.name}
-      activeVisits={activeVisits} completedVisits={completedVisits} insights={insights}
+      organizationId={org.id}
+      businessSlug={org.slug}
+      activeVisits={activeVisits}
+      completedVisits={completedVisits}
+      insights={insights}
     />
   )
 }
