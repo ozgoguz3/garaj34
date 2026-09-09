@@ -512,36 +512,3 @@ export async function addJobPhoto(jobId: string, photoUrl: string, photoType: 'b
   await sql`INSERT INTO job_photos (job_id, photo_url, photo_type) VALUES (${jobId}, ${photoUrl}, ${photoType})`
 }
 
-export type Business = {
-  id: string
-  slug: string
-  name: string
-  logoUrl: string | null
-  primaryColor: string
-  tagline: string
-  googleMapsUrl: string | null
-}
-
-function mapBusinessRow(r: any): Business {
-  return {
-    id: String(r.id),
-    slug: String(r.slug),
-    name: String(r.name),
-    logoUrl: r.logo_url || null,
-    primaryColor: String(r.primary_color || '#10b981'),
-    tagline: String(r.tagline || ''),
-    googleMapsUrl: r.google_maps_url || null,
-  }
-}
-
-export async function getBusinessBySlug(slug: string): Promise<Business | null> {
-  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
-  return rows.length ? mapBusinessRow(rows[0]) : null
-}
-
-export async function verifyBusinessPin(slug: string, pin: string): Promise<Business | null> {
-  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
-  if (!rows.length) return null
-  const ok = await bcrypt.compare(pin, rows[0].pin_hash)
-  return ok ? mapBusinessRow(rows[0]) : null
-}
