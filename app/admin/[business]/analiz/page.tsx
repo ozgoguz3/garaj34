@@ -1,6 +1,6 @@
 import { Users2, TrendingUp, Target, Award, Car, CalendarDays } from 'lucide-react'
 import {
-  getBusinessBySlug,
+  getOrganizationBySlug,
   getServicePopularity,
   getBusiestWeekday,
   getNewVsReturningRatio,
@@ -8,26 +8,32 @@ import {
 } from '@/lib/data'
 import { SectionCard } from '@/components/admin/section-card'
 import { Badge } from '@/components/ui/badge'
+import { redirect } from 'next/navigation'
+import { getAuthedOrganization } from '@/lib/actions'
 
 const WEEKDAYS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
-const monthFormatter = new Intl.DateTimeFormat('tr-TR', { month: 'short', year: '2-digit' })
 
-// TS'in kafasının karışmaması için tipleri açıkça tanımlıyoruz
+// TypeScript tiplerini zorlamak için
 type ServicePop = { service: string; count: number }
 type WeekdayPop = { weekday: number; count: number }
 type TrendPop = { month: string; visits: number }
 
 export default async function AnalizPage({ params }: { params: Promise<{ business: string }> }) {
   const { business: slug } = await params
-  const business = await getBusinessBySlug(slug)
-  if (!business) return null
+  const org = await getOrganizationBySlug(slug)
+  if (!org) return null
 
-  // Promise.all içinde dönen verilerin tipini TS'e zorla söylüyoruz
+  // Güvenlik: Tenant izolasyonu
+  const isAuthed = await getAuthedOrganization(slug)
+  if (!isAuthed || isAuthed.organization.id !== org.id) {
+    redirect(`/admin/${slug}`)
+  }
+
   const [services, weekdays, ratio, trend] = await Promise.all([
-    getServicePopularity(business.id) as Promise<ServicePop[]>,
-    getBusiestWeekday(business.id) as Promise<WeekdayPop[]>,
-    getNewVsReturningRatio(business.id),
-    getMonthlyVisitTrend(business.id) as Promise<TrendPop[]>,
+    getServicePopularity(org.id) as Promise<ServicePop[]>,
+    getBusiestWeekday(org.id) as Promise<WeekdayPop[]>,
+    getNewVsReturningRatio(org.id),
+    getMonthlyVisitTrend(org.id) as Promise<TrendPop[]>,
   ])
 
   const maxServiceCount = Math.max(...services.map((s) => s.count), 1)
@@ -36,16 +42,16 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
   const returningPct = ratio.total > 0 ? Math.round((ratio.returning / ratio.total) * 100) : 0
   
   const topService = services.length > 0 ? services[0] : null
+  const monthFormatter = new Intl.DateTimeFormat('tr-TR', { month: 'short', year: '2-digit' })
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Özet Kartları */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           icon={Users2}
           label="Tekrar Eden Müşteri"
           value={`%${returningPct}`}
-          subtext={`${ratio.returning}/${ratio.total} müşteri`}
+          subtext={`${ratio.returning}/${ratio.total} araç`}
           color="cyan"
         />
         <MetricCard
@@ -71,10 +77,9 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
         />
       </div>
 
-      {/* Hizmet Popülaritesi */}
       <SectionCard 
         title="En Çok Tercih Edilen Hizmetler" 
-        description="Arşivdeki tüm işlemlere göre."
+        description="Tamamlanmış tüm işlemlere göre."
         action={<Badge variant="outline" className="font-mono">{services.length} hizmet</Badge>}
       >
         {services.length === 0 ? (
@@ -100,7 +105,6 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
         )}
       </SectionCard>
 
-      {/* En Yoğun Günler */}
       <SectionCard title="En Yoğun Günler" description="Hangi gün daha çok araç kabul ediliyor.">
         {weekdays.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Henüz yeterli veri yok.</p>
@@ -122,10 +126,9 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
         )}
       </SectionCard>
 
-      {/* Aylık Ziyaret Trendi */}
       <SectionCard 
         title="Aylık Ziyaret Trendi" 
-        description="Son 6 ayda gelen araç sayısı."
+        description="Son 6 ayda tamamlanan araç sayısı."
         action={
           trend.length > 0 && (
             <Badge variant="outline" className="font-mono text-neon">
@@ -163,7 +166,6 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
         )}
       </SectionCard>
 
-      {/* Stratejik Öneriler */}
       <SectionCard title="Stratejik Öneriler" description="Verilerinize göre CRM aksiyon önerileri.">
         <div className="flex flex-col gap-3">
           {returningPct < 40 && (
@@ -173,7 +175,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                 <div className="flex flex-col gap-1">
                   <p className="font-semibold text-amber-400">Müşteri Sadakati Geliştirilebilir</p>
                   <p className="text-sm text-muted-foreground">
-                    Müşterilerinizin %{100 - returningPct}'si tek seferde kalıyor. 
+                    Araçların %{100 - returningPct}'si tek seferde kalıyor. 
                     "Kampanya" menüsünden 60+ gün gelmeyenlere bir hatırlatma mesajı atabilirsiniz.
                   </p>
                 </div>
@@ -188,7 +190,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                 <div className="flex flex-col gap-1">
                   <p className="font-semibold text-cyan">Araç Girişleri Azalıyor</p>
                   <p className="text-sm text-muted-foreground">
-                    Bu ay bir önceki aya göre daha az araç kabul edilmiş. Eski müşterilerinize bakım hatırlatması yapmak için tam zamanı.
+                    Bu ay bir önceki aya göre daha az araç tamamlanmış. Eski müşterilerinize bakım hatırlatması yapmak için tam zamanı.
                   </p>
                 </div>
               </div>
@@ -203,7 +205,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                   <p className="font-semibold text-neon">Bir Hizmet Çok Popüler</p>
                   <p className="text-sm text-muted-foreground">
                     "{services[0].service}" hizmetiniz çok tercih ediliyor. 
-                    Müşteriler bu hizmete geldiklerinde yanına ufak bir "cam filmi" paketini "WhatsApp Kampanya" üzerinden önerebilirsiniz (Cross-sell).
+                    Müşteriler bu hizmete geldiklerinde yanına ufak bir yan paket eklemeyi önerebilirsiniz (Çapraz satış).
                   </p>
                 </div>
               </div>

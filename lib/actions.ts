@@ -2,12 +2,11 @@
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import bcrypt from 'bcryptjs'
+import { sql } from '@/lib/db'
 import * as data from '@/lib/data'
 import type { VisitStatus } from '@/lib/data'
 
-// NOT: İleride BetterAuth/Lucia gibi bir sisteme geçtiğinde 
-// buradaki cookie okuma mantığı `const session = await auth()` şekline dönüşecek.
-// Şu an için MVP izolasyonunu koruyoruz.
 function authCookieName(slug: string) {
   return `garaj34_auth_${slug}`
 }
@@ -21,7 +20,6 @@ export async function getAuthedOrganization(slug: string) {
     const org = await data.getOrganizationBySlug(slug)
     if (!org || String(org.id) !== String(cookieOrgId)) return null
     
-    // Geçici yetkilendirme mock'u
     return { organization: org, role: 'boss' as const } 
   } catch {
     return null
@@ -75,7 +73,6 @@ export async function updateBrandingAction(
   revalidatePath(`/${slug}`, 'layout')
 }
 
-// GÜVENLİK AÇIĞI KAPATILDI: Artık bu aksiyon tenant izolasyonundan geçiriliyor
 export async function getCampaignSegmentAction(
   slug: string, 
   organizationId: string, 
@@ -85,11 +82,26 @@ export async function getCampaignSegmentAction(
   return data.getCampaignSegment(organizationId, segment)
 }
 
-export async function loginAction(slug: string, pin: string) {
+export async function loginAction(slug: string, email: string, pass: string) {
   try {
     const org = await data.getOrganizationBySlug(slug)
-    // Şimdilik test edebilmek için PIN olarak organizasyon adının ilk 4 harfini veya '1234' kabul ediyoruz (Auth fazına geçene kadar)
-    if (!org || (pin !== '1234' && pin !== org.name.substring(0,4))) return { ok: false as const, error: 'Hatalı PIN kodu.' }
+    if (!org) return { ok: false as const, error: 'İşletme bulunamadı.' }
+
+    // 1. Kullanıcıyı email ile bul
+    const users = await sql`SELECT * FROM neon_auth.user WHERE email = ${email} LIMIT 1`
+    if (!users.length) return { ok: false as const, error: 'Geçersiz e-posta veya şifre.' }
+    const user = users[0]
+
+    // 2. Kullanıcının şifresini çek ve kontrol et
+    const accounts = await sql`SELECT * FROM neon_auth.account WHERE "userId" = ${user.id} LIMIT 1`
+    if (!accounts.length) return { ok: false as const, error: 'Geçersiz e-posta veya şifre.' }
+    
+    const isMatch = await bcrypt.compare(pass, accounts[0].password)
+    if (!isMatch) return { ok: false as const, error: 'Geçersiz e-posta veya şifre.' }
+
+    // 3. Kullanıcı bu işletmenin (organization) yetkilisi mi kontrol et
+    const members = await sql`SELECT * FROM neon_auth.member WHERE "userId" = ${user.id} AND "organizationId" = ${org.id} LIMIT 1`
+    if (!members.length) return { ok: false as const, error: 'Bu panele erişim yetkiniz yok.' }
 
     const jar = await cookies()
     jar.set(authCookieName(slug), String(org.id), {
@@ -97,8 +109,9 @@ export async function loginAction(slug: string, pin: string) {
     })
 
     revalidatePath(`/admin/${slug}`, 'layout')
-    return { ok: true as const, role: 'boss' as const }
+    return { ok: true as const, role: members[0].role }
   } catch (error) {
+    console.error(error)
     return { ok: false as const, error: 'Sunucu hatası oluştu.' }
   }
 }

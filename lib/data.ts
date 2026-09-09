@@ -349,3 +349,49 @@ export async function getRetentionInsights(orgId: string): Promise<RetentionInsi
   
   return mapped.filter(c => c.isOverdue).sort((a, b) => new Date(a.lastVisit).getTime() - new Date(b.lastVisit).getTime())
 }
+
+export async function getServicePopularity(orgId: string) {
+  const rows = await sql`
+    SELECT unnest(services) AS service, COUNT(*) AS count
+    FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed'
+    GROUP BY service
+    ORDER BY count DESC
+    LIMIT 8
+  `
+  return rows.map((r: any) => ({ service: String(r.service), count: Number(r.count) }))
+}
+
+export async function getBusiestWeekday(orgId: string) {
+  const rows = await sql`
+    SELECT extract(dow FROM created_at) AS weekday, COUNT(*) AS count
+    FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed'
+    GROUP BY weekday
+    ORDER BY count DESC
+  `
+  return rows.map((r: any) => ({ weekday: Number(r.weekday), count: Number(r.count) }))
+}
+
+export async function getNewVsReturningRatio(orgId: string) {
+  const rows = await sql`
+    SELECT vehicle_id, COUNT(*) AS visits
+    FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed'
+    GROUP BY vehicle_id
+  `
+  const total = rows.length
+  const returning = rows.filter((r: any) => Number(r.visits) > 1).length
+  return { total, returning, new: total - returning }
+}
+
+export async function getMonthlyVisitTrend(orgId: string) {
+  const rows = await sql`
+    SELECT date_trunc('month', created_at) AS month, COUNT(*) AS visits
+    FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed' AND created_at > now() - interval '6 months'
+    GROUP BY month
+    ORDER BY month ASC
+  `
+  return rows.map((r: any) => ({ month: String(r.month), visits: Number(r.visits) }))
+}

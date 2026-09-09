@@ -1,0 +1,3042 @@
+﻿==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\globals.css ====================
+@import "tailwindcss";
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  
+  --color-neon: var(--neon);
+  --color-neon-foreground: #000000;
+  --color-plate: #ffffff;
+  --color-plate-foreground: #000000;
+  --color-plate-stripe: #0033a0;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 83.1%;
+    --radius: 0.75rem;
+    
+    --neon: #10b981;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom UI Effects */
+.bg-grid {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+.glass {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glow-neon {
+  box-shadow: 0 0 20px rgba(var(--neon-rgb, 16, 185, 129), 0.3);
+}
+
+.glow-neon-text {
+  text-shadow: 0 0 10px rgba(var(--neon-rgb, 16, 185, 129), 0.5);
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(90deg, hsl(var(--muted)) 0%, hsl(var(--muted-foreground)/0.1) 50%, hsl(var(--muted)) 100%);
+  background-size: 1000px 100%;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon);
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\layout.tsx ====================
+import type { Metadata } from 'next'
+import './globals.css'
+
+export const metadata: Metadata = {
+  title: 'Garaj34',
+  description: 'Premium Detailing YÃ¶netim Sistemi',
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="tr">
+      <body>{children}</body>
+    </html>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\page.tsx ====================
+import { Sparkles } from 'lucide-react'
+
+// ArtÄ±k mÃ¼ÅŸteriler bu sayfada plaka aramÄ±yor â€” her mÃ¼ÅŸteri kendi iÅŸletmesinden
+// aldÄ±ÄŸÄ± Ã¶zel linkle (/{isletme}/{plaka}) direkt kendi aracÄ±nÄ±n durumuna gidiyor.
+// Admin de kendi paneline direkt /admin/{isletme} linkiyle giriyor (tarayÄ±cÄ±ya
+// eklediÄŸi bir yer imi Ã¼zerinden). Bu yÃ¼zden bu sayfa artÄ±k sadece nÃ¶tr bir
+// karÅŸÄ±lama ekranÄ±; hiÃ§bir iÅŸlevsel form barÄ±ndÄ±rmÄ±yor.
+export default function HomePage() {
+  return (
+    <main className="bg-grid flex min-h-dvh flex-col items-center justify-center p-6 text-center">
+      <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-neon/20 bg-background/60 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="glow-neon flex size-16 items-center justify-center rounded-2xl bg-neon text-neon-foreground">
+          <Sparkles className="size-8" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight">Garaj34 Premium</h1>
+        <p className="text-sm text-muted-foreground">
+          CanlÄ± araÃ§ takip ve mÃ¼ÅŸteri yÃ¶netim sistemi.
+        </p>
+      </div>
+    </main>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\admin\[business]\layout.tsx ====================
+import { getOrganizationBySlug } from '@/lib/data'
+import { getAuthedOrganization } from '@/lib/actions'
+import { AdminLogin } from '@/components/admin/admin-login'
+import { AdminShell } from '@/components/admin/admin-shell'
+
+type LayoutProps = {
+  children: React.ReactNode
+  params: Promise<{ business: string }>
+}
+
+export default async function AdminLayout({ children, params }: LayoutProps) {
+  const { business: slug } = await params
+  const org = await getOrganizationBySlug(slug)
+
+  if (!org) {
+    return (
+      <main className="bg-grid flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
+        <h1 className="text-xl font-semibold">Ä°ÅŸletme bulunamadÄ±</h1>
+        <p className="text-sm text-muted-foreground">
+          Bu adres iÃ§in kayÄ±tlÄ± bir iÅŸletme yok. LÃ¼tfen size verilen yÃ¶netim linkini kontrol edin.
+        </p>
+      </main>
+    )
+  }
+
+  const authState = await getAuthedOrganization(slug)
+
+  if (!authState) {
+    return <AdminLogin slug={slug} businessName={org.name} />
+  }
+
+  return (
+    <AdminShell organization={authState.organization} slug={slug} role={authState.role}>
+      {children}
+    </AdminShell>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\admin\[business]\page.tsx ====================
+import { redirect } from 'next/navigation'
+import { getAuthedOrganization } from '@/lib/actions'
+import { listActiveVisits, listCompletedVisits, getRetentionInsights } from '@/lib/data'
+import { AdminDashboard } from '@/components/admin/admin-dashboard'
+
+export default async function AdminDashboardPage({ params }: { params: { business: string } }) {
+  const auth = await getAuthedOrganization(params.business)
+  if (!auth) redirect(`/admin/${params.business}`)
+
+  const org = auth.organization
+  const activeVisits = await listActiveVisits(org.id)
+  const completedVisits = await listCompletedVisits(org.id)
+  const insights = await getRetentionInsights(org.id)
+
+  return (
+    <AdminDashboard
+      organizationId={org.id}
+      businessSlug={org.slug}
+      businessName={org.name}
+      activeVisits={activeVisits}
+      completedVisits={completedVisits}
+      insights={insights}
+    />
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\admin\[business]\aktif\page.tsx ====================
+import { getOrganizationBySlug, listActiveVisits } from '@/lib/data'
+import { NewJobForm } from '@/components/admin/new-job-form'
+import { ActiveJobs } from '@/components/admin/active-jobs'
+import { PlatePreviewStrip } from '@/components/admin/plate-preview-strip'
+
+export default async function AktifIslerPage({ params }: { params: Promise<{ business: string }> }) {
+  const { business: slug } = await params
+  const org = await getOrganizationBySlug(slug)
+  if (!org) return null
+
+  const visits = await listActiveVisits(org.id)
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PlatePreviewStrip visits={visits} businessName={org.name} />
+      <NewJobForm organizationId={org.id} businessSlug={slug} />
+      <ActiveJobs visits={visits} organizationId={org.id} businessSlug={slug} />
+    </div>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\admin\[business]\analiz\page.tsx ====================
+import { Users2, TrendingUp, Target, Award, Car, CalendarDays } from 'lucide-react'
+import {
+  getOrganizationBySlug,
+  getServicePopularity,
+  getBusiestWeekday,
+  getNewVsReturningRatio,
+  getMonthlyVisitTrend,
+} from '@/lib/data'
+import { SectionCard } from '@/components/admin/section-card'
+import { Badge } from '@/components/ui/badge'
+import { redirect } from 'next/navigation'
+import { getAuthedOrganization } from '@/lib/actions'
+
+const WEEKDAYS = ['Pazar', 'Pazartesi', 'SalÄ±', 'Ã‡arÅŸamba', 'PerÅŸembe', 'Cuma', 'Cumartesi']
+
+// TypeScript tiplerini zorlamak iÃ§in
+type ServicePop = { service: string; count: number }
+type WeekdayPop = { weekday: number; count: number }
+type TrendPop = { month: string; visits: number }
+
+export default async function AnalizPage({ params }: { params: Promise<{ business: string }> }) {
+  const { business: slug } = await params
+  const org = await getOrganizationBySlug(slug)
+  if (!org) return null
+
+  // GÃ¼venlik: Tenant izolasyonu
+  const isAuthed = await getAuthedOrganization(slug)
+  if (!isAuthed || isAuthed.organization.id !== org.id) {
+    redirect(`/admin/${slug}`)
+  }
+
+  const [services, weekdays, ratio, trend] = await Promise.all([
+    getServicePopularity(org.id) as Promise<ServicePop[]>,
+    getBusiestWeekday(org.id) as Promise<WeekdayPop[]>,
+    getNewVsReturningRatio(org.id),
+    getMonthlyVisitTrend(org.id) as Promise<TrendPop[]>,
+  ])
+
+  const maxServiceCount = Math.max(...services.map((s) => s.count), 1)
+  const maxWeekdayCount = Math.max(...weekdays.map((w) => w.count), 1)
+  const maxVisits = Math.max(...trend.map((t) => t.visits), 1)
+  const returningPct = ratio.total > 0 ? Math.round((ratio.returning / ratio.total) * 100) : 0
+  
+  const topService = services.length > 0 ? services[0] : null
+  const monthFormatter = new Intl.DateTimeFormat('tr-TR', { month: 'short', year: '2-digit' })
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          icon={Users2}
+          label="Tekrar Eden MÃ¼ÅŸteri"
+          value={`%${returningPct}`}
+          subtext={`${ratio.returning}/${ratio.total} araÃ§`}
+          color="cyan"
+        />
+        <MetricCard
+          icon={Car}
+          label="Toplam AraÃ§"
+          value={String(ratio.total)}
+          subtext={`${ratio.new} yeni mÃ¼ÅŸteri`}
+          color="neon"
+        />
+        <MetricCard
+          icon={Award}
+          label="En PopÃ¼ler Hizmet"
+          value={topService?.service.substring(0, 12) || 'Veri yok'}
+          subtext={topService ? `${topService.count} kez` : ''}
+          color="amber"
+        />
+        <MetricCard
+          icon={TrendingUp}
+          label="AylÄ±k Ziyaret"
+          value={trend.length > 0 ? String(trend[trend.length - 1]?.visits || 0) : '0'}
+          subtext="Bu ayki araÃ§ sayÄ±sÄ±"
+          color="cyan"
+        />
+      </div>
+
+      <SectionCard 
+        title="En Ã‡ok Tercih Edilen Hizmetler" 
+        description="TamamlanmÄ±ÅŸ tÃ¼m iÅŸlemlere gÃ¶re."
+        action={<Badge variant="outline" className="font-mono">{services.length} hizmet</Badge>}
+      >
+        {services.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">HenÃ¼z yeterli veri yok.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {services.map((s, index) => (
+              <div key={s.service} className="flex items-center gap-3">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-neon/10 text-xs font-bold text-neon">
+                  {index + 1}
+                </span>
+                <span className="w-32 shrink-0 truncate text-sm font-medium sm:w-40">{s.service}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div 
+                    className="h-full rounded-full bg-gradient-to-r from-neon to-cyan transition-all duration-1000" 
+                    style={{ width: `${(s.count / maxServiceCount) * 100}%` }} 
+                  />
+                </div>
+                <span className="w-8 shrink-0 text-right font-mono text-xs font-semibold">{s.count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard title="En YoÄŸun GÃ¼nler" description="Hangi gÃ¼n daha Ã§ok araÃ§ kabul ediliyor.">
+        {weekdays.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">HenÃ¼z yeterli veri yok.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {weekdays.map((w) => (
+              <div key={w.weekday} className="flex items-center gap-3">
+                <span className="w-24 shrink-0 text-sm font-medium">{WEEKDAYS[w.weekday]}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div 
+                    className="h-full rounded-full bg-gradient-to-r from-cyan to-neon transition-all duration-1000" 
+                    style={{ width: `${(w.count / maxWeekdayCount) * 100}%` }} 
+                  />
+                </div>
+                <span className="w-8 shrink-0 text-right font-mono text-xs font-semibold">{w.count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard 
+        title="AylÄ±k Ziyaret Trendi" 
+        description="Son 6 ayda tamamlanan araÃ§ sayÄ±sÄ±."
+        action={
+          trend.length > 0 && (
+            <Badge variant="outline" className="font-mono text-neon">
+              {trend.reduce((acc, t) => acc + t.visits, 0)} Toplam AraÃ§
+            </Badge>
+          )
+        }
+      >
+        {trend.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">HenÃ¼z yeterli veri yok.</p>
+        ) : (
+          <div className="flex items-end justify-between gap-2 h-40">
+            {trend.map((t) => {
+              const heightPct = Math.max((t.visits / maxVisits) * 100, 5)
+              return (
+                <div key={t.month} className="group flex flex-1 flex-col items-center gap-2">
+                  <div className="relative w-full">
+                    <div
+                      className="w-full rounded-t-lg bg-gradient-to-t from-neon to-cyan transition-all duration-500 hover:brightness-110 cursor-pointer"
+                      style={{ height: `${heightPct}%`, minHeight: '32px' }}
+                      title={`${t.visits} AraÃ§ - ${monthFormatter.format(new Date(t.month))}`}
+                    >
+                      <span className="absolute inset-x-0 -top-6 text-center text-xs font-semibold opacity-0 transition-opacity group-hover:opacity-100">
+                        {t.visits}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    {monthFormatter.format(new Date(t.month))}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard title="Stratejik Ã–neriler" description="Verilerinize gÃ¶re CRM aksiyon Ã¶nerileri.">
+        <div className="flex flex-col gap-3">
+          {returningPct < 40 && (
+            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <Target className="size-5 shrink-0 text-amber-400 mt-0.5" />
+                <div className="flex flex-col gap-1">
+                  <p className="font-semibold text-amber-400">MÃ¼ÅŸteri Sadakati GeliÅŸtirilebilir</p>
+                  <p className="text-sm text-muted-foreground">
+                    AraÃ§larÄ±n %{100 - returningPct}'si tek seferde kalÄ±yor. 
+                    "Kampanya" menÃ¼sÃ¼nden 60+ gÃ¼n gelmeyenlere bir hatÄ±rlatma mesajÄ± atabilirsiniz.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {trend.length >= 2 && trend[trend.length - 1].visits < trend[trend.length - 2].visits && (
+            <div className="rounded-lg border border-cyan/20 bg-cyan/5 p-4">
+              <div className="flex items-start gap-3">
+                <CalendarDays className="size-5 shrink-0 text-cyan mt-0.5" />
+                <div className="flex flex-col gap-1">
+                  <p className="font-semibold text-cyan">AraÃ§ GiriÅŸleri AzalÄ±yor</p>
+                  <p className="text-sm text-muted-foreground">
+                    Bu ay bir Ã¶nceki aya gÃ¶re daha az araÃ§ tamamlanmÄ±ÅŸ. Eski mÃ¼ÅŸterilerinize bakÄ±m hatÄ±rlatmasÄ± yapmak iÃ§in tam zamanÄ±.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {services.length > 0 && services[0].count > services.slice(1).reduce((acc, s) => acc + s.count, 0) && (
+            <div className="rounded-lg border border-neon/20 bg-neon/5 p-4">
+              <div className="flex items-start gap-3">
+                <Award className="size-5 shrink-0 text-neon mt-0.5" />
+                <div className="flex flex-col gap-1">
+                  <p className="font-semibold text-neon">Bir Hizmet Ã‡ok PopÃ¼ler</p>
+                  <p className="text-sm text-muted-foreground">
+                    "{services[0].service}" hizmetiniz Ã§ok tercih ediliyor. 
+                    MÃ¼ÅŸteriler bu hizmete geldiklerinde yanÄ±na ufak bir yan paket eklemeyi Ã¶nerebilirsiniz (Ã‡apraz satÄ±ÅŸ).
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </SectionCard>
+    </div>
+  )
+}
+
+function MetricCard({ icon: Icon, label, value, subtext, color = 'neon' }: { icon: React.ElementType, label: string, value: string, subtext?: string, color?: 'neon' | 'cyan' | 'amber' }) {
+  const colorClasses = {
+    neon: 'text-neon bg-neon/10 border-neon/20',
+    cyan: 'text-cyan bg-cyan/10 border-cyan/20',
+    amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+  }[color]
+
+  return (
+    <div className="glass flex flex-col gap-3 rounded-xl p-4 transition-all hover:shadow-lg">
+      <div className={`flex size-10 items-center justify-center rounded-lg border ${colorClasses}`}>
+        <Icon className="size-5" />
+      </div>
+      <div className="flex flex-col">
+        <span className="text-xl font-bold leading-tight tracking-tight sm:text-2xl">{value}</span>
+        <span className="text-[11px] text-muted-foreground">{label}</span>
+        {subtext && <span className="mt-1 text-[10px] text-muted-foreground/70">{subtext}</span>}
+      </div>
+    </div>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\admin\[business]\ayarlar\page.tsx ====================
+import { getBusinessBySlug } from '@/lib/data'
+import { BrandingForm } from '@/components/admin/branding-form'
+
+export default async function AyarlarPage({ params }: { params: Promise<{ business: string }> }) {
+  const { business: slug } = await params
+  const business = await getBusinessBySlug(slug)
+  if (!business) return null
+
+  return (
+    <div className="flex flex-col gap-6">
+      <BrandingForm business={business} slug={slug} />
+
+      <div className="glass rounded-xl p-5 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">Ä°ÅŸletme Bilgileri</p>
+        <p className="mt-2">Panel adresi: <span className="font-mono text-foreground">/admin/{slug}</span></p>
+        <p>Ä°ÅŸletme adÄ±: <span className="text-foreground">{business.name}</span></p>
+      </div>
+    </div>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\admin\[business]\kampanya\page.tsx ====================
+import { getOrganizationBySlug, getCampaignSegment } from '@/lib/data'
+import { CampaignBuilder } from '@/components/admin/campaign-builder'
+import { getAuthedOrganization } from '@/lib/actions'
+import { redirect } from 'next/navigation'
+
+export default async function KampanyaPage({ params }: { params: Promise<{ business: string }> }) {
+  const { business: slug } = await params
+  const org = await getOrganizationBySlug(slug)
+  if (!org) return null
+
+  const isAuthed = await getAuthedOrganization(slug)
+  if (!isAuthed) {
+    redirect(`/admin/${slug}`)
+  }
+
+  const initialCustomers = await getCampaignSegment(org.id, 'inactive_30')
+
+  return (
+    <CampaignBuilder 
+      businessId={org.id} 
+      businessSlug={slug} 
+      initialData={initialCustomers} 
+    />
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\admin\[business]\musteriler\page.tsx ====================
+import { getOrganizationBySlug, listCompletedVisits, getRetentionInsights } from '@/lib/data'
+import { CustomerDatabase } from '@/components/admin/customer-database'
+
+export default async function MusterilerPage({ params }: { params: Promise<{ business: string }> }) {
+  const { business: slug } = await params
+  const org = await getOrganizationBySlug(slug)
+  if (!org) return null
+
+  const [completedVisits, insights] = await Promise.all([
+    listCompletedVisits(org.id),
+    getRetentionInsights(org.id),
+  ])
+
+  return <CustomerDatabase completedVisits={completedVisits} insights={insights} businessSlug={slug} />
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\[business]\[plate]\page.tsx ====================
+import { notFound } from 'next/navigation'
+import { getOrganizationBySlug, findVisitByPlate } from '@/lib/data'
+import { TrackingView } from '@/components/tracking-view'
+
+export default async function CustomerTrackingPage({
+  params,
+}: {
+  params: { business: string; plate: string }
+}) {
+  const org = await getOrganizationBySlug(params.business)
+  if (!org) notFound()
+
+  const visit = await findVisitByPlate(org.id, params.plate)
+  if (!visit) notFound()
+
+  return (
+    <TrackingView
+      visit={visit}
+      businessName={org.name}
+      primaryColor={org.metadata?.primaryColor}
+      logoUrl={org.logoUrl}
+      googleMapsUrl={org.metadata?.googleMapsUrl}
+    />
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\license-plate.tsx ====================
+import { cn } from '@/lib/utils'
+
+type LicensePlateProps = {
+  plate: string
+  size?: 'sm' | 'lg'
+  className?: string
+}
+
+export function LicensePlate({ plate, size = 'sm', className }: LicensePlateProps) {
+  const isLarge = size === 'lg'
+
+  return (
+    <div
+      aria-label={`Plaka ${plate}`}
+      className={cn(
+        'inline-flex items-stretch overflow-hidden rounded-md bg-plate text-plate-foreground shadow-[inset_0_0_0_2px_rgba(0,0,0,0.85)]',
+        isLarge ? 'h-20 rounded-lg' : 'h-8',
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          'flex flex-col items-center justify-end bg-plate-stripe text-plate font-sans font-bold leading-none',
+          isLarge ? 'w-12 pb-2 text-base' : 'w-6 pb-1 text-[9px]',
+        )}
+      >
+        <span
+          aria-hidden
+          className={cn(
+            'mb-auto mt-1.5 block rounded-full border border-current',
+            isLarge ? 'size-5 border-2' : 'size-2.5',
+          )}
+        />
+        <span>TR</span>
+      </div>
+      <div
+        className={cn(
+          'flex items-center whitespace-nowrap font-mono font-bold tabular-nums',
+          isLarge ? 'px-5 text-3xl tracking-[0.1em] sm:px-6 sm:text-5xl' : 'px-2.5 text-sm tracking-[0.12em]',
+        )}
+      >
+        {plate}
+      </div>
+    </div>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\status-tracker.tsx ====================
+import { Check, Clock, Droplets, KeyRound, Wind } from 'lucide-react'
+import { STEPS, STATUS_INDEX } from '@/lib/jobs-store'
+import type { VisitStatus } from '@/lib/data'
+import { cn } from '@/lib/utils'
+
+const ICONS = [Clock, Droplets, Wind, KeyRound] as const
+
+export function StatusTracker({ status }: { status: VisitStatus }) {
+  const currentStep = STATUS_INDEX[status] ?? 0
+
+  return (
+    <ol className="relative flex flex-col" aria-label="Ä°ÅŸlem durumu">
+      {STEPS.map((s, i) => {
+        const Icon = ICONS[i] || Clock
+        const isDone = i < currentStep
+        const isActive = i === currentStep
+        const isLast = i === STEPS.length - 1
+
+        return (
+          <li key={s.key} className="relative flex gap-4 pb-8 last:pb-0">
+            {!isLast && <span aria-hidden className={cn('absolute left-[19px] top-10 h-[calc(100%-2.5rem)] w-0.5 rounded-full', isDone ? 'bg-neon' : 'bg-border')} />}
+            <div className="relative shrink-0">
+              <div className={cn('flex size-10 items-center justify-center rounded-full border transition-all duration-500', isDone && 'border-neon bg-neon text-neon-foreground', isActive && 'glow-neon border-neon bg-neon/15 text-neon', !isDone && !isActive && 'border-border bg-muted text-muted-foreground')}>
+                {isDone ? <Check className="size-5" strokeWidth={3} /> : <Icon className="size-5" />}
+              </div>
+            </div>
+            <div className={cn('flex flex-col gap-1 pt-1.5', !isDone && !isActive && 'opacity-50')}>
+              <p className={cn('font-semibold leading-tight', isActive ? 'text-glow-neon text-lg text-neon' : 'text-foreground')}>{s.title}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{s.description}</p>
+            </div>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\tracking-view.tsx ====================
+'use client'
+
+import { Sparkles, Star, ShieldCheck, Wrench, AlertTriangle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { LicensePlate } from '@/components/license-plate'
+import { StatusTracker } from '@/components/status-tracker'
+import { STEPS, STATUS_INDEX } from '@/lib/jobs-store'
+import type { Visit } from '@/lib/data'
+
+type TrackingViewProps = {
+  visit: Visit
+  businessName?: string
+  primaryColor?: string
+  logoUrl?: string | null
+  googleMapsUrl?: string | null
+}
+
+export function TrackingView({
+  visit,
+  businessName = 'Garaj34 Premium Detailing',
+  primaryColor,
+  logoUrl,
+  googleMapsUrl
+}: TrackingViewProps) {
+  const currentIndex = STATUS_INDEX[visit.status] ?? 0
+  const isCompleted = visit.status === 'completed' || visit.status === 'ready'
+  
+  const displayPlate = visit.plate || 'BÄ°LÄ°NMÄ°YOR'
+  const firstName = visit.customerName ? visit.customerName.split(' ')[0] : 'DeÄŸerli MÃ¼ÅŸterimiz'
+
+  return (
+    <main
+      className="bg-grid relative min-h-dvh overflow-hidden pb-12"
+      style={primaryColor ? ({ '--neon': primaryColor } as React.CSSProperties) : undefined}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.18),transparent_65%)]"
+      />
+
+      <div className="relative mx-auto flex w-full max-w-md flex-col gap-8 px-5 pt-8">
+        <header className="flex flex-col items-center gap-3 text-center">
+          {logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={businessName} className="size-16 rounded-2xl object-cover shadow-lg border border-white/10" />
+          )}
+          <Badge className="glow-neon gap-1.5 border-neon/40 bg-neon/15 px-3 py-1 text-neon">
+            <Sparkles className="size-3.5" />
+            CanlÄ± Takip
+          </Badge>
+          <h1 className="text-balance text-2xl font-bold tracking-tight">
+            {businessName}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            SayÄ±n {firstName}, aracÄ±nÄ±z gÃ¼venli ellerde.
+          </p>
+        </header>
+
+        <section className="flex flex-col items-center gap-4">
+          <LicensePlate plate={displayPlate} size="lg" className="shadow-2xl" />
+          
+          {visit.carModel && (
+            <div className="font-semibold text-lg text-white/90">
+              {visit.carModel}
+            </div>
+          )}
+          
+          {visit.services && visit.services.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+              {visit.services.map((s, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-1 rounded-full border border-neon/30 bg-neon/10 px-3 py-1 text-xs font-medium text-neon"
+                >
+                  <Wrench className="size-3" />
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {visit.damageNote && (
+            <div className="mt-2 flex w-full items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-left text-sm text-amber-200">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
+              <div>
+                <span className="font-semibold text-amber-500">Teslim Alma Notu: </span>
+                {visit.damageNote}
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="glass rounded-2xl p-6">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Ä°ÅŸlem AdÄ±mlarÄ±
+            </h2>
+            <span className="font-mono text-xs text-neon">
+              {Math.min(currentIndex + 1, STEPS.length)}/{STEPS.length}
+            </span>
+          </div>
+          <StatusTracker status={visit.status} />
+        </section>
+
+        {isCompleted && googleMapsUrl && (
+          <section className="flex flex-col items-center gap-5 pt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex gap-1.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className="size-7 fill-gold text-gold drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                />
+              ))}
+            </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold">
+                AracÄ±nÄ±z Teslimata HazÄ±r!
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Hizmetimizden memnun kaldÄ±ysanÄ±z bize 5 yÄ±ldÄ±z vererek destek olabilirsiniz.
+              </p>
+            </div>
+            <Button
+              size="lg"
+              className="glow-neon h-14 w-full rounded-xl bg-neon text-base font-bold text-neon-foreground transition-all hover:scale-105"
+              render={<a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" />}
+            >
+              Bizi Google'da DeÄŸerlendirin
+            </Button>
+          </section>
+        )}
+
+        <footer className="flex flex-col items-center gap-2 pt-6 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="size-3.5 text-neon" />
+            {businessName} - Premium Takip Sistemi
+          </span>
+        </footer>
+      </div>
+    </main>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\active-jobs.tsx ====================
+'use client'
+
+import { CarFront } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { JobCard } from '@/components/admin/job-card'
+import { SectionCard } from '@/components/admin/section-card'
+import type { Visit } from '@/lib/data'
+
+type ActiveJobsProps = {
+  visits: Visit[]
+  organizationId: string
+  businessSlug: string
+}
+
+export function ActiveJobs({ visits, organizationId, businessSlug }: ActiveJobsProps) {
+  return (
+    <SectionCard
+      title="Aktif Ä°ÅŸlemler"
+      description="Åu anda serviste bulunan araÃ§lar."
+      action={
+        <Badge className="border-cyan/40 bg-cyan/10 font-mono text-cyan">
+          {visits.length} araÃ§
+        </Badge>
+      }
+    >
+      {visits.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-14 text-center text-muted-foreground">
+          <CarFront className="size-8" />
+          <p className="text-sm">Aktif iÅŸlem yok. YukarÄ±dan yeni bir araÃ§ ekleyin.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {visits.map((visit) => (
+            <JobCard key={visit.id} visit={visit} organizationId={organizationId} businessSlug={businessSlug} />
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\admin-dashboard.tsx ====================
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Sparkles, LogOut, X, Eye } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { LicensePlate } from '@/components/license-plate'
+import { TrackingView } from '@/components/tracking-view'
+import { NewJobForm } from '@/components/admin/new-job-form'
+import { ActiveJobs } from '@/components/admin/active-jobs'
+import { CustomerDatabase } from '@/components/admin/customer-database'
+import { logoutAction } from '@/lib/actions'
+import type { Visit } from '@/lib/data'
+import type { RetentionInsight } from '@/lib/data'
+
+type AdminDashboardProps = {
+  organizationId: string
+  businessSlug: string
+  businessName: string
+  activeVisits: Visit[]
+  completedVisits: Visit[]
+  insights: RetentionInsight[]
+}
+
+export function AdminDashboard({
+  organizationId,
+  businessSlug,
+  businessName,
+  activeVisits,
+  completedVisits,
+  insights,
+}: AdminDashboardProps) {
+  const router = useRouter()
+  const [previewVisit, setPreviewVisit] = useState<Visit | null>(null)
+
+  function handleLogout() {
+    logoutAction(businessSlug).then(() => router.refresh())
+  }
+
+  return (
+    <div className="bg-grid min-h-dvh">
+      <header className="glass sticky top-0 z-10 border-x-0 border-t-0">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="glow-neon flex size-10 shrink-0 items-center justify-center rounded-lg bg-neon text-neon-foreground">
+              <Sparkles className="size-5" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-base font-bold leading-tight tracking-tight sm:text-lg">{businessName}</h1>
+              <p className="text-[10px] text-muted-foreground sm:text-xs">YÃ¶netim Paneli</p>
+            </div>
+          </div>
+
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-red-400">
+            <LogOut className="mr-1.5 size-4" />
+            Ã‡Ä±kÄ±ÅŸ
+          </Button>
+        </div>
+
+        {activeVisits.length > 0 && (
+          <div className="border-t border-border/60 px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <span className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Ã–nizle:</span>
+              {activeVisits.map((visit) => (
+                <button
+                  key={visit.id}
+                  onClick={() => setPreviewVisit(visit)}
+                  className="shrink-0 rounded-md transition-transform hover:scale-105"
+                  aria-label={`${visit.plate} ekranÄ±nÄ± Ã¶nizle`}
+                >
+                  <LicensePlate plate={visit.plate || ''} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </header>
+
+      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_380px] lg:py-8">
+        <div className="flex flex-col gap-6">
+          <NewJobForm organizationId={organizationId} businessSlug={businessSlug} />
+          <ActiveJobs visits={activeVisits} organizationId={organizationId} businessSlug={businessSlug} />
+        </div>
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <CustomerDatabase completedVisits={completedVisits} insights={insights} businessSlug={businessSlug} />
+        </div>
+      </main>
+
+      {previewVisit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm">
+          <div className="relative flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border">
+            <div className="glass flex items-center justify-between border-x-0 border-t-0 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Eye className="size-4 text-cyan" />
+                <span className="text-muted-foreground">MÃ¼ÅŸteri ÅŸunu gÃ¶rÃ¼yor:</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setPreviewVisit(null)} className="size-8 p-0"><X className="size-5" /></Button>
+            </div>
+            <div className="overflow-y-auto">
+              <TrackingView visit={previewVisit} businessName={businessName} />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\admin-login.tsx ====================
+'use client'
+
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { Lock, ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { loginAction } from '@/lib/actions'
+
+type AdminLoginProps = {
+  slug: string
+  businessName: string
+}
+
+export function AdminLogin({ slug, businessName }: AdminLoginProps) {
+  const [pin, setPin] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+
+  function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setErrorMessage(null)
+
+    startTransition(async () => {
+      try {
+        const result = await loginAction(slug, pin)
+        console.log('Login sonucu:', result)
+
+        if (result.ok) {
+          // reload yerine adresi zorla panele yÃ¶nlendiriyoruz ki cache'de kalmasÄ±n
+          window.location.href = `/admin/${slug}`
+        } else {
+          setErrorMessage(result.error || 'HatalÄ± PIN kodu')
+          setPin('')
+        }
+      } catch (err: any) {
+        console.error('GiriÅŸ hatasÄ±:', err)
+        setErrorMessage(err.message || 'Sunucu baÄŸlantÄ± hatasÄ± oluÅŸtu')
+      }
+    })
+  }
+
+  return (
+    <div className="bg-grid flex min-h-dvh items-center justify-center p-4">
+      <div className="flex w-full max-w-sm flex-col gap-6 rounded-2xl border border-neon/20 bg-background/60 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="glow-neon flex size-12 items-center justify-center rounded-xl bg-neon text-neon-foreground">
+            <Lock className="size-6" />
+          </div>
+          <h1 className="mt-4 text-xl font-bold tracking-tight">{businessName}</h1>
+          <p className="text-sm text-muted-foreground">Panele eriÅŸmek iÃ§in 4 haneli PIN kodunu girin.</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <Input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="â€¢â€¢â€¢â€¢"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            className={`h-14 text-center text-2xl tracking-[1em] ${errorMessage ? 'border-red-500 bg-red-500/10' : 'bg-input/40'}`}
+            autoFocus
+          />
+          {errorMessage && (
+            <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>
+          )}
+
+          <Button
+            type="submit"
+            disabled={isPending || pin.length === 0}
+            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:bg-neon hover:brightness-110"
+          >
+            {isPending ? 'Kontrol ediliyor...' : <>GiriÅŸ Yap <ArrowRight className="ml-2 size-5" /></>}
+          </Button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\admin-shell.tsx ====================
+'use client'
+
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
+import { LayoutDashboard, CarFront, Users, Megaphone, Settings, LogOut, Sparkles, ShieldAlert } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { logoutAction } from '@/lib/actions'
+import type { Organization } from '@/lib/data'
+import { cn } from '@/lib/utils'
+
+const NAV_ITEMS = [
+  { href: '', label: 'Panel', icon: LayoutDashboard, roles: ['boss'] },
+  { href: '/aktif', label: 'Aktif Ä°ÅŸler', icon: CarFront, roles: ['boss', 'employee'] },
+  { href: '/musteriler', label: 'MÃ¼ÅŸteriler', icon: Users, roles: ['boss', 'employee'] },
+  { href: '/kampanya', label: 'Kampanya', icon: Megaphone, roles: ['boss'] },
+  { href: '/ayarlar', label: 'Ayarlar', icon: Settings, roles: ['boss'] },
+]
+
+type AdminShellProps = {
+  organization: Organization
+  slug: string
+  role?: 'boss' | 'employee'
+  children: React.ReactNode
+}
+
+export function AdminShell({ organization, slug, role = 'boss', children }: AdminShellProps) {
+  const pathname = usePathname()
+  const base = `/admin/${slug}`
+  const primaryColor = organization.metadata?.primaryColor || '#10b981'
+  const tagline = organization.metadata?.tagline || ''
+
+  function handleLogout() {
+    logoutAction(slug).then(() => window.location.reload())
+  }
+
+  const allowedNavItems = NAV_ITEMS.filter((item) => item.roles.includes(role))
+
+  return (
+    <div className="bg-grid flex min-h-dvh flex-col" style={{ '--neon': primaryColor } as React.CSSProperties}>
+      <header className="glass sticky top-0 z-20 border-x-0 border-t-0">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+          <div className="flex items-center gap-3">
+            {organization.logoUrl ? (
+              <img src={organization.logoUrl} alt={organization.name} className="size-9 rounded-lg object-cover" />
+            ) : (
+              <div className="glow-neon flex size-9 items-center justify-center rounded-lg bg-neon text-neon-foreground"><Sparkles className="size-4.5" /></div>
+            )}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-bold leading-tight sm:text-base">{organization.name}</h1>
+              </div>
+              {tagline && <p className="hidden text-[11px] text-muted-foreground sm:block">{tagline}</p>}
+            </div>
+          </div>
+
+          <nav className="hidden items-center gap-1 md:flex">
+            {allowedNavItems.map((item) => {
+              const href = `${base}${item.href}`
+              const isActive = item.href === '' ? pathname === base : pathname.startsWith(href)
+              return (
+                <Link key={item.href} href={href} className={cn('flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', isActive ? 'bg-neon/15 text-neon' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
+                  <item.icon className="size-4" />{item.label}
+                </Link>
+              )
+            })}
+          </nav>
+
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-red-400">
+            <LogOut className="size-4 md:mr-1.5" />
+            <span className="hidden md:inline">Ã‡Ä±kÄ±ÅŸ</span>
+          </Button>
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-6 sm:pb-8">{children}</main>
+    </div>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\branding-form.tsx ====================
+'use client'
+
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { CheckCircle2, Palette } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { SectionCard } from '@/components/admin/section-card'
+import { updateBrandingAction } from '@/lib/actions'
+import type { Business } from '@/lib/data'
+
+const COLOR_PRESETS = [
+  { label: 'Neon YeÅŸil', value: '#10b981' },
+  { label: 'Elektrik Mavi', value: '#3b82f6' },
+  { label: 'Turuncu', value: '#f97316' },
+  { label: 'Mor', value: '#a855f7' },
+  { label: 'KÄ±rmÄ±zÄ±', value: '#ef4444' },
+  { label: 'AltÄ±n', value: '#eab308' },
+]
+
+type BrandingFormProps = {
+  business: Business
+  slug: string
+}
+
+export function BrandingForm({ business, slug }: BrandingFormProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [logoUrl, setLogoUrl] = useState(business.logoUrl ?? '')
+  const [tagline, setTagline] = useState(business.tagline)
+  const [color, setColor] = useState(business.primaryColor)
+  const [saved, setSaved] = useState(false)
+
+  function handleSave() {
+    startTransition(async () => {
+      await updateBrandingAction(slug, business.id, { logoUrl, tagline, primaryColor: color })
+      setSaved(true)
+      router.refresh()
+      setTimeout(() => setSaved(false), 2500)
+    })
+  }
+
+  return (
+    <SectionCard
+      title="Marka AyarlarÄ±"
+      description="Logo, slogan ve ana renk â€” hem admin panelinde hem mÃ¼ÅŸteri ekranÄ±nda kullanÄ±lÄ±r."
+    >
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="logoUrl">Logo Adresi (URL)</Label>
+          <Input
+            id="logoUrl"
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            placeholder="https://..."
+            className="h-11 bg-input/40"
+          />
+          <p className="text-xs text-muted-foreground">
+            Logo dosyanÄ± bir gÃ¶rsel barÄ±ndÄ±rma sitesine (Ã¶rn. imgur.com) yÃ¼kleyip linkini buraya yapÄ±ÅŸtÄ±rabilirsin.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="tagline">Slogan</Label>
+          <Input
+            id="tagline"
+            value={tagline}
+            onChange={(e) => setTagline(e.target.value)}
+            placeholder="Premium Oto Detaylama"
+            className="h-11 bg-input/40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Label className="flex items-center gap-1.5"><Palette className="size-4" /> Ana Renk</Label>
+          <div className="flex flex-wrap gap-2">
+            {COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                onClick={() => setColor(preset.value)}
+                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                  color === preset.value ? 'border-foreground/60 ring-2 ring-foreground/20' : 'border-border'
+                }`}
+              >
+                <span className="size-3.5 rounded-full" style={{ backgroundColor: preset.value }} />
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button
+          onClick={handleSave}
+          disabled={isPending}
+          className="h-12 w-full text-neon-foreground"
+          style={{ backgroundColor: color }}
+        >
+          {saved ? (
+            <><CheckCircle2 className="mr-2 size-4" /> Kaydedildi</>
+          ) : isPending ? (
+            'Kaydediliyor...'
+          ) : (
+            'DeÄŸiÅŸiklikleri Kaydet'
+          )}
+        </Button>
+      </div>
+    </SectionCard>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\campaign-builder.tsx ====================
+'use client'
+
+import { useState, useTransition, useEffect, useRef } from 'react'
+import { Megaphone, MessageCircle, CheckCircle2, Loader2, Sparkles, Download, Copy, TrendingUp, Clock, Users, Zap } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { SectionCard } from '@/components/admin/section-card'
+import { getCampaignSegmentAction } from '@/lib/actions'
+import type { CampaignSegment, CampaignTarget } from '@/lib/data'
+import { cn } from '@/lib/utils'
+
+const SEGMENTS: { value: CampaignSegment; label: string; description: string; icon: React.ElementType }[] = [
+  { 
+    value: 'inactive_30', 
+    label: '30-60 GÃ¼n Gelmeyenler', 
+    description: 'YakÄ±nda unutmaya baÅŸlayacaklar â€“ hatÄ±rlatma iÃ§in ideal.',
+    icon: Clock
+  },
+  { 
+    value: 'inactive_60', 
+    label: '60+ GÃ¼n Gelmeyenler', 
+    description: 'Uzun sÃ¼redir uÄŸramayan, kaybetme riski olan mÃ¼ÅŸteriler.',
+    icon: TrendingUp
+  },
+  { 
+    value: 'ceramic_ppf_only', 
+    label: 'Seramik & Film YaptÄ±ranlar', 
+    description: 'Garantili iÅŸlemler â€“ periyodik bakÄ±m veya yenileme satmak iÃ§in.',
+    icon: Sparkles
+  },
+  { 
+    value: 'high_value', 
+    label: 'En DeÄŸerli 20 MÃ¼ÅŸteri', 
+    description: 'Toplam harcamaya gÃ¶re en Ã§ok kazandÄ±ran mÃ¼ÅŸteriler.',
+    icon: Zap
+  },
+  { 
+    value: 'all_customers', 
+    label: 'TÃ¼m MÃ¼ÅŸteriler', 
+    description: 'Genel bir duyuru/kampanya iÃ§in tÃ¼m mÃ¼ÅŸteri listesi.',
+    icon: Users
+  },
+]
+
+const MESSAGE_TEMPLATES = [
+  {
+    name: 'Bahar KampanyasÄ±',
+    text: 'Merhaba {isim}! ğŸŒ¸ Bahar geldi, aracÄ±nÄ±z iÃ§in detaylÄ± bakÄ±m zamanÄ±! %20 indirim fÄ±rsatÄ±nÄ± kaÃ§Ä±rmayÄ±n. Randevu iÃ§in bize yazÄ±n.',
+  },
+  {
+    name: 'Yaz HazÄ±rlÄ±ÄŸÄ±',
+    text: 'SayÄ±n {isim}, yaz gelmeden seramik kaplama ile aracÄ±nÄ±zÄ± gÃ¼neÅŸten koruyun! â˜€ï¸ SÄ±nÄ±rlÄ± sayÄ±da slot kaldÄ±.',
+  },
+  {
+    name: 'Garanti HatÄ±rlatma',
+    text: 'Merhaba {isim}! Seramik kaplama garantiniz yakÄ±nda sona eriyor. Ãœcretsiz kontrol iÃ§in hemen randevu alÄ±n!',
+  },
+  {
+    name: 'Sadakat Tebrik',
+    text: 'SayÄ±n {isim}, bizi tercih ettiÄŸiniz iÃ§in teÅŸekkÃ¼rler! ğŸ’™ SadÄ±k mÃ¼ÅŸterilerimize Ã¶zel %15 indirim sizin iÃ§in hazÄ±r.',
+  },
+]
+
+type CampaignBuilderProps = {
+  businessId: string
+  businessSlug: string
+  initialData?: CampaignTarget[]
+}
+
+export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: CampaignBuilderProps) {
+  const [segment, setSegment] = useState<CampaignSegment>('inactive_30')
+  const [template, setTemplate] = useState(MESSAGE_TEMPLATES[0].text)
+  const [targets, setTargets] = useState<CampaignTarget[]>(initialData)
+  const [sentPlates, setSentPlates] = useState<Set<string>>(new Set())
+  const [isPending, startTransition] = useTransition()
+  const isFirstRender = useRef(true)
+  const [copiedTemplate, setCopiedTemplate] = useState(false)
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+
+    startTransition(async () => {
+      const result = await getCampaignSegmentAction(businessId, segment)
+      setTargets(result)
+      setSentPlates(new Set())
+    })
+  }, [segment, businessId])
+
+  function sendTo(target: CampaignTarget) {
+    const isUnknown = !target.customerName || 
+      target.customerName.toLowerCase().includes('isimsiz') || 
+      target.customerName.toLowerCase().includes('iÄ°simsiz')
+    
+    const firstName = isUnknown ? '' : target.customerName.split(' ')[0]
+    
+    let message = template
+    if (isUnknown) {
+      message = message.replace(' {isim}', '').replace('{isim}', '')
+    } else {
+      message = message.replace('{isim}', firstName)
+    }
+
+    const digits = target.phone.replace(/\D/g, '')
+    const intl = digits.startsWith('0') ? `90${digits.slice(1)}` : (digits.startsWith('90') ? digits : `90${digits}`)
+    
+    window.open(`https://wa.me/${intl}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
+    setSentPlates((prev) => new Set(prev).add(target.plate))
+  }
+
+  function sendToAll() {
+    targets.forEach((target, index) => {
+      setTimeout(() => sendTo(target), index * 1000) // Her saniye 1 mesaj
+    })
+  }
+
+  function exportToCSV() {
+    const csv = [
+      ['Plaka', 'MÃ¼ÅŸteri AdÄ±', 'Telefon', 'Son Ziyaret'],
+      ...targets.map(t => [t.plate, t.customerName, t.phone, new Date(t.lastVisit).toLocaleDateString('tr-TR')])
+    ].map(row => row.join(',')).join('\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `kampanya_${segment}_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+  }
+
+  function copyTemplate() {
+    navigator.clipboard.writeText(template)
+    setCopiedTemplate(true)
+    setTimeout(() => setCopiedTemplate(false), 2000)
+  }
+
+  return (
+    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <SectionCard
+        title="Kampanya OluÅŸtur"
+        description="Bir mÃ¼ÅŸteri grubu seÃ§, mesajÄ±nÄ± yaz â€“ sÄ±radaki listeyi tek tek WhatsApp'tan gÃ¶nder."
+      >
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <Label>Kime gÃ¶nderilecek?</Label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {SEGMENTS.map((s) => {
+                const Icon = s.icon
+                return (
+                  <button
+                    key={s.value}
+                    onClick={() => setSegment(s.value)}
+                    className={cn(
+                      'flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-all',
+                      segment === s.value 
+                        ? 'border-neon bg-neon/10 shadow-[0_0_15px_rgba(var(--neon-rgb),0.2)] scale-[1.02]' 
+                        : 'border-border hover:bg-muted/40 hover:border-neon/30 hover:scale-[1.01]',
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className={cn('size-4', segment === s.value && 'text-neon')} />
+                      <span className={cn('text-sm font-semibold', segment === s.value && 'text-neon')}>
+                        {s.label}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{s.description}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="template">Mesaj Åablonu</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onClick={copyTemplate}
+                  className={cn(copiedTemplate && 'text-neon')}
+                >
+                  {copiedTemplate ? <CheckCircle2 className="mr-1 size-3" /> : <Copy className="mr-1 size-3" />}
+                  {copiedTemplate ? 'KopyalandÄ±' : 'Kopyala'}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="grid gap-2 sm:grid-cols-2">
+              {MESSAGE_TEMPLATES.map((t) => (
+                <button
+                  key={t.name}
+                  type="button"
+                  onClick={() => setTemplate(t.text)}
+                  className="rounded-lg border border-border bg-muted/30 p-3 text-left text-xs hover:bg-muted/60 transition-colors"
+                >
+                  <span className="font-semibold text-foreground">{t.name}</span>
+                  <p className="mt-1 text-muted-foreground line-clamp-2">{t.text.substring(0, 60)}...</p>
+                </button>
+              ))}
+            </div>
+
+            <Textarea
+              id="template"
+              value={template}
+              onChange={(e) => setTemplate(e.target.value)}
+              rows={4}
+              className="rounded-lg border border-border bg-input/40 p-3 text-sm outline-none transition-colors focus:border-neon/50 focus:bg-background"
+            />
+            <p className="text-xs text-muted-foreground">
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-neon">{'{isim}'}</code> yazdÄ±ÄŸÄ±n yere mÃ¼ÅŸterinin adÄ± otomatik yerleÅŸir. MÃ¼ÅŸteri ismi kayÄ±tlÄ± deÄŸilse sistem bu kelimeyi gizler.
+            </p>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="GÃ¶nderim KuyruÄŸu"
+        description="Her karta dokunduÄŸunda WhatsApp yeni sekmede aÃ§Ä±lÄ±r, mesaj hazÄ±r gelir â€“ sadece gÃ¶nder'e basman yeterli."
+        action={
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-xs font-medium text-neon">
+              {sentPlates.size}/{targets.length} GÃ¶nderildi
+            </span>
+            {targets.length > 0 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="xs"
+                  onClick={exportToCSV}
+                  className="border-cyan/40 text-cyan hover:bg-cyan/10"
+                >
+                  <Download className="mr-1 size-3" /> CSV Ä°ndir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="xs"
+                  onClick={sendToAll}
+                  disabled={isPending}
+                  className="border-neon/40 text-neon hover:bg-neon/10"
+                >
+                  <Megaphone className="mr-1 size-3" /> TÃ¼mÃ¼ne GÃ¶nder
+                </Button>
+              </>
+            )}
+          </div>
+        }
+      >
+        {isPending ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-sm text-muted-foreground">
+            <Loader2 className="size-6 animate-spin text-neon" /> 
+            <span>MÃ¼ÅŸteri listesi hazÄ±rlanÄ±yor...</span>
+          </div>
+        ) : targets.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-12 text-center text-sm text-muted-foreground">
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted/50 mb-2">
+              <Megaphone className="size-6 text-muted-foreground/50" />
+            </div>
+            Bu segmentte telefon numarasÄ± kayÄ±tlÄ± mÃ¼ÅŸteri bulunamadÄ±.
+          </div>
+        ) : (
+          <ul className="flex flex-col divide-y divide-border/50">
+            {targets.map((t) => {
+              const isSent = sentPlates.has(t.plate)
+              const daysSince = Math.floor((Date.now() - new Date(t.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
+              
+              return (
+                <li key={t.plate} className="flex items-center justify-between gap-3 py-3.5 first:pt-1 last:pb-1 hover:bg-muted/20 transition-colors rounded-lg px-2">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-foreground truncate">{t.customerName}</span>
+                    <span className="font-mono text-[11.5px] text-muted-foreground flex items-center gap-1.5">
+                      <span className="rounded bg-muted/50 px-1.5 py-0.5 text-foreground/70">{t.plate}</span> 
+                      {t.phone}
+                      <span className="text-amber-400">â€¢ {daysSince} gÃ¼n Ã¶nce</span>
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={isSent ? 'ghost' : 'outline'}
+                    onClick={() => sendTo(t)}
+                    className={cn(
+                      'transition-all shrink-0',
+                      !isSent && 'border-neon/40 text-neon hover:bg-neon/15 hover:text-neon shadow-sm hover:shadow-neon/20',
+                      isSent && 'text-muted-foreground opacity-60',
+                    )}
+                  >
+                    {isSent ? (
+                      <><CheckCircle2 className="mr-1.5 size-4" /> GÃ¶nderildi</>
+                    ) : (
+                      <><MessageCircle className="mr-1.5 size-4" /> GÃ¶nder</>
+                    )}
+                  </Button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </SectionCard>
+    </div>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\customer-database.tsx ====================
+'use client'
+
+import { useState } from 'react'
+import { MessageCircle, Users, Calendar, X, Car, TrendingDown } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { LicensePlate } from '@/components/license-plate'
+import { SectionCard } from '@/components/admin/section-card'
+import { buildWhatsAppLink } from '@/lib/jobs-store'
+import type { Visit, RetentionInsight } from '@/lib/data'
+
+const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+type FilterType = 'all' | 'week' | 'month'
+
+type CustomerDatabaseProps = {
+  completedVisits: Visit[]
+  insights: RetentionInsight[]
+  businessSlug: string
+  className?: string
+}
+
+export function CustomerDatabase({ completedVisits, insights, businessSlug, className }: CustomerDatabaseProps) {
+  const [filter, setFilter] = useState<FilterType>('all')
+  const [selectedPlateForModal, setSelectedPlateForModal] = useState<string | null>(null)
+
+  const filteredArchive = completedVisits.filter((item) => {
+    if (filter === 'all') return true
+    const itemDate = new Date(item.createdAt).getTime()
+    const now = new Date().getTime()
+    const diffDays = (now - itemDate) / (1000 * 60 * 60 * 24)
+
+    if (filter === 'week') return diffDays <= 7
+    if (filter === 'month') return diffDays <= 30
+    return true
+  })
+
+  const modalHistory = selectedPlateForModal
+    ? completedVisits.filter((a) => a.plate === selectedPlateForModal)
+    : []
+
+  function recall(phone: string | undefined | null, plate: string | undefined) {
+    if (!plate) return
+    const link = buildWhatsAppLink(phone, plate, businessSlug, window.location.origin)
+    if (link) window.open(link, '_blank', 'noopener,noreferrer')
+  }
+
+  return (
+    <>
+      {insights.length > 0 && (
+        <SectionCard
+          className={className ? `${className} mb-6` : 'mb-6'}
+          title="Geri KazanÄ±m AdaylarÄ±"
+          description="Eskiden dÃ¼zenli gelip son zamanlarda uÄŸramayan mÃ¼ÅŸteriler."
+          action={
+            <Badge variant="outline" className="gap-1 border-amber-500/40 font-mono text-amber-400">
+              <TrendingDown className="size-3" />
+              {insights.length}
+            </Badge>
+          }
+        >
+          <ul className="flex flex-col gap-2">
+            {insights.slice(0, 5).map((c) => (
+              <li
+                key={c.plate}
+                className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2"
+              >
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-semibold">{c.customerName}</span>
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    Son ziyaret: {dateFormatter.format(new Date(c.lastVisit))} Â· {c.visitCount} ziyaret
+                  </span>
+                </div>
+                {c.phone && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => recall(c.phone, c.plate)}
+                    className="shrink-0 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 hover:text-amber-400"
+                  >
+                    <MessageCircle className="mr-1.5 size-3.5" />
+                    UlaÅŸ
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      )}
+
+      <SectionCard
+        className={className}
+        title="MÃ¼ÅŸteri VeritabanÄ±"
+        description="GeÃ§miÅŸ iÅŸlemler, filtreleme ve ziyaret geÃ§miÅŸi."
+        action={
+          <Badge variant="outline" className="gap-1 font-mono text-muted-foreground">
+            <Users className="size-3" />
+            {completedVisits.length}
+          </Badge>
+        }
+      >
+        <div className="mb-4 flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
+          <button
+            onClick={() => setFilter('all')}
+            className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+              filter === 'all' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            TÃ¼mÃ¼ ({completedVisits.length})
+          </button>
+          <button
+            onClick={() => setFilter('week')}
+            className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+              filter === 'week' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            Bu Hafta
+          </button>
+          <button
+            onClick={() => setFilter('month')}
+            className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+              filter === 'month' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            Bu Ay
+          </button>
+        </div>
+
+        {filteredArchive.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            SeÃ§ilen aralÄ±kta kayÄ±t bulunmuyor.
+          </div>
+        ) : (
+          <ul className="flex flex-col divide-y divide-border">
+            {filteredArchive.map((c) => {
+              const totalVisits = completedVisits.filter((a) => a.plate === c.plate).length
+              const displayPlate = c.plate || 'BÄ°LÄ°NMÄ°YOR'
+
+              return (
+                <li
+                  key={c.id}
+                  onClick={() => setSelectedPlateForModal(displayPlate)}
+                  className="group flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between cursor-pointer rounded-lg px-2 transition-colors hover:bg-muted/40"
+                >
+                  <div className="flex items-start gap-4 sm:items-center">
+                    <div className="mt-1 sm:mt-0">
+                      <LicensePlate plate={displayPlate} />
+                    </div>
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-semibold">{c.customerName}</span>
+                        {totalVisits > 1 && (
+                          <span className="rounded-full bg-cyan/10 px-2 py-0.5 text-[10px] font-mono text-cyan border border-cyan/20">
+                            {totalVisits}. Ziyaret
+                          </span>
+                        )}
+                      </div>
+                      <time dateTime={c.createdAt} className="font-mono text-xs text-muted-foreground">
+                        {dateFormatter.format(new Date(c.createdAt))}
+                      </time>
+
+                      {c.services && c.services.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {c.services.map((s, i) => (
+                            <span key={i} className="rounded bg-secondary/50 px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        recall(c.phone, c.plate)
+                      }}
+                      className="w-full border-neon/50 bg-transparent text-neon hover:border-neon hover:bg-neon/10 hover:text-neon sm:w-auto"
+                    >
+                      <MessageCircle className="mr-2 size-4" />
+                      Tekrar Ã‡aÄŸÄ±r
+                    </Button>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </SectionCard>
+
+      {selectedPlateForModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="flex w-full max-w-lg flex-col gap-6 rounded-2xl border border-border bg-background p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-cyan/10 text-cyan">
+                  <Car className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">MÃ¼ÅŸteri Ziyaret GeÃ§miÅŸi</h3>
+                  <p className="font-mono text-xs text-muted-foreground">{selectedPlateForModal}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedPlateForModal(null)}
+                className="size-8 p-0"
+              >
+                <X className="size-5" />
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
+              <p className="text-xs text-muted-foreground">
+                Bu aracÄ±n toplam <span className="font-bold text-foreground">{modalHistory.length}</span> kayÄ±tlÄ± hizmet geÃ§miÅŸi bulunmaktadÄ±r:
+              </p>
+
+              {modalHistory.map((historyItem, idx) => (
+                <div key={historyItem.id} className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 p-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1 font-mono">
+                      <Calendar className="size-3.5" />
+                      {dateFormatter.format(new Date(historyItem.createdAt))}
+                    </span>
+                    <span className="font-mono">KayÄ±t #{modalHistory.length - idx}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{historyItem.customerName}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{historyItem.phone || 'Telefon yok'}</span>
+                  </div>
+
+                  {historyItem.services && historyItem.services.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {historyItem.services.map((s, sIdx) => (
+                        <span key={sIdx} className="rounded bg-neon/10 border border-neon/30 px-2 py-0.5 text-[11px] font-medium text-neon">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <Button
+              onClick={() => setSelectedPlateForModal(null)}
+              className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            >
+              Kapat
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\job-card.tsx ====================
+'use client'
+import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { Archive, Clock, ExternalLink } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { LicensePlate } from '@/components/license-plate'
+import { STEPS, STATUS_INDEX, plateToSlug } from '@/lib/jobs-store'
+import { updateVisitStatusAction } from '@/lib/actions'
+import type { Visit, VisitStatus } from '@/lib/data'
+import { cn } from '@/lib/utils'
+
+const timeFormatter = new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit' })
+
+export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit, organizationId: string, businessSlug: string }) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  
+  const currentIndex = STATUS_INDEX[visit.status] ?? 0
+  const isReady = visit.status === 'ready'
+  const displayPlate = visit.plate || 'BÄ°LÄ°NMÄ°YOR'
+
+  function handleSetStep(newStatus: VisitStatus) {
+    startTransition(async () => { await updateVisitStatusAction(businessSlug, organizationId, visit.id, newStatus) })
+  }
+
+  function handleComplete() {
+    startTransition(async () => { await updateVisitStatusAction(businessSlug, organizationId, visit.id, 'completed') })
+  }
+
+  return (
+    <article className={cn('flex flex-col gap-5 rounded-xl border bg-background/40 p-5', isReady ? 'border-neon/40 glow-neon' : 'border-border', isPending && 'opacity-60')}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-1.5 min-w-0">
+          <h3 className="text-lg font-bold leading-tight truncate">{visit.customerName}</h3>
+          <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><Clock className="size-3" /> <time>{timeFormatter.format(new Date(visit.createdAt))}</time></span>
+            {visit.phone && <span>Â· {visit.phone}</span>}
+          </div>
+          {visit.services && <div className="mt-1 flex flex-wrap gap-1.5">{visit.services.map((s, i) => <span key={i} className="rounded-md bg-secondary/60 px-2 py-0.5 text-[11px]">{s}</span>)}</div>}
+        </div>
+        <div className="flex shrink-0"><LicensePlate plate={displayPlate} /></div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {STEPS.map((s, i) => {
+          const active = s.key === visit.status
+          const done = i < currentIndex
+          return (
+            <button key={s.key} disabled={isPending} onClick={() => handleSetStep(s.key)}
+              className={cn('flex h-10 items-center justify-center rounded-lg border text-xs font-bold transition-all', active && 'glow-cyan border-cyan bg-cyan/15 text-cyan', done && 'border-neon/30 bg-neon/10 text-neon', !active && !done && 'border-border bg-muted/60 text-muted-foreground')}
+            >{s.adminLabel}</button>
+          )
+        })}
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button variant="secondary" disabled={isPending} onClick={handleComplete} className="h-10 flex-1">
+          <Archive className="mr-2 size-4" /> Teslim Edildi / ArÅŸive KaldÄ±r
+        </Button>
+        <Button variant="ghost" className="h-10 text-muted-foreground" render={<a href={`/${businessSlug}/${plateToSlug(displayPlate)}`} target="_blank" />}>
+          <ExternalLink className="mr-2 size-4" /> Takip SayfasÄ±
+        </Button>
+      </div>
+    </article>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\new-job-form.tsx ====================
+'use client'
+
+import { useState, useTransition, type FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
+import { Send, CheckCircle2, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { SectionCard } from '@/components/admin/section-card'
+import { buildWhatsAppLink, plateToSlug, WARRANTY_ELIGIBLE_SERVICES } from '@/lib/jobs-store'
+import { addVisitAction } from '@/lib/actions'
+
+const SERVICE_OPTIONS = ['Ä°Ã§/DÄ±ÅŸ YÄ±kama', 'DetaylÄ± Temizlik', 'Pasta & Cila', 'Seramik Kaplama', 'Motor YÄ±kama', 'Kaput Filmi', 'Cam Filmi', 'Far BakÄ±mÄ±', 'Torpedo KuafÃ¶r']
+const WARRANTY_PRESETS = [{ label: '12 Ay', months: 12 }, { label: '24 Ay', months: 24 }, { label: '36 Ay', months: 36 }]
+
+export function NewJobForm({ organizationId, businessSlug }: { organizationId: string, businessSlug: string }) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  
+  const [customerName, setCustomerName] = useState('')
+  const [plate, setPlate] = useState('')
+  const [carModel, setCarModel] = useState('')
+  const [phone, setPhone] = useState('')
+  const [services, setServices] = useState<string[]>([])
+  const [warrantyMonths, setWarrantyMonths] = useState<number | null>(null)
+  const [damageNote, setDamageNote] = useState('')
+  const [internalNote, setInternalNote] = useState('')
+  const [lastLink, setLastLink] = useState<{ wa: string; track: string; plate: string } | null>(null)
+
+  const canSubmit = plate.trim().length > 0 && services.length > 0
+  const showWarranty = services.some((s) => (WARRANTY_ELIGIBLE_SERVICES as readonly string[]).includes(s))
+
+  function toggleService(service: string) {
+    setServices((prev) => prev.includes(service) ? prev.filter((s) => s !== service) : [...prev, service])
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (!canSubmit) return
+
+    startTransition(async () => {
+      const visit = await addVisitAction(businessSlug, organizationId, {
+        customerName,
+        plate,
+        carModel,
+        phone,
+        services,
+        warrantyMonths: showWarranty ? (warrantyMonths ?? undefined) : undefined,
+        damageNote,
+        internalNote,
+      })
+
+      const displayPlate = visit.plate || plate
+      const waLink = buildWhatsAppLink(visit.phone, displayPlate, businessSlug, window.location.origin)
+      
+      setLastLink({ wa: waLink, track: `/${businessSlug}/${plateToSlug(displayPlate)}`, plate: displayPlate })
+      if (waLink) window.open(waLink, '_blank', 'noopener,noreferrer')
+
+      setCustomerName(''); setPlate(''); setCarModel(''); setPhone('');
+      setServices([]); setWarrantyMonths(null); setDamageNote(''); setInternalNote('');
+      router.refresh()
+    })
+  }
+
+  return (
+    <SectionCard title="Yeni Ä°ÅŸlem Ekle" description="Plaka girin, hizmetleri seÃ§in ve tek tÄ±kla sisteme kaydedin.">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-col gap-2">
+            <Label>MÃ¼ÅŸteri AdÄ± <span className="text-muted-foreground text-xs">(Ä°steÄŸe baÄŸlÄ±)</span></Label>
+            <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Ã–rn: Ahmet YÄ±lmaz" className="h-11" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>Plaka <span className="text-neon">*</span></Label>
+            <Input value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} placeholder="34 ABC 123" className="h-11 font-mono uppercase" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>AraÃ§ Modeli <span className="text-muted-foreground text-xs">(Ä°steÄŸe baÄŸlÄ±)</span></Label>
+            <Input value={carModel} onChange={(e) => setCarModel(e.target.value)} placeholder="Ã–rn: BMW 320i" className="h-11" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>Telefon <span className="text-muted-foreground text-xs">(Ä°steÄŸe baÄŸlÄ±)</span></Label>
+            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05xx xxx xx xx" className="h-11 font-mono" />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Label>Hizmet Tipi (En az 1 seÃ§im yapÄ±n)</Label>
+          <div className="flex flex-wrap gap-2">
+            {SERVICE_OPTIONS.map((service) => (
+              <button key={service} type="button" onClick={() => toggleService(service)}
+                className={`rounded-full border px-4 py-2 text-sm transition-all ${
+                  services.includes(service) ? 'border-neon bg-neon/10 text-neon shadow-[0_0_10px_rgba(var(--neon-rgb),0.3)]' : 'text-muted-foreground'
+                }`}
+              >{service}</button>
+            ))}
+          </div>
+        </div>
+
+        {showWarranty && (
+          <div className="flex flex-col gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <Label className="flex items-center gap-1.5 text-amber-400"><ShieldCheck className="size-4" /> Garanti SÃ¼resi</Label>
+            <div className="flex gap-2">
+              {WARRANTY_PRESETS.map((p) => (
+                <button key={p.months} type="button" onClick={() => setWarrantyMonths(p.months)}
+                  className={`rounded-full border px-4 py-1.5 text-xs transition-all ${warrantyMonths === p.months ? 'border-amber-400 bg-amber-500/15 text-amber-400' : 'text-muted-foreground'}`}
+                >{p.label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <Label className="flex items-center gap-1.5 text-amber-400"><AlertTriangle className="size-4" /> Tespit Edilen Hasar/Not (MÃ¼ÅŸteri GÃ¶recek)</Label>
+            <Textarea value={damageNote} onChange={(e) => setDamageNote(e.target.value)} placeholder="Ã–rn: Arka tampon Ã§izik..." rows={2} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>Dahili Notlar (Sadece siz gÃ¶receksiniz)</Label>
+            <Textarea value={internalNote} onChange={(e) => setInternalNote(e.target.value)} placeholder="Ã–zel talepler vs..." rows={2} />
+          </div>
+        </div>
+
+        <Button type="submit" disabled={!canSubmit || isPending} className="glow-neon h-14 w-full bg-neon text-neon-foreground font-bold text-base hover:brightness-110">
+          {isPending ? 'Kaydediliyor...' : 'Sisteme Kaydet & WhatsApp Linki OluÅŸtur'}
+        </Button>
+
+        {lastLink && (
+           <div className="flex flex-col gap-4 rounded-xl border border-neon/30 bg-neon/10 p-4 sm:flex-row sm:justify-between items-center mt-2">
+             <span className="flex items-center gap-2 text-neon font-medium"><CheckCircle2 className="size-5" /> {lastLink.plate} kaydedildi.</span>
+             <div className="flex gap-2">
+               {lastLink.wa && <Button variant="outline" className="border-neon/40 text-neon" render={<a href={lastLink.wa} target="_blank" rel="noopener noreferrer"/>}>WhatsApp'ta AÃ§</Button>}
+               <Button variant="ghost" render={<a href={lastLink.track} target="_blank" rel="noopener noreferrer"/>}><ExternalLink className="mr-2 size-4" /> Takip EkranÄ±</Button>
+             </div>
+           </div>
+        )}
+      </form>
+    </SectionCard>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\plate-preview-strip.tsx ====================
+'use client'
+
+import { useState } from 'react'
+import { Eye, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { LicensePlate } from '@/components/license-plate'
+import { TrackingView } from '@/components/tracking-view'
+import type { Visit } from '@/lib/data'
+
+type PlatePreviewStripProps = {
+  visits: Visit[]
+  businessName: string
+}
+
+export function PlatePreviewStrip({ visits, businessName }: PlatePreviewStripProps) {
+  const [previewVisit, setPreviewVisit] = useState<Visit | null>(null)
+
+  if (visits.length === 0) return null
+
+  return (
+    <>
+      <div className="glass rounded-xl px-4 py-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <span className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            MÃ¼ÅŸteri Ã–nizle:
+          </span>
+          {visits.map((visit) => (
+            <button
+              key={visit.id}
+              onClick={() => setPreviewVisit(visit)}
+              className="shrink-0 rounded-md transition-transform hover:scale-105"
+              aria-label={`${visit.plate} mÃ¼ÅŸteri ekranÄ±nÄ± Ã¶nizle`}
+            >
+              <LicensePlate plate={visit.plate || ''} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {previewVisit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm">
+          <div className="relative flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border">
+            <div className="glass flex items-center justify-between border-x-0 border-t-0 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Eye className="size-4 text-cyan" />
+                <span className="text-muted-foreground">MÃ¼ÅŸteri ÅŸunu gÃ¶rÃ¼yor:</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setPreviewVisit(null)} className="size-8 p-0">
+                <X className="size-5" />
+              </Button>
+            </div>
+            <div className="overflow-y-auto">
+              <TrackingView visit={previewVisit} businessName={businessName} />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\section-card.tsx ====================
+import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
+
+type SectionCardProps = {
+  title: string
+  description?: string
+  action?: ReactNode
+  children: ReactNode
+  className?: string
+}
+
+export function SectionCard({ title, description, action, children, className }: SectionCardProps) {
+  return (
+    <section className={cn('glass flex flex-col gap-6 rounded-2xl p-6', className)}>
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        </div>
+        {action}
+      </header>
+      {children}
+    </section>
+  )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\ui\badge.tsx ====================
+import { mergeProps } from "@base-ui/react/merge-props"
+import { useRender } from "@base-ui/react/use-render"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "cn"
+
+const badgeVariants = cva(
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        secondary:
+          "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
+        destructive:
+          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
+        outline:
+          "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
+        ghost:
+          "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+function Badge({
+  className,
+  variant = "default",
+  render,
+  ...props
+}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
+  return useRender({
+    defaultTagName: "span",
+    props: mergeProps<"span">(
+      {
+        className: cn(badgeVariants({ variant }), className),
+      },
+      props
+    ),
+    render,
+    state: {
+      slot: "badge",
+      variant,
+    },
+  })
+}
+
+export { Badge, badgeVariants }
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\ui\button.tsx ====================
+import * as React from 'react'
+import { Button as ButtonPrimitive } from '@base-ui/react/button'
+import { cva, type VariantProps } from 'class-variance-authority'
+
+import { cn } from '@/lib/utils'
+
+const buttonVariants = cva(
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
+        outline:
+          'border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
+        secondary:
+          'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
+        ghost:
+          'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50',
+        destructive:
+          'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
+        link: 'text-primary underline-offset-4 hover:underline',
+      },
+      size: {
+        default:
+          'h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
+        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: 'h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
+        icon: 'size-8',
+        'icon-xs':
+          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+        'icon-sm':
+          'size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg',
+        'icon-lg': 'size-9',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  },
+)
+
+function Button({
+  className,
+  variant = 'default',
+  size = 'default',
+  ...props
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  // EÄŸer render prop'u ile a veya baÅŸka etiket geliyorsa nativeButton'Ä± false yaparak Base UI uyarÄ±sÄ±nÄ± engeller
+  const isCustomRender = Boolean(props.render && typeof props.render !== 'function' && (props.render as React.ReactElement).type !== 'button')
+
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      nativeButton={!isCustomRender}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\ui\card.tsx ====================
+import * as React from "react"
+import { cn } from "cn"
+
+function Card({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+  return (
+    <div
+      data-slot="card"
+      data-size={size}
+      className={cn(
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn(
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn(
+        "text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-(--card-spacing)", className)}
+      {...props}
+    />
+  )
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn(
+        "flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\ui\input.tsx ====================
+import * as React from "react"
+import { Input as InputPrimitive } from "@base-ui/react/input"
+import { cn } from "cn"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <InputPrimitive
+      type={type}
+      data-slot="input"
+      className={cn(
+        "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Input }
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\ui\label.tsx ====================
+"use client"
+
+import * as React from "react"
+import { cn } from "cn"
+
+function Label({ className, ...props }: React.ComponentProps<"label">) {
+  return (
+    <label
+      data-slot="label"
+      className={cn(
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Label }
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\ui\textarea.tsx ====================
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "flex min-h-[80px] w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon focus-visible:border-neon disabled:cursor-not-allowed disabled:opacity-50 transition-all",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Textarea.displayName = "Textarea"
+
+export { Textarea }
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\actions.ts ====================
+'use server'
+
+import { cookies } from 'next/headers'
+import { revalidatePath } from 'next/cache'
+import * as data from '@/lib/data'
+import type { VisitStatus } from '@/lib/data'
+
+// NOT: Ä°leride BetterAuth/Lucia gibi bir sisteme geÃ§tiÄŸinde 
+// buradaki cookie okuma mantÄ±ÄŸÄ± `const session = await auth()` ÅŸekline dÃ¶nÃ¼ÅŸecek.
+// Åu an iÃ§in MVP izolasyonunu koruyoruz.
+function authCookieName(slug: string) {
+  return `garaj34_auth_${slug}`
+}
+
+export async function getAuthedOrganization(slug: string) {
+  try {
+    const jar = await cookies()
+    const cookieOrgId = jar.get(authCookieName(slug))?.value
+    if (!cookieOrgId) return null
+
+    const org = await data.getOrganizationBySlug(slug)
+    if (!org || String(org.id) !== String(cookieOrgId)) return null
+    
+    // GeÃ§ici yetkilendirme mock'u
+    return { organization: org, role: 'boss' as const } 
+  } catch {
+    return null
+  }
+}
+
+// TENTANT ISOLATION KORUMASI: TÃ¼m iÅŸlemlerden Ã¶nce iÅŸletme yetkisi kontrol edilir
+async function requireAuth(slug: string, organizationId: string) {
+  const auth = await getAuthedOrganization(slug)
+  if (!auth || String(auth.organization.id) !== String(organizationId)) {
+    throw new Error('Yetkisiz islem. Lutfen tekrar giris yapin.')
+  }
+}
+
+export async function logoutAction(slug: string) {
+  const jar = await cookies()
+  jar.delete(authCookieName(slug))
+  revalidatePath(`/admin/${slug}`, 'layout')
+}
+
+export async function addVisitAction(
+  slug: string, 
+  organizationId: string, 
+  input: Parameters<typeof data.addVisit>[1]
+) {
+  await requireAuth(slug, organizationId)
+  const visit = await data.addVisit(organizationId, input)
+  revalidatePath(`/admin/${slug}`, 'layout')
+  return visit
+}
+
+export async function updateVisitStatusAction(
+  slug: string, 
+  organizationId: string, 
+  visitId: string, 
+  status: VisitStatus
+) {
+  await requireAuth(slug, organizationId)
+  await data.updateVisitStatus(organizationId, visitId, status)
+  revalidatePath(`/admin/${slug}`, 'layout')
+}
+
+export async function updateBrandingAction(
+  slug: string, 
+  organizationId: string, 
+  input: Parameters<typeof data.updateOrganizationBranding>[1]
+) {
+  await requireAuth(slug, organizationId)
+  await data.updateOrganizationBranding(organizationId, input)
+  revalidatePath(`/admin/${slug}`, 'layout')
+  revalidatePath(`/${slug}`, 'layout')
+}
+
+// GÃœVENLÄ°K AÃ‡IÄI KAPATILDI: ArtÄ±k bu aksiyon tenant izolasyonundan geÃ§iriliyor
+export async function getCampaignSegmentAction(
+  slug: string, 
+  organizationId: string, 
+  segment: string
+) {
+  await requireAuth(slug, organizationId)
+  return data.getCampaignSegment(organizationId, segment)
+}
+
+export async function loginAction(slug: string, pin: string) {
+  try {
+    const org = await data.getOrganizationBySlug(slug)
+    // Åimdilik test edebilmek iÃ§in PIN olarak organizasyon adÄ±nÄ±n ilk 4 harfini veya '1234' kabul ediyoruz (Auth fazÄ±na geÃ§ene kadar)
+    if (!org || (pin !== '1234' && pin !== org.name.substring(0,4))) return { ok: false as const, error: 'HatalÄ± PIN kodu.' }
+
+    const jar = await cookies()
+    jar.set(authCookieName(slug), String(org.id), {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30,
+    })
+
+    revalidatePath(`/admin/${slug}`, 'layout')
+    return { ok: true as const, role: 'boss' as const }
+  } catch (error) {
+    return { ok: false as const, error: 'Sunucu hatasÄ± oluÅŸtu.' }
+  }
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\data.ts ====================
+import 'server-only'
+import { sql } from '@/lib/db'
+import { normalizePlate } from '@/lib/jobs-store'
+
+// --- TÄ°PLER ---
+export type Organization = {
+  id: string
+  slug: string
+  name: string
+  logoUrl: string | null
+  metadata: any
+  createdAt: string
+}
+
+export type Customer = {
+  id: string
+  organizationId: string
+  fullName: string
+  phone: string | null
+  createdAt: string
+}
+
+export type Vehicle = {
+  id: string
+  customerId: string | null
+  organizationId: string
+  plate: string
+  brand: string | null
+  model: string | null
+}
+
+export type VisitStatus = 'queued' | 'processing' | 'ready' | 'completed' | 'cancelled'
+
+export type Visit = {
+  id: string
+  vehicleId: string
+  organizationId: string
+  status: VisitStatus
+  services: string[]
+  damageNote: string | null
+  internalNote: string | null
+  warrantyEndDate: string | null
+  createdAt: string
+  completedAt: string | null
+  plate?: string
+  customerName?: string
+  phone?: string
+  carModel?: string
+}
+
+export type CampaignTarget = {
+  plate: string
+  customerName: string
+  phone: string
+  lastVisit: string
+  services: string[]
+}
+
+export type RetentionInsight = {
+  plate: string
+  customerName: string
+  phone: string
+  visitCount: number
+  lastVisit: string
+  isOverdue: boolean
+}
+
+// --- ORGANÄ°ZASYON (TENANT) Ä°ÅLEMLERÄ° ---
+
+export async function getOrganizationBySlug(slug: string): Promise<Organization | null> {
+  const rows = await sql`SELECT * FROM neon_auth.organization WHERE slug = ${slug} LIMIT 1`
+  if (!rows.length) return null
+  return {
+    id: String(rows[0].id),
+    slug: String(rows[0].slug),
+    name: String(rows[0].name),
+    logoUrl: rows[0].logo || null,
+    metadata: rows[0].metadata || {},
+    createdAt: String(rows[0].createdat)
+  }
+}
+
+export async function updateOrganizationBranding(
+  orgId: string,
+  input: { logoUrl?: string; tagline?: string; primaryColor?: string }
+) {
+  await sql`
+    UPDATE neon_auth.organization 
+    SET logo = COALESCE(${input.logoUrl ?? null}, logo),
+        metadata = jsonb_set(
+          jsonb_set(COALESCE(metadata, '{}'::jsonb), '{tagline}', COALESCE(to_jsonb(${input.tagline}::text), metadata->'tagline')),
+          '{primaryColor}', COALESCE(to_jsonb(${input.primaryColor}::text), metadata->'primaryColor')
+        )
+    WHERE id = ${orgId}
+  `
+}
+
+// --- CRM & OPERASYON Ä°ÅLEMLERÄ° ---
+
+export async function addVisit(
+  orgId: string,
+  input: {
+    customerName?: string
+    plate: string
+    carModel?: string
+    phone?: string
+    services: string[]
+    warrantyMonths?: number
+    damageNote?: string
+    internalNote?: string
+  }
+): Promise<Visit> {
+  const customerName = input.customerName?.trim() || 'Ä°simsiz MÃ¼ÅŸteri'
+  const phone = input.phone?.trim() || null
+  const plate = normalizePlate(input.plate)
+  const carModel = input.carModel?.trim() || null
+
+  let warrantyEndDate = null
+  if (input.warrantyMonths) {
+    const d = new Date()
+    d.setMonth(d.getMonth() + input.warrantyMonths)
+    warrantyEndDate = d.toISOString()
+  }
+
+  let customerId = null
+  if (phone) {
+    const custRows = await sql`
+      INSERT INTO customers (organization_id, full_name, phone)
+      VALUES (${orgId}, ${customerName}, ${phone})
+      ON CONFLICT (organization_id, phone) 
+      DO UPDATE SET full_name = EXCLUDED.full_name
+      RETURNING id
+    `
+    customerId = custRows[0].id
+  } else {
+    const custRows = await sql`
+      INSERT INTO customers (organization_id, full_name)
+      VALUES (${orgId}, ${customerName})
+      RETURNING id
+    `
+    customerId = custRows[0].id
+  }
+
+  const vehRows = await sql`
+    INSERT INTO vehicles (organization_id, customer_id, plate, model)
+    VALUES (${orgId}, ${customerId}, ${plate}, ${carModel})
+    ON CONFLICT (organization_id, plate) 
+    DO UPDATE SET customer_id = EXCLUDED.customer_id, model = COALESCE(EXCLUDED.model, vehicles.model)
+    RETURNING id
+  `
+  const vehicleId = vehRows[0].id
+
+  const visitRows = await sql`
+    INSERT INTO visits (
+      organization_id, vehicle_id, status, services, damage_note, internal_note, warranty_end_date
+    ) VALUES (
+      ${orgId}, ${vehicleId}, 'queued', ${input.services}, ${input.damageNote || null}, ${input.internalNote || null}, ${warrantyEndDate}
+    )
+    RETURNING *
+  `
+  
+  return {
+    ...visitRows[0],
+    plate,
+    customerName,
+    phone,
+    carModel
+  } as Visit
+}
+
+export async function listActiveVisits(orgId: string): Promise<Visit[]> {
+  const rows = await sql`
+    SELECT v.*, veh.plate, veh.model as carModel, c.full_name as customerName, c.phone
+    FROM visits v
+    JOIN vehicles veh ON v.vehicle_id = veh.id
+    LEFT JOIN customers c ON veh.customer_id = c.id
+    WHERE v.organization_id = ${orgId} AND v.status IN ('queued', 'processing', 'ready')
+    ORDER BY v.created_at DESC
+  `
+  return rows.map((r: any) => ({
+    id: String(r.id),
+    vehicleId: String(r.vehicle_id),
+    organizationId: String(r.organization_id),
+    status: r.status as VisitStatus,
+    services: r.services || [],
+    damageNote: r.damage_note,
+    internalNote: r.internal_note,
+    warrantyEndDate: r.warranty_end_date,
+    createdAt: r.created_at,
+    completedAt: r.completed_at,
+    plate: r.plate,
+    customerName: r.customername,
+    phone: r.phone,
+    carModel: r.carmodel
+  }))
+}
+
+export async function listCompletedVisits(orgId: string): Promise<Visit[]> {
+  const rows = await sql`
+    SELECT v.*, veh.plate, veh.model as carModel, c.full_name as customerName, c.phone
+    FROM visits v
+    JOIN vehicles veh ON v.vehicle_id = veh.id
+    LEFT JOIN customers c ON veh.customer_id = c.id
+    WHERE v.organization_id = ${orgId} AND v.status IN ('completed', 'cancelled')
+    ORDER BY v.completed_at DESC NULLS LAST
+  `
+  return rows.map((r: any) => ({
+    id: String(r.id),
+    vehicleId: String(r.vehicle_id),
+    organizationId: String(r.organization_id),
+    status: r.status as VisitStatus,
+    services: r.services || [],
+    damageNote: r.damage_note,
+    internalNote: r.internal_note,
+    warrantyEndDate: r.warranty_end_date,
+    createdAt: r.created_at,
+    completedAt: r.completed_at,
+    plate: r.plate,
+    customerName: r.customername,
+    phone: r.phone,
+    carModel: r.carmodel
+  }))
+}
+
+export async function findVisitByPlate(orgId: string, slug: string): Promise<Visit | null> {
+  const normalized = slug.toUpperCase()
+  const rows = await sql`
+    SELECT v.*, veh.plate, veh.model as carModel, c.full_name as customerName, c.phone
+    FROM visits v
+    JOIN vehicles veh ON v.vehicle_id = veh.id
+    LEFT JOIN customers c ON veh.customer_id = c.id
+    WHERE v.organization_id = ${orgId} 
+      AND REPLACE(veh.plate, ' ', '') = ${normalized}
+      AND v.status != 'cancelled'
+    ORDER BY v.created_at DESC LIMIT 1
+  `
+  if (!rows.length) return null
+  const r = rows[0]
+  return {
+    id: String(r.id), vehicleId: String(r.vehicle_id), organizationId: String(r.organization_id),
+    status: r.status as VisitStatus, services: r.services || [], damageNote: r.damage_note,
+    internalNote: r.internal_note, warrantyEndDate: r.warranty_end_date, createdAt: r.created_at,
+    completedAt: r.completed_at, plate: r.plate, customerName: r.customername, phone: r.phone, carModel: r.carmodel
+  }
+}
+
+export async function updateVisitStatus(orgId: string, visitId: string, status: VisitStatus) {
+  const completedAt = status === 'completed' ? sql`NOW()` : null
+  await sql`
+    UPDATE visits 
+    SET status = ${status}, completed_at = COALESCE(${completedAt}, completed_at)
+    WHERE id = ${visitId} AND organization_id = ${orgId}
+  `
+}
+
+// --- KAMPANYA VE DAVRANIÅ ANALÄ°ZÄ° ---
+
+export async function getCampaignSegment(orgId: string, segment: string): Promise<CampaignTarget[]> {
+  const base = sql`
+    SELECT 
+      veh.plate, 
+      c.full_name as customer_name, 
+      c.phone, 
+      MAX(v.created_at) AS last_visit, 
+      array_agg(DISTINCT unnest(v.services)) as all_services, 
+      COUNT(v.id) as total_visits
+    FROM visits v
+    JOIN vehicles veh ON v.vehicle_id = veh.id
+    JOIN customers c ON veh.customer_id = c.id
+    WHERE v.organization_id = ${orgId} AND c.phone IS NOT NULL
+    GROUP BY veh.plate, c.full_name, c.phone
+  `
+  const rows = await base
+  const now = Date.now()
+
+  // TypeScript'e ara verimizin tipini aÃ§Ä±kÃ§a sÃ¶ylÃ¼yoruz
+  type MappedTarget = {
+    plate: string
+    customerName: string
+    phone: string
+    lastVisit: string
+    services: string[]
+    daysSince: number
+    totalVisits: number
+  }
+
+  const mapped: MappedTarget[] = rows.map((r: any) => ({
+    plate: String(r.plate || ''),
+    customerName: String(r.customer_name || ''),
+    phone: String(r.phone || ''),
+    lastVisit: String(r.last_visit || ''),
+    services: Array.isArray(r.all_services) ? r.all_services.map(String) : [],
+    daysSince: Math.floor((now - new Date(r.last_visit).getTime()) / (1000 * 60 * 60 * 24)),
+    totalVisits: Number(r.total_visits || 0)
+  }))
+
+  let filtered = mapped
+
+  if (segment === 'inactive_30') {
+    filtered = mapped.filter((c) => c.daysSince >= 30 && c.daysSince < 60)
+  } else if (segment === 'inactive_60') {
+    filtered = mapped.filter((c) => c.daysSince >= 60)
+  } else if (segment === 'ceramic_ppf_only') {
+    filtered = mapped.filter((c) => c.services.some((s) => s.includes('Seramik') || s.includes('Film')))
+  } else if (segment === 'high_value') {
+    filtered = [...mapped].sort((a, b) => b.totalVisits - a.totalVisits).slice(0, 20)
+  }
+
+  // TypeScript'i mutlu etmek iÃ§in fazladan eklediÄŸimiz 'daysSince' ve 'totalVisits' verilerini
+  // dÄ±ÅŸarÄ±ya yollamadan Ã¶nce temizliyoruz (Sadece CampaignTarget tipini dÃ¶ndÃ¼rÃ¼yoruz).
+  return filtered.map(f => ({
+    plate: f.plate,
+    customerName: f.customerName,
+    phone: f.phone,
+    lastVisit: f.lastVisit,
+    services: f.services
+  }))
+}
+
+export async function getRetentionInsights(orgId: string): Promise<RetentionInsight[]> {
+  const rows = await sql`
+    SELECT veh.plate, c.full_name as customer_name, c.phone, array_agg(v.created_at ORDER BY v.created_at DESC) AS visit_dates
+    FROM visits v
+    JOIN vehicles veh ON v.vehicle_id = veh.id
+    JOIN customers c ON veh.customer_id = c.id
+    WHERE v.organization_id = ${orgId} AND v.status = 'completed'
+    GROUP BY veh.plate, c.full_name, c.phone
+    HAVING count(v.id) >= 2
+  `
+  const now = Date.now()
+  
+  const mapped: RetentionInsight[] = rows.map((r: any) => {
+    const dates = (Array.isArray(r.visit_dates) ? r.visit_dates : []).map((v: string) => new Date(v).getTime())
+    const gaps = dates.slice(0, -1).map((d: number, i: number) => d - dates[i + 1])
+    
+    // HatanÄ±n Ã§Ã¶zÃ¼ldÃ¼ÄŸÃ¼ satÄ±r: a ve b iÃ§in : number eklendi
+    const avgGap = gaps.length > 0 ? gaps.reduce((a: number, b: number) => a + b, 0) / gaps.length : 0
+    
+    const sinceLast = now - (dates[0] || now)
+    return {
+      plate: String(r.plate || ''), 
+      customerName: String(r.customer_name || ''), 
+      phone: String(r.phone || ''),
+      visitCount: dates.length, 
+      lastVisit: new Date(dates[0] || now).toISOString(), 
+      isOverdue: sinceLast > (avgGap * 1.5),
+    }
+  })
+  
+  return mapped.filter(c => c.isOverdue).sort((a, b) => new Date(a.lastVisit).getTime() - new Date(b.lastVisit).getTime())
+}
+
+export async function getServicePopularity(orgId: string) {
+  const rows = await sql`
+    SELECT unnest(services) AS service, COUNT(*) AS count
+    FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed'
+    GROUP BY service
+    ORDER BY count DESC
+    LIMIT 8
+  `
+  return rows.map((r: any) => ({ service: String(r.service), count: Number(r.count) }))
+}
+
+export async function getBusiestWeekday(orgId: string) {
+  const rows = await sql`
+    SELECT extract(dow FROM created_at) AS weekday, COUNT(*) AS count
+    FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed'
+    GROUP BY weekday
+    ORDER BY count DESC
+  `
+  return rows.map((r: any) => ({ weekday: Number(r.weekday), count: Number(r.count) }))
+}
+
+export async function getNewVsReturningRatio(orgId: string) {
+  const rows = await sql`
+    SELECT vehicle_id, COUNT(*) AS visits
+    FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed'
+    GROUP BY vehicle_id
+  `
+  const total = rows.length
+  const returning = rows.filter((r: any) => Number(r.visits) > 1).length
+  return { total, returning, new: total - returning }
+}
+
+export async function getMonthlyVisitTrend(orgId: string) {
+  const rows = await sql`
+    SELECT date_trunc('month', created_at) AS month, COUNT(*) AS visits
+    FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed' AND created_at > now() - interval '6 months'
+    GROUP BY month
+    ORDER BY month ASC
+  `
+  return rows.map((r: any) => ({ month: String(r.month), visits: Number(r.visits) }))
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\db.ts ====================
+import { neon } from '@neondatabase/serverless'
+
+const connectionString =
+  process.env.DATABASE_URL ??
+  process.env.POSTGRES_URL ??
+  process.env.DATABASE_URL_UNPOOLED
+
+if (!connectionString) {
+  throw new Error(
+    'VeritabanÄ± baÄŸlantÄ± adresi bulunamadÄ±. Vercel proje ayarlarÄ±nda DATABASE_URL (veya POSTGRES_URL) environment variable\'Ä±nÄ±n eklendiÄŸinden emin ol.'
+  )
+}
+
+export const sql = neon(connectionString)
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\jobs-store.tsx ====================
+import type { VisitStatus } from '@/lib/data'
+
+export const WARRANTY_ELIGIBLE_SERVICES = ['Seramik Kaplama', 'Kaput Filmi', 'Cam Filmi'] as const
+
+export type StepConfig = {
+  key: VisitStatus
+  adminLabel: string
+  title: string
+  description: string
+}
+
+export const STEPS: StepConfig[] = [
+  {
+    key: 'queued',
+    adminLabel: 'SÄ±rada',
+    title: 'SÄ±rada Bekliyor',
+    description: 'AracÄ±nÄ±z teslim alÄ±ndÄ±, sÄ±raya eklendi.',
+  },
+  {
+    key: 'processing',
+    adminLabel: 'Ä°ÅŸlemde',
+    title: 'Ä°ÅŸleme AlÄ±ndÄ±',
+    description: 'SeÃ§tiÄŸiniz hizmetler Ã¶zenle uygulanÄ±yor.',
+  },
+  {
+    key: 'ready',
+    adminLabel: 'HazÄ±r!',
+    title: 'Teslime HazÄ±r!',
+    description: 'AracÄ±nÄ±zÄ±n iÅŸlemleri tamamlandÄ±, sizi bekliyor.',
+  },
+]
+
+// Status deÄŸerlerinin indeks karÅŸÄ±lÄ±klarÄ± (Ä°lerlemeyi hesaplamak iÃ§in)
+export const STATUS_INDEX: Record<VisitStatus, number> = {
+  queued: 0,
+  processing: 1,
+  ready: 2,
+  completed: 3,
+  cancelled: 4
+}
+
+export function normalizePlate(input: string) {
+  return input
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .replace(/^(\d{2})([A-Z]{1,3})(\d{2,5})$/, '$1 $2 $3')
+}
+
+export function plateToSlug(plate: string) {
+  return plate.replace(/\s+/g, '').toUpperCase()
+}
+
+export function buildWhatsAppLink(phone: string | undefined | null, plate: string, businessSlug: string, origin: string) {
+  if (!phone) return ''
+  const digits = phone.replace(/\D/g, '')
+  const intl = digits.startsWith('0') ? `90${digits.slice(1)}` : digits.startsWith('90') ? digits : `90${digits}`
+  const url = `${origin}/${businessSlug}/${plateToSlug(plate)}`
+  const text = `Merhaba! AracÄ±nÄ±z iÅŸleme alÄ±ndÄ±. CanlÄ± takip linkiniz: ${url}`
+  return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\utils.ts ====================
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+
