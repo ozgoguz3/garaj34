@@ -1,41 +1,6 @@
 ﻿==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\globals.css ====================
 @import "tailwindcss";
 
-@theme {
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  
-  --color-neon: var(--neon);
-  --color-neon-foreground: #000000;
-  --color-plate: #ffffff;
-  --color-plate-foreground: #000000;
-  --color-plate-stripe: #0033a0;
-}
-
 @layer base {
   :root {
     --background: 0 0% 3.9%;
@@ -58,18 +23,35 @@
     --input: 0 0% 20%;
     --ring: 0 0% 83.1%;
     --radius: 0.75rem;
-    
     --neon: #10b981;
   }
 }
 
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
 }
 
 /* Custom UI Effects */
@@ -86,15 +68,9 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.glow-neon {
-  box-shadow: 0 0 20px rgba(var(--neon-rgb, 16, 185, 129), 0.3);
-}
+.glow-neon { box-shadow: 0 0 20px var(--neon); }
+.glow-neon-text { text-shadow: 0 0 10px var(--neon); }
 
-.glow-neon-text {
-  text-shadow: 0 0 10px rgba(var(--neon-rgb, 16, 185, 129), 0.5);
-}
-
-/* Animations */
 @keyframes shimmer {
   0% { background-position: -1000px 0; }
   100% { background-position: 1000px 0; }
@@ -102,26 +78,14 @@
 
 .skeleton {
   animation: shimmer 2s infinite linear;
-  background: linear-gradient(90deg, hsl(var(--muted)) 0%, hsl(var(--muted-foreground)/0.1) 50%, hsl(var(--muted)) 100%);
+  background: linear-gradient(90deg, hsl(var(--muted)) 0%, rgba(255,255,255,0.05) 50%, hsl(var(--muted)) 100%);
   background-size: 1000px 100%;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--neon);
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--neon); }
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\layout.tsx ====================
@@ -997,6 +961,7 @@ import { useRouter } from 'next/navigation'
 import { Lock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { loginAction } from '@/lib/actions'
 
 type AdminLoginProps = {
@@ -1005,10 +970,10 @@ type AdminLoginProps = {
 }
 
 export function AdminLogin({ slug, businessName }: AdminLoginProps) {
-  const [pin, setPin] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -1016,19 +981,14 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
 
     startTransition(async () => {
       try {
-        const result = await loginAction(slug, pin)
-        console.log('Login sonucu:', result)
-
+        const result = await loginAction(slug, email, password)
         if (result.ok) {
-          // reload yerine adresi zorla panele yÃ¶nlendiriyoruz ki cache'de kalmasÄ±n
           window.location.href = `/admin/${slug}`
         } else {
-          setErrorMessage(result.error || 'HatalÄ± PIN kodu')
-          setPin('')
+          setErrorMessage(result.error || 'GeÃ§ersiz giriÅŸ bilgileri')
         }
-      } catch (err: any) {
-        console.error('GiriÅŸ hatasÄ±:', err)
-        setErrorMessage(err.message || 'Sunucu baÄŸlantÄ± hatasÄ± oluÅŸtu')
+      } catch (err) {
+        setErrorMessage('Sunucu baÄŸlantÄ± hatasÄ± oluÅŸtu')
       }
     })
   }
@@ -1041,29 +1001,36 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
             <Lock className="size-6" />
           </div>
           <h1 className="mt-4 text-xl font-bold tracking-tight">{businessName}</h1>
-          <p className="text-sm text-muted-foreground">Panele eriÅŸmek iÃ§in 4 haneli PIN kodunu girin.</p>
+          <p className="text-sm text-muted-foreground">Panele eriÅŸmek iÃ§in hesap bilgilerinizi girin.</p>
         </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <Input
-            type="password"
-            inputMode="numeric"
-            maxLength={4}
-            placeholder="â€¢â€¢â€¢â€¢"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            className={`h-14 text-center text-2xl tracking-[1em] ${errorMessage ? 'border-red-500 bg-red-500/10' : 'bg-input/40'}`}
-            autoFocus
-          />
-          {errorMessage && (
-            <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>
-          )}
+        <form onSubmit={handleLogin} className="flex flex-col gap-4 text-left">
+          <div className="flex flex-col gap-2">
+            <Label>E-posta Adresi</Label>
+            <Input 
+              type="email" 
+              placeholder="admin@garaj34.com" 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+              required 
+              className="h-12 bg-input/40" 
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>Åifre</Label>
+            <Input 
+              type="password" 
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              required 
+              className="h-12 bg-input/40" 
+            />
+          </div>
+          
+          {errorMessage && <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>}
 
-          <Button
-            type="submit"
-            disabled={isPending || pin.length === 0}
-            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:bg-neon hover:brightness-110"
-          >
+          <Button type="submit" disabled={isPending} className="glow-neon h-12 w-full mt-2 bg-neon text-base font-bold text-neon-foreground hover:brightness-110">
             {isPending ? 'Kontrol ediliyor...' : <>GiriÅŸ Yap <ArrowRight className="ml-2 size-5" /></>}
           </Button>
         </form>
@@ -2449,12 +2416,11 @@ export { Textarea }
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import bcrypt from 'bcryptjs'
+import { sql } from '@/lib/db'
 import * as data from '@/lib/data'
 import type { VisitStatus } from '@/lib/data'
 
-// NOT: Ä°leride BetterAuth/Lucia gibi bir sisteme geÃ§tiÄŸinde 
-// buradaki cookie okuma mantÄ±ÄŸÄ± `const session = await auth()` ÅŸekline dÃ¶nÃ¼ÅŸecek.
-// Åu an iÃ§in MVP izolasyonunu koruyoruz.
 function authCookieName(slug: string) {
   return `garaj34_auth_${slug}`
 }
@@ -2468,7 +2434,6 @@ export async function getAuthedOrganization(slug: string) {
     const org = await data.getOrganizationBySlug(slug)
     if (!org || String(org.id) !== String(cookieOrgId)) return null
     
-    // GeÃ§ici yetkilendirme mock'u
     return { organization: org, role: 'boss' as const } 
   } catch {
     return null
@@ -2522,7 +2487,6 @@ export async function updateBrandingAction(
   revalidatePath(`/${slug}`, 'layout')
 }
 
-// GÃœVENLÄ°K AÃ‡IÄI KAPATILDI: ArtÄ±k bu aksiyon tenant izolasyonundan geÃ§iriliyor
 export async function getCampaignSegmentAction(
   slug: string, 
   organizationId: string, 
@@ -2532,11 +2496,26 @@ export async function getCampaignSegmentAction(
   return data.getCampaignSegment(organizationId, segment)
 }
 
-export async function loginAction(slug: string, pin: string) {
+export async function loginAction(slug: string, email: string, pass: string) {
   try {
     const org = await data.getOrganizationBySlug(slug)
-    // Åimdilik test edebilmek iÃ§in PIN olarak organizasyon adÄ±nÄ±n ilk 4 harfini veya '1234' kabul ediyoruz (Auth fazÄ±na geÃ§ene kadar)
-    if (!org || (pin !== '1234' && pin !== org.name.substring(0,4))) return { ok: false as const, error: 'HatalÄ± PIN kodu.' }
+    if (!org) return { ok: false as const, error: 'Ä°ÅŸletme bulunamadÄ±.' }
+
+    // 1. KullanÄ±cÄ±yÄ± email ile bul
+    const users = await sql`SELECT * FROM neon_auth.user WHERE email = ${email} LIMIT 1`
+    if (!users.length) return { ok: false as const, error: 'GeÃ§ersiz e-posta veya ÅŸifre.' }
+    const user = users[0]
+
+    // 2. KullanÄ±cÄ±nÄ±n ÅŸifresini Ã§ek ve kontrol et
+    const accounts = await sql`SELECT * FROM neon_auth.account WHERE "userId" = ${user.id} LIMIT 1`
+    if (!accounts.length) return { ok: false as const, error: 'GeÃ§ersiz e-posta veya ÅŸifre.' }
+    
+    const isMatch = await bcrypt.compare(pass, accounts[0].password)
+    if (!isMatch) return { ok: false as const, error: 'GeÃ§ersiz e-posta veya ÅŸifre.' }
+
+    // 3. KullanÄ±cÄ± bu iÅŸletmenin (organization) yetkilisi mi kontrol et
+    const members = await sql`SELECT * FROM neon_auth.member WHERE "userId" = ${user.id} AND "organizationId" = ${org.id} LIMIT 1`
+    if (!members.length) return { ok: false as const, error: 'Bu panele eriÅŸim yetkiniz yok.' }
 
     const jar = await cookies()
     jar.set(authCookieName(slug), String(org.id), {
@@ -2544,8 +2523,9 @@ export async function loginAction(slug: string, pin: string) {
     })
 
     revalidatePath(`/admin/${slug}`, 'layout')
-    return { ok: true as const, role: 'boss' as const }
+    return { ok: true as const, role: members[0].role }
   } catch (error) {
+    console.error(error)
     return { ok: false as const, error: 'Sunucu hatasÄ± oluÅŸtu.' }
   }
 }
