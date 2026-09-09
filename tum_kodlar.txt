@@ -469,22 +469,22 @@ function MetricCard({ icon: Icon, label, value, subtext, color = 'neon' }: { ico
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\admin\[business]\ayarlar\page.tsx ====================
-import { getBusinessBySlug } from '@/lib/data'
+import { getOrganizationBySlug } from '@/lib/data'
 import { BrandingForm } from '@/components/admin/branding-form'
 
 export default async function AyarlarPage({ params }: { params: Promise<{ business: string }> }) {
   const { business: slug } = await params
-  const business = await getBusinessBySlug(slug)
-  if (!business) return null
+  const org = await getOrganizationBySlug(slug)
+  if (!org) return null
 
   return (
     <div className="flex flex-col gap-6">
-      <BrandingForm business={business} slug={slug} />
+      <BrandingForm organization={org} slug={slug} />
 
       <div className="glass rounded-xl p-5 text-sm text-muted-foreground">
         <p className="font-medium text-foreground">Ä°ÅŸletme Bilgileri</p>
         <p className="mt-2">Panel adresi: <span className="font-mono text-foreground">/admin/{slug}</span></p>
-        <p>Ä°ÅŸletme adÄ±: <span className="text-foreground">{business.name}</span></p>
+        <p>Ä°ÅŸletme adÄ±: <span className="text-foreground">{org.name}</span></p>
       </div>
     </div>
   )
@@ -961,7 +961,6 @@ import { useRouter } from 'next/navigation'
 import { Lock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { loginAction } from '@/lib/actions'
 
 type AdminLoginProps = {
@@ -970,10 +969,10 @@ type AdminLoginProps = {
 }
 
 export function AdminLogin({ slug, businessName }: AdminLoginProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [pin, setPin] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -981,14 +980,15 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
 
     startTransition(async () => {
       try {
-        const result = await loginAction(slug, email, password)
+        const result = await loginAction(slug, pin)
         if (result.ok) {
           window.location.href = `/admin/${slug}`
         } else {
-          setErrorMessage(result.error || 'GeÃ§ersiz giriÅŸ bilgileri')
+          setErrorMessage(result.error || 'HatalÄ± PIN kodu')
+          setPin('')
         }
-      } catch (err) {
-        setErrorMessage('Sunucu baÄŸlantÄ± hatasÄ± oluÅŸtu')
+      } catch (err: any) {
+        setErrorMessage(err.message || 'Sunucu baÄŸlantÄ± hatasÄ± oluÅŸtu')
       }
     })
   }
@@ -1001,36 +1001,29 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
             <Lock className="size-6" />
           </div>
           <h1 className="mt-4 text-xl font-bold tracking-tight">{businessName}</h1>
-          <p className="text-sm text-muted-foreground">Panele eriÅŸmek iÃ§in hesap bilgilerinizi girin.</p>
+          <p className="text-sm text-muted-foreground">Panele eriÅŸmek iÃ§in 4 haneli PIN kodunu girin.</p>
         </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4 text-left">
-          <div className="flex flex-col gap-2">
-            <Label>E-posta Adresi</Label>
-            <Input 
-              type="email" 
-              placeholder="admin@garaj34.com" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              required 
-              className="h-12 bg-input/40" 
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>Åifre</Label>
-            <Input 
-              type="password" 
-              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-              required 
-              className="h-12 bg-input/40" 
-            />
-          </div>
-          
-          {errorMessage && <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>}
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <Input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="â€¢â€¢â€¢â€¢"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            className={`h-14 text-center text-2xl tracking-[1em] ${errorMessage ? 'border-red-500 bg-red-500/10' : 'bg-input/40'}`}
+            autoFocus
+          />
+          {errorMessage && (
+            <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>
+          )}
 
-          <Button type="submit" disabled={isPending} className="glow-neon h-12 w-full mt-2 bg-neon text-base font-bold text-neon-foreground hover:brightness-110">
+          <Button
+            type="submit"
+            disabled={isPending || pin.length === 0}
+            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:brightness-110"
+          >
             {isPending ? 'Kontrol ediliyor...' : <>GiriÅŸ Yap <ArrowRight className="ml-2 size-5" /></>}
           </Button>
         </form>
@@ -1131,7 +1124,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SectionCard } from '@/components/admin/section-card'
 import { updateBrandingAction } from '@/lib/actions'
-import type { Business } from '@/lib/data'
+import type { Organization } from '@/lib/data'
 
 const COLOR_PRESETS = [
   { label: 'Neon YeÅŸil', value: '#10b981' },
@@ -1143,21 +1136,21 @@ const COLOR_PRESETS = [
 ]
 
 type BrandingFormProps = {
-  business: Business
+  organization: Organization
   slug: string
 }
 
-export function BrandingForm({ business, slug }: BrandingFormProps) {
+export function BrandingForm({ organization, slug }: BrandingFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [logoUrl, setLogoUrl] = useState(business.logoUrl ?? '')
-  const [tagline, setTagline] = useState(business.tagline)
-  const [color, setColor] = useState(business.primaryColor)
+  const [logoUrl, setLogoUrl] = useState(organization.logoUrl ?? '')
+  const [tagline, setTagline] = useState(organization.metadata?.tagline ?? '')
+  const [color, setColor] = useState(organization.metadata?.primaryColor ?? '#10b981')
   const [saved, setSaved] = useState(false)
 
   function handleSave() {
     startTransition(async () => {
-      await updateBrandingAction(slug, business.id, { logoUrl, tagline, primaryColor: color })
+      await updateBrandingAction(slug, organization.id, { logoUrl, tagline, primaryColor: color })
       setSaved(true)
       router.refresh()
       setTimeout(() => setSaved(false), 2500)
@@ -1165,68 +1158,30 @@ export function BrandingForm({ business, slug }: BrandingFormProps) {
   }
 
   return (
-    <SectionCard
-      title="Marka AyarlarÄ±"
-      description="Logo, slogan ve ana renk â€” hem admin panelinde hem mÃ¼ÅŸteri ekranÄ±nda kullanÄ±lÄ±r."
-    >
+    <SectionCard title="Marka AyarlarÄ±" description="Logo, slogan ve ana renk â€” hem admin panelinde hem mÃ¼ÅŸteri ekranÄ±nda kullanÄ±lÄ±r.">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <Label htmlFor="logoUrl">Logo Adresi (URL)</Label>
-          <Input
-            id="logoUrl"
-            value={logoUrl}
-            onChange={(e) => setLogoUrl(e.target.value)}
-            placeholder="https://..."
-            className="h-11 bg-input/40"
-          />
-          <p className="text-xs text-muted-foreground">
-            Logo dosyanÄ± bir gÃ¶rsel barÄ±ndÄ±rma sitesine (Ã¶rn. imgur.com) yÃ¼kleyip linkini buraya yapÄ±ÅŸtÄ±rabilirsin.
-          </p>
+          <Input id="logoUrl" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." className="h-11 bg-input/40" />
+          <p className="text-xs text-muted-foreground">Logo dosyanÄ± bir gÃ¶rsel barÄ±ndÄ±rma sitesine (Ã¶rn. imgur.com) yÃ¼kleyip linkini buraya yapÄ±ÅŸtÄ±rabilirsin.</p>
         </div>
-
         <div className="flex flex-col gap-2">
           <Label htmlFor="tagline">Slogan</Label>
-          <Input
-            id="tagline"
-            value={tagline}
-            onChange={(e) => setTagline(e.target.value)}
-            placeholder="Premium Oto Detaylama"
-            className="h-11 bg-input/40"
-          />
+          <Input id="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Premium Oto Detaylama" className="h-11 bg-input/40" />
         </div>
-
         <div className="flex flex-col gap-3">
           <Label className="flex items-center gap-1.5"><Palette className="size-4" /> Ana Renk</Label>
           <div className="flex flex-wrap gap-2">
             {COLOR_PRESETS.map((preset) => (
-              <button
-                key={preset.value}
-                type="button"
-                onClick={() => setColor(preset.value)}
-                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
-                  color === preset.value ? 'border-foreground/60 ring-2 ring-foreground/20' : 'border-border'
-                }`}
-              >
+              <button key={preset.value} type="button" onClick={() => setColor(preset.value)} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${color === preset.value ? 'border-foreground/60 ring-2 ring-foreground/20' : 'border-border'}`}>
                 <span className="size-3.5 rounded-full" style={{ backgroundColor: preset.value }} />
                 {preset.label}
               </button>
             ))}
           </div>
         </div>
-
-        <Button
-          onClick={handleSave}
-          disabled={isPending}
-          className="h-12 w-full text-neon-foreground"
-          style={{ backgroundColor: color }}
-        >
-          {saved ? (
-            <><CheckCircle2 className="mr-2 size-4" /> Kaydedildi</>
-          ) : isPending ? (
-            'Kaydediliyor...'
-          ) : (
-            'DeÄŸiÅŸiklikleri Kaydet'
-          )}
+        <Button onClick={handleSave} disabled={isPending} className="h-12 w-full text-neon-foreground" style={{ backgroundColor: color }}>
+          {saved ? <><CheckCircle2 className="mr-2 size-4" /> Kaydedildi</> : isPending ? 'Kaydediliyor...' : 'DeÄŸiÅŸiklikleri Kaydet'}
         </Button>
       </div>
     </SectionCard>
@@ -1244,59 +1199,22 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { SectionCard } from '@/components/admin/section-card'
 import { getCampaignSegmentAction } from '@/lib/actions'
-import type { CampaignSegment, CampaignTarget } from '@/lib/data'
+import type { CampaignTarget } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
-const SEGMENTS: { value: CampaignSegment; label: string; description: string; icon: React.ElementType }[] = [
-  { 
-    value: 'inactive_30', 
-    label: '30-60 GÃ¼n Gelmeyenler', 
-    description: 'YakÄ±nda unutmaya baÅŸlayacaklar â€“ hatÄ±rlatma iÃ§in ideal.',
-    icon: Clock
-  },
-  { 
-    value: 'inactive_60', 
-    label: '60+ GÃ¼n Gelmeyenler', 
-    description: 'Uzun sÃ¼redir uÄŸramayan, kaybetme riski olan mÃ¼ÅŸteriler.',
-    icon: TrendingUp
-  },
-  { 
-    value: 'ceramic_ppf_only', 
-    label: 'Seramik & Film YaptÄ±ranlar', 
-    description: 'Garantili iÅŸlemler â€“ periyodik bakÄ±m veya yenileme satmak iÃ§in.',
-    icon: Sparkles
-  },
-  { 
-    value: 'high_value', 
-    label: 'En DeÄŸerli 20 MÃ¼ÅŸteri', 
-    description: 'Toplam harcamaya gÃ¶re en Ã§ok kazandÄ±ran mÃ¼ÅŸteriler.',
-    icon: Zap
-  },
-  { 
-    value: 'all_customers', 
-    label: 'TÃ¼m MÃ¼ÅŸteriler', 
-    description: 'Genel bir duyuru/kampanya iÃ§in tÃ¼m mÃ¼ÅŸteri listesi.',
-    icon: Users
-  },
+const SEGMENTS = [
+  { value: 'inactive_30', label: '30-60 GÃ¼n Gelmeyenler', description: 'YakÄ±nda unutmaya baÅŸlayacaklar â€“ hatÄ±rlatma iÃ§in ideal.', icon: Clock },
+  { value: 'inactive_60', label: '60+ GÃ¼n Gelmeyenler', description: 'Uzun sÃ¼redir uÄŸramayan, kaybetme riski olan mÃ¼ÅŸteriler.', icon: TrendingUp },
+  { value: 'ceramic_ppf_only', label: 'Seramik & Film YaptÄ±ranlar', description: 'Garantili iÅŸlemler â€“ periyodik bakÄ±m veya yenileme satmak iÃ§in.', icon: Sparkles },
+  { value: 'high_value', label: 'En DeÄŸerli 20 MÃ¼ÅŸteri', description: 'Toplam harcamaya gÃ¶re en Ã§ok kazandÄ±ran mÃ¼ÅŸteriler.', icon: Zap },
+  { value: 'all_customers', label: 'TÃ¼m MÃ¼ÅŸteriler', description: 'Genel bir duyuru/kampanya iÃ§in tÃ¼m mÃ¼ÅŸteri listesi.', icon: Users },
 ]
 
 const MESSAGE_TEMPLATES = [
-  {
-    name: 'Bahar KampanyasÄ±',
-    text: 'Merhaba {isim}! ğŸŒ¸ Bahar geldi, aracÄ±nÄ±z iÃ§in detaylÄ± bakÄ±m zamanÄ±! %20 indirim fÄ±rsatÄ±nÄ± kaÃ§Ä±rmayÄ±n. Randevu iÃ§in bize yazÄ±n.',
-  },
-  {
-    name: 'Yaz HazÄ±rlÄ±ÄŸÄ±',
-    text: 'SayÄ±n {isim}, yaz gelmeden seramik kaplama ile aracÄ±nÄ±zÄ± gÃ¼neÅŸten koruyun! â˜€ï¸ SÄ±nÄ±rlÄ± sayÄ±da slot kaldÄ±.',
-  },
-  {
-    name: 'Garanti HatÄ±rlatma',
-    text: 'Merhaba {isim}! Seramik kaplama garantiniz yakÄ±nda sona eriyor. Ãœcretsiz kontrol iÃ§in hemen randevu alÄ±n!',
-  },
-  {
-    name: 'Sadakat Tebrik',
-    text: 'SayÄ±n {isim}, bizi tercih ettiÄŸiniz iÃ§in teÅŸekkÃ¼rler! ğŸ’™ SadÄ±k mÃ¼ÅŸterilerimize Ã¶zel %15 indirim sizin iÃ§in hazÄ±r.',
-  },
+  { name: 'Bahar KampanyasÄ±', text: 'Merhaba {isim}! ğŸŒ¸ Bahar geldi, aracÄ±nÄ±z iÃ§in detaylÄ± bakÄ±m zamanÄ±! %20 indirim fÄ±rsatÄ±nÄ± kaÃ§Ä±rmayÄ±n. Randevu iÃ§in bize yazÄ±n.' },
+  { name: 'Yaz HazÄ±rlÄ±ÄŸÄ±', text: 'SayÄ±n {isim}, yaz gelmeden seramik kaplama ile aracÄ±nÄ±zÄ± gÃ¼neÅŸten koruyun! â˜€ï¸ SÄ±nÄ±rlÄ± sayÄ±da slot kaldÄ±.' },
+  { name: 'Garanti HatÄ±rlatma', text: 'Merhaba {isim}! Seramik kaplama garantiniz yakÄ±nda sona eriyor. Ãœcretsiz kontrol iÃ§in hemen randevu alÄ±n!' },
+  { name: 'Sadakat Tebrik', text: 'SayÄ±n {isim}, bizi tercih ettiÄŸiniz iÃ§in teÅŸekkÃ¼rler! ğŸ’™ SadÄ±k mÃ¼ÅŸterilerimize Ã¶zel %15 indirim sizin iÃ§in hazÄ±r.' },
 ]
 
 type CampaignBuilderProps = {
@@ -1306,7 +1224,7 @@ type CampaignBuilderProps = {
 }
 
 export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: CampaignBuilderProps) {
-  const [segment, setSegment] = useState<CampaignSegment>('inactive_30')
+  const [segment, setSegment] = useState<string>('inactive_30')
   const [template, setTemplate] = useState(MESSAGE_TEMPLATES[0].text)
   const [targets, setTargets] = useState<CampaignTarget[]>(initialData)
   const [sentPlates, setSentPlates] = useState<Set<string>>(new Set())
@@ -1319,38 +1237,32 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
       isFirstRender.current = false
       return
     }
-
     startTransition(async () => {
-      const result = await getCampaignSegmentAction(businessId, segment)
+      // HATANIN Ã‡Ã–ZÃœLDÃœÄÃœ YER: businessSlug eklendi
+      const result = await getCampaignSegmentAction(businessSlug, businessId, segment)
       setTargets(result)
       setSentPlates(new Set())
     })
-  }, [segment, businessId])
+  }, [segment, businessId, businessSlug])
 
   function sendTo(target: CampaignTarget) {
-    const isUnknown = !target.customerName || 
-      target.customerName.toLowerCase().includes('isimsiz') || 
-      target.customerName.toLowerCase().includes('iÄ°simsiz')
-    
+    const isUnknown = !target.customerName || target.customerName.toLowerCase().includes('isimsiz')
     const firstName = isUnknown ? '' : target.customerName.split(' ')[0]
-    
     let message = template
     if (isUnknown) {
       message = message.replace(' {isim}', '').replace('{isim}', '')
     } else {
       message = message.replace('{isim}', firstName)
     }
-
     const digits = target.phone.replace(/\D/g, '')
     const intl = digits.startsWith('0') ? `90${digits.slice(1)}` : (digits.startsWith('90') ? digits : `90${digits}`)
-    
     window.open(`https://wa.me/${intl}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
     setSentPlates((prev) => new Set(prev).add(target.plate))
   }
 
   function sendToAll() {
     targets.forEach((target, index) => {
-      setTimeout(() => sendTo(target), index * 1000) // Her saniye 1 mesaj
+      setTimeout(() => sendTo(target), index * 1000)
     })
   }
 
@@ -1359,7 +1271,6 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
       ['Plaka', 'MÃ¼ÅŸteri AdÄ±', 'Telefon', 'Son Ziyaret'],
       ...targets.map(t => [t.plate, t.customerName, t.phone, new Date(t.lastVisit).toLocaleDateString('tr-TR')])
     ].map(row => row.join(',')).join('\n')
-
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
@@ -1375,10 +1286,7 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <SectionCard
-        title="Kampanya OluÅŸtur"
-        description="Bir mÃ¼ÅŸteri grubu seÃ§, mesajÄ±nÄ± yaz â€“ sÄ±radaki listeyi tek tek WhatsApp'tan gÃ¶nder."
-      >
+      <SectionCard title="Kampanya OluÅŸtur" description="Bir mÃ¼ÅŸteri grubu seÃ§, mesajÄ±nÄ± yaz â€“ sÄ±radaki listeyi tek tek WhatsApp'tan gÃ¶nder.">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <Label>Kime gÃ¶nderilecek?</Label>
@@ -1386,21 +1294,10 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
               {SEGMENTS.map((s) => {
                 const Icon = s.icon
                 return (
-                  <button
-                    key={s.value}
-                    onClick={() => setSegment(s.value)}
-                    className={cn(
-                      'flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-all',
-                      segment === s.value 
-                        ? 'border-neon bg-neon/10 shadow-[0_0_15px_rgba(var(--neon-rgb),0.2)] scale-[1.02]' 
-                        : 'border-border hover:bg-muted/40 hover:border-neon/30 hover:scale-[1.01]',
-                    )}
-                  >
+                  <button key={s.value} onClick={() => setSegment(s.value)} className={cn('flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-all', segment === s.value ? 'border-neon bg-neon/10 shadow-[0_0_15px_rgba(var(--neon-rgb),0.2)] scale-[1.02]' : 'border-border hover:bg-muted/40 hover:border-neon/30 hover:scale-[1.01]')}>
                     <div className="flex items-center gap-2">
                       <Icon className={cn('size-4', segment === s.value && 'text-neon')} />
-                      <span className={cn('text-sm font-semibold', segment === s.value && 'text-neon')}>
-                        {s.label}
-                      </span>
+                      <span className={cn('text-sm font-semibold', segment === s.value && 'text-neon')}>{s.label}</span>
                     </div>
                     <span className="text-xs text-muted-foreground">{s.description}</span>
                   </button>
@@ -1408,127 +1305,46 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
               })}
             </div>
           </div>
-
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="template">Mesaj Åablonu</Label>
               <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onClick={copyTemplate}
-                  className={cn(copiedTemplate && 'text-neon')}
-                >
+                <Button type="button" variant="ghost" size="xs" onClick={copyTemplate} className={cn(copiedTemplate && 'text-neon')}>
                   {copiedTemplate ? <CheckCircle2 className="mr-1 size-3" /> : <Copy className="mr-1 size-3" />}
                   {copiedTemplate ? 'KopyalandÄ±' : 'Kopyala'}
                 </Button>
               </div>
             </div>
-            
             <div className="grid gap-2 sm:grid-cols-2">
               {MESSAGE_TEMPLATES.map((t) => (
-                <button
-                  key={t.name}
-                  type="button"
-                  onClick={() => setTemplate(t.text)}
-                  className="rounded-lg border border-border bg-muted/30 p-3 text-left text-xs hover:bg-muted/60 transition-colors"
-                >
+                <button key={t.name} type="button" onClick={() => setTemplate(t.text)} className="rounded-lg border border-border bg-muted/30 p-3 text-left text-xs hover:bg-muted/60 transition-colors">
                   <span className="font-semibold text-foreground">{t.name}</span>
                   <p className="mt-1 text-muted-foreground line-clamp-2">{t.text.substring(0, 60)}...</p>
                 </button>
               ))}
             </div>
-
-            <Textarea
-              id="template"
-              value={template}
-              onChange={(e) => setTemplate(e.target.value)}
-              rows={4}
-              className="rounded-lg border border-border bg-input/40 p-3 text-sm outline-none transition-colors focus:border-neon/50 focus:bg-background"
-            />
-            <p className="text-xs text-muted-foreground">
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-neon">{'{isim}'}</code> yazdÄ±ÄŸÄ±n yere mÃ¼ÅŸterinin adÄ± otomatik yerleÅŸir. MÃ¼ÅŸteri ismi kayÄ±tlÄ± deÄŸilse sistem bu kelimeyi gizler.
-            </p>
+            <Textarea id="template" value={template} onChange={(e) => setTemplate(e.target.value)} rows={4} className="rounded-lg border border-border bg-input/40 p-3 text-sm outline-none transition-colors focus:border-neon/50 focus:bg-background" />
           </div>
         </div>
       </SectionCard>
-
-      <SectionCard
-        title="GÃ¶nderim KuyruÄŸu"
-        description="Her karta dokunduÄŸunda WhatsApp yeni sekmede aÃ§Ä±lÄ±r, mesaj hazÄ±r gelir â€“ sadece gÃ¶nder'e basman yeterli."
-        action={
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xs font-medium text-neon">
-              {sentPlates.size}/{targets.length} GÃ¶nderildi
-            </span>
-            {targets.length > 0 && (
-              <>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={exportToCSV}
-                  className="border-cyan/40 text-cyan hover:bg-cyan/10"
-                >
-                  <Download className="mr-1 size-3" /> CSV Ä°ndir
-                </Button>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={sendToAll}
-                  disabled={isPending}
-                  className="border-neon/40 text-neon hover:bg-neon/10"
-                >
-                  <Megaphone className="mr-1 size-3" /> TÃ¼mÃ¼ne GÃ¶nder
-                </Button>
-              </>
-            )}
-          </div>
-        }
-      >
+      <SectionCard title="GÃ¶nderim KuyruÄŸu" description="Her karta dokunduÄŸunda WhatsApp yeni sekmede aÃ§Ä±lÄ±r." action={<div className="flex items-center gap-3"><span className="font-mono text-xs font-medium text-neon">{sentPlates.size}/{targets.length} GÃ¶nderildi</span>{targets.length > 0 && <><Button variant="outline" size="xs" onClick={exportToCSV} className="border-cyan/40 text-cyan hover:bg-cyan/10"><Download className="mr-1 size-3" /> CSV Ä°ndir</Button><Button variant="outline" size="xs" onClick={sendToAll} disabled={isPending} className="border-neon/40 text-neon hover:bg-neon/10"><Megaphone className="mr-1 size-3" /> TÃ¼mÃ¼ne GÃ¶nder</Button></>}</div>}>
         {isPending ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12 text-sm text-muted-foreground">
-            <Loader2 className="size-6 animate-spin text-neon" /> 
-            <span>MÃ¼ÅŸteri listesi hazÄ±rlanÄ±yor...</span>
-          </div>
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-sm text-muted-foreground"><Loader2 className="size-6 animate-spin text-neon" /> <span>Liste hazÄ±rlanÄ±yor...</span></div>
         ) : targets.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-12 text-center text-sm text-muted-foreground">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted/50 mb-2">
-              <Megaphone className="size-6 text-muted-foreground/50" />
-            </div>
-            Bu segmentte telefon numarasÄ± kayÄ±tlÄ± mÃ¼ÅŸteri bulunamadÄ±.
-          </div>
+          <div className="flex flex-col items-center gap-2 py-12 text-center text-sm text-muted-foreground"><div className="flex size-12 items-center justify-center rounded-full bg-muted/50 mb-2"><Megaphone className="size-6 text-muted-foreground/50" /></div>BulunamadÄ±.</div>
         ) : (
           <ul className="flex flex-col divide-y divide-border/50">
             {targets.map((t) => {
               const isSent = sentPlates.has(t.plate)
               const daysSince = Math.floor((Date.now() - new Date(t.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
-              
               return (
-                <li key={t.plate} className="flex items-center justify-between gap-3 py-3.5 first:pt-1 last:pb-1 hover:bg-muted/20 transition-colors rounded-lg px-2">
+                <li key={t.plate} className="flex items-center justify-between gap-3 py-3.5 px-2 hover:bg-muted/20 rounded-lg">
                   <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-medium text-foreground truncate">{t.customerName}</span>
-                    <span className="font-mono text-[11.5px] text-muted-foreground flex items-center gap-1.5">
-                      <span className="rounded bg-muted/50 px-1.5 py-0.5 text-foreground/70">{t.plate}</span> 
-                      {t.phone}
-                      <span className="text-amber-400">â€¢ {daysSince} gÃ¼n Ã¶nce</span>
-                    </span>
+                    <span className="text-sm font-medium">{t.customerName}</span>
+                    <span className="font-mono text-[11.5px] text-muted-foreground"><span className="rounded bg-muted/50 px-1.5 py-0.5">{t.plate}</span> {t.phone} <span className="text-amber-400">â€¢ {daysSince} gÃ¼n Ã¶nce</span></span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={isSent ? 'ghost' : 'outline'}
-                    onClick={() => sendTo(t)}
-                    className={cn(
-                      'transition-all shrink-0',
-                      !isSent && 'border-neon/40 text-neon hover:bg-neon/15 hover:text-neon shadow-sm hover:shadow-neon/20',
-                      isSent && 'text-muted-foreground opacity-60',
-                    )}
-                  >
-                    {isSent ? (
-                      <><CheckCircle2 className="mr-1.5 size-4" /> GÃ¶nderildi</>
-                    ) : (
-                      <><MessageCircle className="mr-1.5 size-4" /> GÃ¶nder</>
-                    )}
+                  <Button size="sm" variant={isSent ? 'ghost' : 'outline'} onClick={() => sendTo(t)} className={cn('shrink-0', !isSent && 'border-neon/40 text-neon hover:bg-neon/15 hover:text-neon shadow-sm', isSent && 'text-muted-foreground opacity-60')}>
+                    {isSent ? <><CheckCircle2 className="mr-1.5 size-4" /> GÃ¶nderildi</> : <><MessageCircle className="mr-1.5 size-4" /> GÃ¶nder</>}
                   </Button>
                 </li>
               )
@@ -2416,35 +2232,33 @@ export { Textarea }
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import bcrypt from 'bcryptjs'
-import { sql } from '@/lib/db'
 import * as data from '@/lib/data'
 import type { VisitStatus } from '@/lib/data'
+
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
 function authCookieName(slug: string) {
   return `garaj34_auth_${slug}`
 }
 
-export async function getAuthedOrganization(slug: string) {
+export async function loginAction(slug: string, pin: string) {
   try {
+    const business = await data.verifyBusinessPin(slug, pin)
+    if (!business) return { ok: false as const, error: 'HatalÄ± PIN kodu.' }
+
     const jar = await cookies()
-    const cookieOrgId = jar.get(authCookieName(slug))?.value
-    if (!cookieOrgId) return null
+    jar.set(authCookieName(slug), String(business.id), {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'lax', 
+      path: '/', 
+      maxAge: COOKIE_MAX_AGE,
+    })
 
-    const org = await data.getOrganizationBySlug(slug)
-    if (!org || String(org.id) !== String(cookieOrgId)) return null
-    
-    return { organization: org, role: 'boss' as const } 
+    revalidatePath(`/admin/${slug}`, 'layout')
+    return { ok: true as const, business, role: 'boss' as const }
   } catch {
-    return null
-  }
-}
-
-// TENTANT ISOLATION KORUMASI: TÃ¼m iÅŸlemlerden Ã¶nce iÅŸletme yetkisi kontrol edilir
-async function requireAuth(slug: string, organizationId: string) {
-  const auth = await getAuthedOrganization(slug)
-  if (!auth || String(auth.organization.id) !== String(organizationId)) {
-    throw new Error('Yetkisiz islem. Lutfen tekrar giris yapin.')
+    return { ok: false as const, error: 'Sunucu hatasÄ± oluÅŸtu.' }
   }
 }
 
@@ -2454,85 +2268,68 @@ export async function logoutAction(slug: string) {
   revalidatePath(`/admin/${slug}`, 'layout')
 }
 
-export async function addVisitAction(
-  slug: string, 
-  organizationId: string, 
-  input: Parameters<typeof data.addVisit>[1]
-) {
-  await requireAuth(slug, organizationId)
-  const visit = await data.addVisit(organizationId, input)
-  revalidatePath(`/admin/${slug}`, 'layout')
-  return visit
-}
-
-export async function updateVisitStatusAction(
-  slug: string, 
-  organizationId: string, 
-  visitId: string, 
-  status: VisitStatus
-) {
-  await requireAuth(slug, organizationId)
-  await data.updateVisitStatus(organizationId, visitId, status)
-  revalidatePath(`/admin/${slug}`, 'layout')
-}
-
-export async function updateBrandingAction(
-  slug: string, 
-  organizationId: string, 
-  input: Parameters<typeof data.updateOrganizationBranding>[1]
-) {
-  await requireAuth(slug, organizationId)
-  await data.updateOrganizationBranding(organizationId, input)
-  revalidatePath(`/admin/${slug}`, 'layout')
-  revalidatePath(`/${slug}`, 'layout')
-}
-
-export async function getCampaignSegmentAction(
-  slug: string, 
-  organizationId: string, 
-  segment: string
-) {
-  await requireAuth(slug, organizationId)
-  return data.getCampaignSegment(organizationId, segment)
-}
-
-export async function loginAction(slug: string, email: string, pass: string) {
+export async function getAuthedBusiness(slug: string) {
   try {
-    const org = await data.getOrganizationBySlug(slug)
-    if (!org) return { ok: false as const, error: 'Ä°ÅŸletme bulunamadÄ±.' }
-
-    // 1. KullanÄ±cÄ±yÄ± email ile bul
-    const users = await sql`SELECT * FROM neon_auth.user WHERE email = ${email} LIMIT 1`
-    if (!users.length) return { ok: false as const, error: 'GeÃ§ersiz e-posta veya ÅŸifre.' }
-    const user = users[0]
-
-    // 2. KullanÄ±cÄ±nÄ±n ÅŸifresini Ã§ek ve kontrol et
-    const accounts = await sql`SELECT * FROM neon_auth.account WHERE "userId" = ${user.id} LIMIT 1`
-    if (!accounts.length) return { ok: false as const, error: 'GeÃ§ersiz e-posta veya ÅŸifre.' }
-    
-    const isMatch = await bcrypt.compare(pass, accounts[0].password)
-    if (!isMatch) return { ok: false as const, error: 'GeÃ§ersiz e-posta veya ÅŸifre.' }
-
-    // 3. KullanÄ±cÄ± bu iÅŸletmenin (organization) yetkilisi mi kontrol et
-    const members = await sql`SELECT * FROM neon_auth.member WHERE "userId" = ${user.id} AND "organizationId" = ${org.id} LIMIT 1`
-    if (!members.length) return { ok: false as const, error: 'Bu panele eriÅŸim yetkiniz yok.' }
-
     const jar = await cookies()
-    jar.set(authCookieName(slug), String(org.id), {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 30,
-    })
+    const cookieBusinessId = jar.get(authCookieName(slug))?.value
+    if (!cookieBusinessId) return null
 
-    revalidatePath(`/admin/${slug}`, 'layout')
-    return { ok: true as const, role: members[0].role }
-  } catch (error) {
-    console.error(error)
-    return { ok: false as const, error: 'Sunucu hatasÄ± oluÅŸtu.' }
+    const business = await data.getBusinessBySlug(slug)
+    if (!business || String(business.id) !== String(cookieBusinessId)) return null
+    
+    return { business, role: 'boss' as const }
+  } catch {
+    return null
   }
+}
+
+async function requireAuth(slug: string, businessId: string) {
+  const auth = await getAuthedBusiness(slug)
+  if (!auth || String(auth.business.id) !== String(businessId)) {
+    throw new Error('Yetkisiz islem. Lutfen tekrar giris yapin.')
+  }
+}
+
+export async function addJobAction(businessSlug: string, businessId: string, input: Parameters<typeof data.addJob>[1]) {
+  await requireAuth(businessSlug, businessId)
+  const job = await data.addJob(businessId, input)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
+  return job
+}
+
+export async function setStepAction(businessSlug: string, businessId: string, jobId: string, step: number | VisitStatus) {
+  await requireAuth(businessSlug, businessId)
+  await data.setJobStep(businessId, jobId, step)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
+}
+
+export async function archiveJobAction(businessSlug: string, businessId: string, jobId: string) {
+  await requireAuth(businessSlug, businessId)
+  await data.archiveJob(businessId, jobId)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
+}
+
+export async function updateBrandingAction(businessSlug: string, businessId: string, input: Parameters<typeof data.updateBusinessBranding>[1]) {
+  await requireAuth(businessSlug, businessId)
+  await data.updateBusinessBranding(businessId, input)
+  revalidatePath(`/admin/${businessSlug}`, 'layout')
+  revalidatePath(`/${businessSlug}`, 'layout')
+}
+
+export async function uploadJobPhotoAction(businessSlug: string, businessId: string, jobId: string, photoUrl: string, photoType: 'before' | 'after') {
+  await requireAuth(businessSlug, businessId)
+  await data.addJobPhoto(jobId, photoUrl, photoType)
+  revalidatePath(`/admin/${businessSlug}/aktif`, 'page')
+}
+
+export async function getCampaignSegmentAction(businessId: string, segment: any) {
+  return data.getCampaignSegment(businessId, segment)
 }
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\data.ts ====================
 import 'server-only'
+import bcrypt from 'bcryptjs'
 import { sql } from '@/lib/db'
 import { normalizePlate } from '@/lib/jobs-store'
 
@@ -2929,6 +2726,122 @@ export async function getMonthlyVisitTrend(orgId: string) {
   `
   return rows.map((r: any) => ({ month: String(r.month), visits: Number(r.visits) }))
 }
+
+// --- EKSÄ°K ESKÄ° OPERASYONEL FONKSÄ°YONLAR (Actions uyumluluÄŸu iÃ§in) ---
+
+export async function verifyBusinessPin(slug: string, pin: string): Promise<Business | null> {
+  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
+  if (!rows.length) return null
+  const ok = await bcrypt.compare(pin, rows[0].pin_hash)
+  return ok ? mapBusinessRow(rows[0]) : null
+}
+
+export async function getBusinessBySlug(slug: string): Promise<Business | null> {
+  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
+  return rows.length ? mapBusinessRow(rows[0]) : null
+}
+
+export type Business = {
+  id: string
+  slug: string
+  name: string
+  logoUrl: string | null
+  primaryColor: string
+  tagline: string
+  googleMapsUrl: string | null
+}
+
+function mapBusinessRow(r: any): Business {
+  return {
+    id: String(r.id),
+    slug: String(r.slug),
+    name: String(r.name),
+    logoUrl: r.logo_url || null,
+    primaryColor: String(r.primary_color || '#10b981'),
+    tagline: String(r.tagline || ''),
+    googleMapsUrl: r.google_maps_url || null,
+  }
+}
+
+export async function addJob(
+  businessId: string,
+  input: {
+    customerName?: string
+    plate: string
+    carModel?: string
+    phone?: string
+    services: string[]
+    warrantyMonths?: number
+    damageNote?: string
+    customerNotes?: string
+  },
+) {
+  let warrantyEndDate = null
+  if (input.warrantyMonths) {
+    const d = new Date()
+    d.setMonth(d.getMonth() + input.warrantyMonths)
+    warrantyEndDate = d.toISOString()
+  }
+
+  const customerName = input.customerName?.trim() || 'Ä°simsiz MÃ¼ÅŸteri'
+  const plate = normalizePlate(input.plate)
+  const carModel = input.carModel?.trim() || null
+  const phone = input.phone?.trim() || ''
+  const damageNote = input.damageNote?.trim() || null
+  const customerNotes = input.customerNotes?.trim() || null
+
+  const rows = await sql`
+    INSERT INTO jobs (
+      business_id, customer_name, plate, car_model, phone, services, step, 
+      warranty_end_date, damage_note, customer_notes, price, payment_status
+    )
+    VALUES (
+      ${businessId}, ${customerName}, ${plate}, ${carModel}, ${phone}, 
+      ${input.services}, 0, ${warrantyEndDate}, ${damageNote}, ${customerNotes}, 0, 'paid'
+    )
+    RETURNING *
+  `
+  return rows[0]
+}
+
+export async function setJobStep(businessId: string, jobId: string, step: any) {
+  await sql`UPDATE jobs SET step = ${step} WHERE id = ${jobId} AND business_id = ${businessId}`
+}
+
+export async function archiveJob(businessId: string, jobId: string) {
+  await sql`
+    WITH moved_job AS (
+      DELETE FROM jobs WHERE id = ${jobId} AND business_id = ${businessId} RETURNING *
+    )
+    INSERT INTO archived_jobs (
+      business_id, customer_name, plate, phone, services, warranty_end_date, 
+      service_date, car_model, damage_note, customer_notes, price, payment_status
+    )
+    SELECT 
+      business_id, customer_name, plate, phone, services, warranty_end_date, 
+      now(), car_model, damage_note, customer_notes, 0, 'paid'
+    FROM moved_job;
+  `
+}
+
+export async function updateBusinessBranding(
+  businessId: string,
+  input: { logoUrl?: string; primaryColor?: string; tagline?: string; googleMapsUrl?: string },
+) {
+  await sql`
+    UPDATE businesses SET
+      logo_url = COALESCE(${input.logoUrl ?? null}, logo_url),
+      primary_color = COALESCE(${input.primaryColor ?? null}, primary_color),
+      tagline = COALESCE(${input.tagline ?? null}, tagline),
+      google_maps_url = COALESCE(${input.googleMapsUrl ?? null}, google_maps_url)
+    WHERE id = ${businessId}
+  `
+}
+
+export async function addJobPhoto(jobId: string, photoUrl: string, photoType: 'before' | 'after') {
+  await sql`INSERT INTO job_photos (job_id, photo_url, photo_type) VALUES (${jobId}, ${photoUrl}, ${photoType})`
+}
+
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\db.ts ====================
