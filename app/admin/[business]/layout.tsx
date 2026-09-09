@@ -1,5 +1,5 @@
-import { getBusinessBySlug } from '@/lib/data'
-import { getAuthedBusiness } from '@/lib/actions'
+import { getOrganizationBySlug } from '@/lib/data'
+import { getAuthedOrganization } from '@/lib/actions'
 import { AdminLogin } from '@/components/admin/admin-login'
 import { AdminShell } from '@/components/admin/admin-shell'
 
@@ -10,9 +10,9 @@ type LayoutProps = {
 
 export default async function AdminLayout({ children, params }: LayoutProps) {
   const { business: slug } = await params
-  const business = await getBusinessBySlug(slug)
+  const org = await getOrganizationBySlug(slug)
 
-  if (!business) {
+  if (!org) {
     return (
       <main className="bg-grid flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
         <h1 className="text-xl font-semibold">İşletme bulunamadı</h1>
@@ -23,14 +23,14 @@ export default async function AdminLayout({ children, params }: LayoutProps) {
     )
   }
 
-  const authState = (await getAuthedBusiness(slug)) as { business: typeof business; role: 'boss' | 'employee' } | null
+  const authState = await getAuthedOrganization(slug)
 
   if (!authState) {
-    return <AdminLogin slug={slug} businessName={business.name} />
+    return <AdminLogin slug={slug} businessName={org.name} />
   }
 
   return (
-    <AdminShell business={authState.business} slug={slug} role={authState.role}>
+    <AdminShell organization={authState.organization} slug={slug} role={authState.role}>
       {children}
     </AdminShell>
   )

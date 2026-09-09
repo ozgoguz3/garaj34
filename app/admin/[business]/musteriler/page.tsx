@@ -1,15 +1,15 @@
-import { getBusinessBySlug, listArchive, getRetentionInsights } from '@/lib/data'
+import { getOrganizationBySlug, listCompletedVisits, getRetentionInsights } from '@/lib/data'
 import { CustomerDatabase } from '@/components/admin/customer-database'
 
 export default async function MusterilerPage({ params }: { params: Promise<{ business: string }> }) {
   const { business: slug } = await params
-  const business = await getBusinessBySlug(slug)
-  if (!business) return null
+  const org = await getOrganizationBySlug(slug)
+  if (!org) return null
 
-  const [archive, insights] = await Promise.all([
-    listArchive(business.id),
-    getRetentionInsights(business.id),
+  const [completedVisits, insights] = await Promise.all([
+    listCompletedVisits(org.id),
+    getRetentionInsights(org.id),
   ])
 
-  return <CustomerDatabase archive={archive} insights={insights} businessSlug={slug} />
+  return <CustomerDatabase completedVisits={completedVisits} insights={insights} businessSlug={slug} />
 }

@@ -5,20 +5,17 @@ import { Eye, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
 import { TrackingView } from '@/components/tracking-view'
-import type { Job } from '@/lib/jobs-store'
+import type { Visit } from '@/lib/data'
 
 type PlatePreviewStripProps = {
-  jobs: Job[]
+  visits: Visit[]
   businessName: string
 }
 
-// Admin, aktif araçların plakalarını kaydırarak görebiliyor ve birine
-// dokununca müşterinin o an ne gördüğünü hiçbir yere yönlendirilmeden
-// (modal içinde) önizleyebiliyor.
-export function PlatePreviewStrip({ jobs, businessName }: PlatePreviewStripProps) {
-  const [previewJob, setPreviewJob] = useState<Job | null>(null)
+export function PlatePreviewStrip({ visits, businessName }: PlatePreviewStripProps) {
+  const [previewVisit, setPreviewVisit] = useState<Visit | null>(null)
 
-  if (jobs.length === 0) return null
+  if (visits.length === 0) return null
 
   return (
     <>
@@ -27,20 +24,20 @@ export function PlatePreviewStrip({ jobs, businessName }: PlatePreviewStripProps
           <span className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Müşteri Önizle:
           </span>
-          {jobs.map((job) => (
+          {visits.map((visit) => (
             <button
-              key={job.id}
-              onClick={() => setPreviewJob(job)}
+              key={visit.id}
+              onClick={() => setPreviewVisit(visit)}
               className="shrink-0 rounded-md transition-transform hover:scale-105"
-              aria-label={`${job.plate} müşteri ekranını önizle`}
+              aria-label={`${visit.plate} müşteri ekranını önizle`}
             >
-              <LicensePlate plate={job.plate} />
+              <LicensePlate plate={visit.plate || ''} />
             </button>
           ))}
         </div>
       </div>
 
-      {previewJob && (
+      {previewVisit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm">
           <div className="relative flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border">
             <div className="glass flex items-center justify-between border-x-0 border-t-0 px-4 py-3">
@@ -48,12 +45,12 @@ export function PlatePreviewStrip({ jobs, businessName }: PlatePreviewStripProps
                 <Eye className="size-4 text-cyan" />
                 <span className="text-muted-foreground">Müşteri şunu görüyor:</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setPreviewJob(null)} className="size-8 p-0">
+              <Button variant="ghost" size="sm" onClick={() => setPreviewVisit(null)} className="size-8 p-0">
                 <X className="size-5" />
               </Button>
             </div>
             <div className="overflow-y-auto">
-              <TrackingView job={previewJob} businessName={businessName} />
+              <TrackingView visit={previewVisit} businessName={businessName} />
             </div>
           </div>
         </div>
