@@ -38,7 +38,8 @@ export async function logoutAction(slug: string) {
   revalidatePath(`/admin/${slug}`, 'layout')
 }
 
-export async function getAuthedBusiness(slug: string) {
+// İsim uyuşmazlığını gidermek için her iki ismi de export ediyoruz
+export async function getAuthedOrganization(slug: string) {
   try {
     const jar = await cookies()
     const cookieBusinessId = jar.get(authCookieName(slug))?.value
@@ -47,15 +48,19 @@ export async function getAuthedBusiness(slug: string) {
     const business = await data.getBusinessBySlug(slug)
     if (!business || String(business.id) !== String(cookieBusinessId)) return null
     
-    return { business, role: 'boss' as const }
+    return { organization: business, role: 'boss' as const }
   } catch {
     return null
   }
 }
 
+export async function getAuthedBusiness(slug: string) {
+  return getAuthedOrganization(slug)
+}
+
 async function requireAuth(slug: string, businessId: string) {
-  const auth = await getAuthedBusiness(slug)
-  if (!auth || String(auth.business.id) !== String(businessId)) {
+  const auth = await getAuthedOrganization(slug)
+  if (!auth || String(auth.organization.id) !== String(businessId)) {
     throw new Error('Yetkisiz islem. Lutfen tekrar giris yapin.')
   }
 }
