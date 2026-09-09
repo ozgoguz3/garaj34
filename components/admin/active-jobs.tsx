@@ -18,7 +18,7 @@ export function ActiveJobs({ visits, organizationId, businessSlug }: ActiveJobsP
       title="Aktif İşlemler"
       description="Şu anda serviste bulunan araçlar."
       action={
-        <Badge className="border-cyan/40 bg-cyan/10 font-mono text-cyan">
+        <Badge className="border-neon/40 bg-neon/10 font-mono text-neon">
           {visits.length} araç
         </Badge>
       }

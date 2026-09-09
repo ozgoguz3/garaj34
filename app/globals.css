@@ -2,29 +2,31 @@
 
 @layer base {
   :root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 212 22% 7%;
+    --foreground: 210 24% 94%;
+    --card: 212 18% 10%;
+    --card-foreground: 210 24% 94%;
+    --popover: 212 18% 10%;
+    --popover-foreground: 210 24% 94%;
+    --primary: 210 24% 94%;
+    --primary-foreground: 212 22% 7%;
+    --secondary: 212 14% 16%;
+    --secondary-foreground: 210 24% 94%;
+    --muted: 212 14% 15%;
+    --muted-foreground: 213 12% 64%;
+    --accent: 212 14% 16%;
+    --accent-foreground: 210 24% 94%;
+    --destructive: 0 62% 42%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 83.1%;
-    --radius: 0.75rem;
-    --neon: #10b981;
-    --cyan: #22d3ee;
-    --gold: #fbbf24;
+    --border: 212 14% 19%;
+    --input: 212 14% 22%;
+    --ring: 213 90% 62%;
+    --radius: 0.5rem;
+    /* ATÖLYE PALETİ */
+    --neon: #4c8df6;  /* çelik mavisi: marka + aksiyon */
+    --cyan: #e0954a;  /* bakır: işlemde + ibre */
+    --gold: #e5b567;  /* amber: garanti + uyarı */
+    --ok: #2ebd85;    /* yeşil: SADECE hazır/tamam */
   }
 }
 
@@ -48,53 +50,75 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  /* Eksik olan tasarım token'ları — bunlar olmadan bg-neon vs. çalışmıyordu */
   --color-neon: var(--neon);
-  --color-neon-foreground: #05130d;
+  --color-neon-foreground: #071120;
   --color-cyan: var(--cyan);
+  --color-cyan-foreground: #1a1206;
   --color-gold: var(--gold);
+  --color-ok: var(--ok);
+  --color-ok-foreground: #06170f;
+  --color-steel: var(--neon);
+  --color-copper: var(--cyan);
   --color-plate: #f4f4f5;
   --color-plate-foreground: #101014;
   --color-plate-stripe: #003399;
+  --font-mono: var(--font-jbmono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
 }
 
 @layer base {
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: color-mix(in srgb, var(--neon) 35%, transparent); }
+  ::selection { background: color-mix(in srgb, var(--neon) 30%, transparent); }
 }
 
-/* Custom UI Effects */
+/* Zemin: ince teknik grid (eskisinden daha sessiz) */
 .bg-grid {
-  background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
 }
+
+/* BLUR YOK. Paneller düz, mat, sağlam. */
 .glass {
-  background: rgba(13, 15, 14, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
 }
 .glass-blur {
-  background: rgba(10, 12, 11, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent);
+  border: 1px solid hsl(var(--border));
 }
-.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
 
-
-.glow-neon { box-shadow: 0 0 20px color-mix(in srgb, var(--neon) 45%, transparent); }
-.glow-cyan { box-shadow: 0 0 18px color-mix(in srgb, var(--cyan) 40%, transparent); }
-.glow-neon-text, .text-glow-neon { text-shadow: 0 0 12px color-mix(in srgb, var(--neon) 60%, transparent); }
-
-@keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
+/* İŞ FİŞİ: sol kenarı zımba delikli docket */
+.docket {
+  position: relative;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
 }
+.docket::before {
+  content: '';
+  position: absolute;
+  left: 9px; top: 16px; bottom: 16px; width: 2px;
+  background-image: radial-gradient(circle, hsl(var(--border)) 1px, transparent 1.6px);
+  background-size: 2px 9px;
+  background-repeat: repeat-y;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Işıma: artık sadece ince bir halka + yumuşak gölge (lazer yok) */
+.glow-neon { box-shadow: 0 0 0 1px color-mix(in srgb, var(--neon) 35%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--neon) 55%, transparent); }
+.glow-cyan { box-shadow: 0 0 0 1px color-mix(in srgb, var(--cyan) 35%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--cyan) 50%, transparent); }
+.glow-ok   { box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 40%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--ok) 55%, transparent); }
+.glow-neon-text, .text-glow-neon { text-shadow: 0 0 10px color-mix(in srgb, var(--neon) 25%, transparent); }
+
+@keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
 .skeleton {
   animation: shimmer 2s infinite linear;
   background: linear-gradient(90deg, hsl(var(--muted)) 0%, rgba(255,255,255,0.05) 50%, hsl(var(--muted)) 100%);

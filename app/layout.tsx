@@ -1,17 +1,21 @@
-// app/layout.tsx
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const grotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-grotesk' })
+const jbmono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jbmono' })
+
 export const metadata: Metadata = {
   title: { default: 'Garaj34', template: '%s · Garaj34' },
-  description: 'Premium Detailing & Oto Yıkama Yönetim Sistemi',
-  themeColor: '#0a0a0a',
+  description: 'Detaylı bakım ve kaplama atölyeleri için canlı araç takibi ve müşteri yönetim sistemi.',
+  themeColor: '#101418',
 }
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr">
-      <body className={geist.variable}>{children}</body>
+      <body className={`${inter.variable} ${grotesk.variable} ${jbmono.variable}`}>{children}</body>
     </html>
   )
 }

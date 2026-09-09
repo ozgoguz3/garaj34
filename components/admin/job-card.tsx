@@ -16,6 +16,7 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit;
   const [status, setStatus] = useState<VisitStatus>(visit.status)
   const [isPending, startTransition] = useTransition()
   const currentIndex = STATUS_INDEX[status] ?? 0
+  const isReady = status === 'ready'
   const displayPlate = visit.plate || 'BİLİNMEYOR'
 
   function apply(next: VisitStatus) {
@@ -30,7 +31,7 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit;
   }
 
   return (
-    <article className={cn('flex flex-col gap-4 rounded-xl border bg-background/40 p-4 transition-all duration-200', status === 'ready' ? 'border-neon/40 glow-neon' : 'border-border', isPending && 'opacity-80')}>
+    <article className={cn('flex flex-col gap-4 rounded-xl border bg-background/40 p-4 transition-all duration-200', isReady ? 'border-ok/40 glow-ok' : 'border-border', isPending && 'opacity-80')}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
           <h3 className="truncate text-base font-bold leading-tight">{visit.customerName}</h3>
@@ -49,8 +50,8 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit;
           return (
             <button key={s.key} disabled={isPending} onClick={() => apply(s.key)}
               className={cn('flex h-9 items-center justify-center rounded-lg border text-[11px] font-bold transition-all duration-150 active:scale-[0.97]',
-                active && 'glow-cyan border-cyan bg-cyan/15 text-cyan',
-                done && 'border-neon/30 bg-neon/10 text-neon',
+                active && 'glow-cyan border-cyan bg-cyan/10 text-cyan',
+                done && 'border-ok/30 bg-ok/10 text-ok',
                 !active && !done && 'border-border bg-muted/60 text-muted-foreground')}>
               {s.adminLabel}
             </button>

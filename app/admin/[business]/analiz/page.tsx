@@ -94,7 +94,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                 <span className="w-32 shrink-0 truncate text-sm font-medium sm:w-40">{s.service}</span>
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-neon to-cyan transition-all duration-300" 
+                    className="h-full rounded-full bg-neon transition-all duration-300" 
                     style={{ width: `${(s.count / maxServiceCount) * 100}%` }} 
                   />
                 </div>
@@ -115,7 +115,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                 <span className="w-24 shrink-0 text-sm font-medium">{WEEKDAYS[w.weekday]}</span>
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-cyan to-neon transition-all duration-300" 
+                    className="h-full rounded-full bg-cyan transition-all duration-300" 
                     style={{ width: `${(w.count / maxWeekdayCount) * 100}%` }} 
                   />
                 </div>
@@ -147,7 +147,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                 <div key={t.month} className="group flex flex-1 flex-col items-center gap-2">
                   <div className="relative w-full">
                     <div
-                      className="w-full rounded-t-lg bg-gradient-to-t from-neon to-cyan transition-all duration-300 hover:brightness-110 cursor-pointer"
+                      className="w-full rounded-t-lg bg-neon transition-all duration-300 hover:brightness-110 cursor-pointer"
                       style={{ height: `${heightPct}%`, minHeight: '32px' }}
                       title={`${t.visits} Araç - ${monthFormatter.format(new Date(t.month))}`}
                     >

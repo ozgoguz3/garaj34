@@ -19,6 +19,8 @@ export default async function CustomerTrackingPage({
       primaryColor={org.primaryColor}
       logoUrl={org.logoUrl}
       googleMapsUrl={org.googleMapsUrl}
+      whatsappPhone={org.whatsappPhone}
+      
     />
   )
 }

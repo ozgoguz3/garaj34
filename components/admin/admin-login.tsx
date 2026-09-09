@@ -1,19 +1,26 @@
 'use client'
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { Lock, ArrowRight } from 'lucide-react'
+import { useState, useTransition, type FormEvent } from 'react'
+import { Delete, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { loginAction } from '@/lib/actions'
+
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
 export function AdminLogin({ slug, businessName }: { slug: string; businessName: string }) {
   const [pin, setPin] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
 
-  function handleLogin(e: React.FormEvent) {
+  function press(k: string) {
+    setErrorMessage(null)
+    if (k === '') return
+    if (k === 'del') { setPin((p) => p.slice(0, -1)); return }
+    setPin((p) => (p.length < 4 ? p + k : p))
+  }
+
+  function handleLogin(e: FormEvent) {
     e.preventDefault()
+    if (pin.length !== 4) return
     setErrorMessage(null)
     startTransition(async () => {
       try {
@@ -28,28 +35,58 @@ export function AdminLogin({ slug, businessName }: { slug: string; businessName:
 
   return (
     <div className="bg-grid flex min-h-dvh items-center justify-center p-4">
-      <div className="flex w-full max-w-sm flex-col gap-6 rounded-2xl border border-neon/20 bg-background/60 p-8 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="glow-neon flex size-12 items-center justify-center rounded-xl bg-neon text-neon-foreground">
-            <Lock className="size-6" />
-          </div>
-          <h1 className="mt-4 text-xl font-bold tracking-tight">{businessName}</h1>
-          <p className="text-sm text-muted-foreground">Panele erişmek için 4 haneli PIN kodunu girin.</p>
+      <form onSubmit={handleLogin} className="docket flex w-full max-w-xs flex-col items-center gap-6 p-6">
+        <div className="flex size-12 items-center justify-center rounded-xl border border-neon/30 bg-neon/10 text-neon">
+          <Lock className="size-5" />
         </div>
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <Input
-            type="password" inputMode="numeric" maxLength={4} placeholder="••••"
-            value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            className={`h-14 text-center text-2xl tracking-[1em] ${errorMessage ? 'border-red-500 bg-red-500/10' : 'bg-input/40'}`}
-            autoFocus
-          />
-          {errorMessage && <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>}
-          <Button type="submit" disabled={isPending || pin.length === 0}
-            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:brightness-110">
-            {isPending ? 'Kontrol ediliyor...' : <>Giriş Yap <ArrowRight className="ml-2 size-5" /></>}
-          </Button>
-        </form>
-      </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <h1 className="font-display text-lg font-bold tracking-tight">{businessName}</h1>
+          <p className="text-xs text-muted-foreground">Panele girmek için 4 haneli PIN</p>
+        </div>
+
+        <div className="flex items-center gap-3" aria-label="PIN noktaları">
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className={cnDot(i < pin.length, errorMessage !== null)} />
+          ))}
+        </div>
+        <input
+          className="sr-only"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          value={pin}
+          autoFocus
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(e as any) }}
+        />
+
+        {errorMessage && <p className="text-center text-xs font-medium text-red-400">{errorMessage}</p>}
+
+        <div className="grid w-full grid-cols-3 gap-2">
+          {KEYS.map((k, i) =>
+            k === '' ? (
+              <span key={i} />
+            ) : (
+              <button
+                key={i}
+                type="button"
+                onClick={() => press(k)}
+                className="flex h-14 items-center justify-center rounded-lg border border-border bg-background/40 font-mono text-lg font-semibold transition-all duration-150 hover:border-neon/40 hover:text-neon active:scale-95"
+              >
+                {k === 'del' ? <Delete className="size-5" /> : k}
+              </button>
+            ),
+          )}
+        </div>
+
+        <Button type="submit" disabled={pin.length !== 4 || isPending} className="h-11 w-full bg-neon font-bold text-neon-foreground hover:brightness-110">
+          {isPending ? 'Kontrol ediliyor...' : 'Giriş Yap'}
+        </Button>
+        <p className="text-center text-[10px] text-muted-foreground">Her işletmenin kendi paneli ve PIN&apos;i vardır</p>
+      </form>
     </div>
   )
+}
+
+function cnDot(filled: boolean, error: boolean) {
+  return `size-3 rounded-full border transition-colors duration-150 ${error ? 'border-red-400 bg-red-400/60' : filled ? 'border-neon bg-neon' : 'border-border bg-transparent'}`
 }

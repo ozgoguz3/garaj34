@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import type { Visit } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
-const STATUS_DOT: Record<string, string> = { queued: 'bg-amber-400', processing: 'bg-cyan', ready: 'bg-neon' }
+const STATUS_DOT: Record<string, string> = { queued: 'bg-muted-foreground', processing: 'bg-neon', ready: 'bg-ok' }
 
 export function PlatesRail({ visits, businessName }: { visits: Visit[]; businessName: string }) {
   const [preview, setPreview] = useState<Visit | null>(null)

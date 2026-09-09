@@ -1,22 +1,42 @@
-import { Sparkles } from 'lucide-react'
+import { LicensePlate } from '@/components/license-plate'
 
-// Artık müşteriler bu sayfada plaka aramıyor — her müşteri kendi işletmesinden
-// aldığı özel linkle (/{isletme}/{plaka}) direkt kendi aracının durumuna gidiyor.
-// Admin de kendi paneline direkt /admin/{isletme} linkiyle giriyor (tarayıcıya
-// eklediği bir yer imi üzerinden). Bu yüzden bu sayfa artık sadece nötr bir
-// karşılama ekranı; hiçbir işlevsel form barındırmıyor.
+const FEATURES = ['Çoklu işleme', 'Canlı takip linki', 'WhatsApp entegrasyonu', 'Müşteri sadakati analizi']
+
 export default function HomePage() {
   return (
-    <main className="bg-grid flex min-h-dvh flex-col items-center justify-center p-6 text-center">
-      <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-neon/20 bg-background/60 p-8 shadow-2xl backdrop-blur-xl">
-        <div className="glow-neon flex size-16 items-center justify-center rounded-2xl bg-neon text-neon-foreground">
-          <Sparkles className="size-8" />
+    <main className="bg-grid flex min-h-dvh flex-col">
+      <header className="border-b border-border/60">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
+          <span className="font-display text-sm font-bold tracking-tight">
+            garaj<span className="text-neon">34</span>
+          </span>
+          <span className="font-mono text-[11px] text-muted-foreground">atölye yönetim sistemi</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Garaj34 Premium</h1>
-        <p className="text-sm text-muted-foreground">
-          Canlı araç takip ve müşteri yönetim sistemi.
+      </header>
+
+      <div className="flex flex-1 flex-col items-center justify-center px-5 py-16 text-center">
+        <LicensePlate plate="34 GRJ 34" size="lg" className="shadow-2xl" />
+        <h1 className="font-display mt-10 max-w-2xl text-balance text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+          Atölyeni <span className="text-neon">enstrüman</span> hassasiyetiyle yönet.
+        </h1>
+        <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+          Garaj34 — detaylı bakım ve kaplama atölyeleri için canlı araç takibi ve müşteri yönetim sistemi.
         </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+          {FEATURES.map((f) => (
+            <span key={f} className="rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground">
+              {f}
+            </span>
+          ))}
+        </div>
       </div>
+
+      <footer className="border-t border-border/60">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 font-mono text-[11px] text-muted-foreground">
+          <span>© {new Date().getFullYear()} garaj34</span>
+          <span>tr · v2</span>
+        </div>
+      </footer>
     </main>
   )
 }

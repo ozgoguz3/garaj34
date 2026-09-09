@@ -102,7 +102,7 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
               {SEGMENTS.map((s) => {
                 const Icon = s.icon
                 return (
-                  <button key={s.value} onClick={() => setSegment(s.value)} className={cn('flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-all', segment === s.value ? 'border-neon bg-neon/10 shadow-[0_0_15px_rgba(var(--neon-rgb),0.2)] scale-[1.02]' : 'border-border hover:bg-muted/40 hover:border-neon/30 hover:scale-[1.01]')}>
+                  <button key={s.value} onClick={() => setSegment(s.value)} className={cn('flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-all', segment === s.value ? 'border-neon bg-neon/10 ring-1 ring-neon/40 scale-[1.02]' : 'border-border hover:bg-muted/40 hover:border-neon/30 hover:scale-[1.01]')}>
                     <div className="flex items-center gap-2">
                       <Icon className={cn('size-4', segment === s.value && 'text-neon')} />
                       <span className={cn('text-sm font-semibold', segment === s.value && 'text-neon')}>{s.label}</span>
