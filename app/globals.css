@@ -23,6 +23,8 @@
     --ring: 0 0% 83.1%;
     --radius: 0.75rem;
     --neon: #10b981;
+    --cyan: #22d3ee;
+    --gold: #fbbf24;
   }
 }
 
@@ -46,35 +48,45 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  /* Eksik olan tasarım token'ları — bunlar olmadan bg-neon vs. çalışmıyordu */
+  --color-neon: var(--neon);
+  --color-neon-foreground: #05130d;
+  --color-cyan: var(--cyan);
+  --color-gold: var(--gold);
+  --color-plate: #f4f4f5;
+  --color-plate-foreground: #101014;
+  --color-plate-stripe: #003399;
 }
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  ::selection { background: color-mix(in srgb, var(--neon) 35%, transparent); }
 }
 
 /* Custom UI Effects */
 .bg-grid {
   background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
 }
-
 .glass {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0,0,0,0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,0.1);
 }
-
-.glow-neon { box-shadow: 0 0 20px var(--neon); }
-.glow-neon-text { text-shadow: 0 0 10px var(--neon); }
+.glow-neon { box-shadow: 0 0 20px color-mix(in srgb, var(--neon) 45%, transparent); }
+.glow-cyan { box-shadow: 0 0 18px color-mix(in srgb, var(--cyan) 40%, transparent); }
+.glow-neon-text, .text-glow-neon { text-shadow: 0 0 12px color-mix(in srgb, var(--neon) 60%, transparent); }
 
 @keyframes shimmer {
   0% { background-position: -1000px 0; }
   100% { background-position: 1000px 0; }
 }
-
 .skeleton {
   animation: shimmer 2s infinite linear;
   background: linear-gradient(90deg, hsl(var(--muted)) 0%, rgba(255,255,255,0.05) 50%, hsl(var(--muted)) 100%);

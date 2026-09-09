@@ -3,23 +3,18 @@ import { getAuthedOrganization } from '@/lib/actions'
 import { listActiveVisits, listCompletedVisits, getRetentionInsights } from '@/lib/data'
 import { AdminDashboard } from '@/components/admin/admin-dashboard'
 
-export default async function AdminDashboardPage({ params }: { params: { business: string } }) {
-  const auth = await getAuthedOrganization(params.business)
-  if (!auth) redirect(`/admin/${params.business}`)
-
+export default async function AdminDashboardPage({ params }: { params: Promise<{ business: string }> }) {
+  const { business } = await params
+  const auth = await getAuthedOrganization(business)
+  if (!auth) redirect(`/admin/${business}`)
   const org = auth.organization
-  const activeVisits = await listActiveVisits(org.id)
-  const completedVisits = await listCompletedVisits(org.id)
-  const insights = await getRetentionInsights(org.id)
-
+  const [activeVisits, completedVisits, insights] = await Promise.all([
+    listActiveVisits(org.id), listCompletedVisits(org.id), getRetentionInsights(org.id),
+  ])
   return (
     <AdminDashboard
-      organizationId={org.id}
-      businessSlug={org.slug}
-      businessName={org.name}
-      activeVisits={activeVisits}
-      completedVisits={completedVisits}
-      insights={insights}
+      organizationId={org.id} businessSlug={org.slug} businessName={org.name}
+      activeVisits={activeVisits} completedVisits={completedVisits} insights={insights}
     />
   )
 }
