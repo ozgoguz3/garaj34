@@ -93,7 +93,7 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-200">
       <SectionCard title="Kampanya Oluştur" description="Bir müşteri grubu seç, mesajını yaz – sıradaki listeyi tek tek WhatsApp'tan gönder.">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">

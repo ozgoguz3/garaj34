@@ -364,3 +364,22 @@ export async function getWarrantyExpirations(orgId: string, days = 90) {
     ORDER BY v.warranty_end_date ASC LIMIT 50`
   return rows.map(mapVisit)
 }
+
+// --- RATE LIMIT (sunucu tarafı) ---
+export async function checkRateLimit(key: string): Promise<string | null> {
+  const rows = await sql`SELECT fails, window_start FROM rate_limits WHERE key = ${key}`
+  if (!rows.length) return null
+  if (Date.now() - new Date(rows[0].window_start).getTime() > 15 * 60 * 1000) return null
+  if (Number(rows[0].fails) >= 5) return 'Çok fazla hatalı deneme. Lütfen 15 dakika sonra tekrar deneyin.'
+  return null
+}
+export async function recordFailedLogin(key: string) {
+  await sql`
+    INSERT INTO rate_limits (key, fails, window_start) VALUES (${key}, 1, now())
+    ON CONFLICT (key) DO UPDATE SET
+      fails = CASE WHEN now() - rate_limits.window_start > interval '15 minutes' THEN 1 ELSE rate_limits.fails + 1 END,
+      window_start = CASE WHEN now() - rate_limits.window_start > interval '15 minutes' THEN now() ELSE rate_limits.window_start END`
+}
+export async function clearRateLimit(key: string) {
+  await sql`DELETE FROM rate_limits WHERE key = ${key}`
+}

@@ -1,4 +1,4 @@
-import { getOrganizationBySlug } from '@/lib/data'
+import { getOrganizationBySlug, listActiveVisits } from '@/lib/data'
 import { getAuthedOrganization } from '@/lib/actions'
 import { AdminLogin } from '@/components/admin/admin-login'
 import { AdminShell } from '@/components/admin/admin-shell'
@@ -22,8 +22,9 @@ export default async function AdminLayout({ children, params }: LayoutProps) {
   if (!authState) return <AdminLogin slug={slug} businessName={org.name} />
   const bill = billingState(authState.organization)
   if (bill.status === 'expired') return <BillingGate organization={authState.organization} bill={bill} />
+  const activeVisits = await listActiveVisits(authState.organization.id)
   return (
-    <AdminShell organization={authState.organization} slug={slug} role={authState.role}>
+    <AdminShell organization={authState.organization} slug={slug} role={authState.role} activeVisits={activeVisits}>
       {children}
     </AdminShell>
   )
