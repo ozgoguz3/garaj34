@@ -46,7 +46,6 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
       return
     }
     startTransition(async () => {
-      // HATANIN ÇÖZÜLDÜĞÜ YER: businessSlug eklendi
       const result = await getCampaignSegmentAction(businessSlug, businessId, segment)
       setTargets(result)
       setSentPlates(new Set())
@@ -75,10 +74,11 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
   }
 
   function exportToCSV() {
-    const csv = [
+    const lines = [
       ['Plaka', 'Müşteri Adı', 'Telefon', 'Son Ziyaret'],
-      ...targets.map(t => [t.plate, t.customerName, t.phone, new Date(t.lastVisit).toLocaleDateString('tr-TR')])
-    ].map(row => row.join(',')).join('\n')
+      ...targets.map((t) => [t.plate, t.customerName, t.phone, new Date(t.lastVisit).toLocaleDateString('tr-TR')]),
+    ]
+    const csv = lines.map((row) => row.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)

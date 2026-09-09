@@ -13,6 +13,7 @@ export function BillingGate({ organization, bill }: { organization: Organization
           <div className="flex size-12 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
             <Lock className="size-6" />
           </div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-400/80">{bill.plan.name} planı</p>
           <h1 className="text-xl font-bold tracking-tight">Abonelik süresi sona erdi</h1>
           <p className="max-w-md text-sm text-muted-foreground">
             Merak etmeyin: <span className="text-foreground">{organization.name}</span> verileriniz silinmedi, güvenle saklanıyor.

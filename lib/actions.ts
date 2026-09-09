@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import * as data from '@/lib/data'
 import type { VisitStatus } from '@/lib/data'
-import { billingState, PLAN_MAP, type PlanId } from '@/lib/billing'
+import { billingState } from '@/lib/billing'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 const authCookieName = (slug: string) => `garaj34_auth_${slug}`

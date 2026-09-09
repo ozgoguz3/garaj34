@@ -26,8 +26,8 @@ type AdminShellProps = {
 export function AdminShell({ organization, slug, role = 'boss', children }: AdminShellProps) {
   const pathname = usePathname()
   const base = `/admin/${slug}`
-  const primaryColor = organization.metadata?.primaryColor || '#10b981'
-  const tagline = organization.metadata?.tagline || ''
+  const primaryColor = organization.primaryColor || organization.metadata?.primaryColor || '#10b981'
+  const tagline = organization.tagline || organization.metadata?.tagline || ''
 
   function handleLogout() {
     logoutAction(slug).then(() => window.location.reload())

@@ -28,8 +28,8 @@ export function BrandingForm({ organization, slug }: BrandingFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [logoUrl, setLogoUrl] = useState(organization.logoUrl ?? '')
-  const [tagline, setTagline] = useState(organization.metadata?.tagline ?? '')
-  const [color, setColor] = useState(organization.metadata?.primaryColor ?? '#10b981')
+  const [tagline, setTagline] = useState(organization.tagline ?? '')
+  const [color, setColor] = useState(organization.primaryColor ?? '#10b981')
   const [saved, setSaved] = useState(false)
 
   function handleSave() {

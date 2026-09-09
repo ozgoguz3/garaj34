@@ -5,21 +5,20 @@ import { TrackingView } from '@/components/tracking-view'
 export default async function CustomerTrackingPage({
   params,
 }: {
-  params: { business: string; plate: string }
+  params: Promise<{ business: string; plate: string }>
 }) {
-  const org = await getOrganizationBySlug(params.business)
+  const { business, plate } = await params
+  const org = await getOrganizationBySlug(business)
   if (!org) notFound()
-
-  const visit = await findVisitByPlate(org.id, params.plate)
+  const visit = await findVisitByPlate(org.id, plate)
   if (!visit) notFound()
-
   return (
     <TrackingView
       visit={visit}
       businessName={org.name}
-      primaryColor={org.metadata?.primaryColor}
+      primaryColor={org.primaryColor}
       logoUrl={org.logoUrl}
-      googleMapsUrl={org.metadata?.googleMapsUrl}
+      googleMapsUrl={org.googleMapsUrl}
     />
   )
 }

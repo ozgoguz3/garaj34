@@ -24,6 +24,8 @@
     --ring: 0 0% 83.1%;
     --radius: 0.75rem;
     --neon: #10b981;
+    --cyan: #22d3ee;
+    --gold: #fbbf24;
   }
 }
 
@@ -47,35 +49,45 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  /* Eksik olan tasarÄ±m token'larÄ± â€” bunlar olmadan bg-neon vs. Ã§alÄ±ÅŸmÄ±yordu */
+  --color-neon: var(--neon);
+  --color-neon-foreground: #05130d;
+  --color-cyan: var(--cyan);
+  --color-gold: var(--gold);
+  --color-plate: #f4f4f5;
+  --color-plate-foreground: #101014;
+  --color-plate-stripe: #003399;
 }
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  ::selection { background: color-mix(in srgb, var(--neon) 35%, transparent); }
 }
 
 /* Custom UI Effects */
 .bg-grid {
   background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
 }
-
 .glass {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0,0,0,0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,0.1);
 }
-
-.glow-neon { box-shadow: 0 0 20px var(--neon); }
-.glow-neon-text { text-shadow: 0 0 10px var(--neon); }
+.glow-neon { box-shadow: 0 0 20px color-mix(in srgb, var(--neon) 45%, transparent); }
+.glow-cyan { box-shadow: 0 0 18px color-mix(in srgb, var(--cyan) 40%, transparent); }
+.glow-neon-text, .text-glow-neon { text-shadow: 0 0 12px color-mix(in srgb, var(--neon) 60%, transparent); }
 
 @keyframes shimmer {
   0% { background-position: -1000px 0; }
   100% { background-position: 1000px 0; }
 }
-
 .skeleton {
   animation: shimmer 2s infinite linear;
   background: linear-gradient(90deg, hsl(var(--muted)) 0%, rgba(255,255,255,0.05) 50%, hsl(var(--muted)) 100%);
@@ -89,24 +101,34 @@
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\layout.tsx ====================
+// app/layout.tsx
 import type { Metadata } from 'next'
+import { Geist } from 'next/font/google'
 import './globals.css'
-
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
 export const metadata: Metadata = {
-  title: 'Garaj34',
-  description: 'Premium Detailing YÃ¶netim Sistemi',
+  title: { default: 'Garaj34', template: '%s Â· Garaj34' },
+  description: 'Premium Detailing & Oto YÄ±kama YÃ¶netim Sistemi',
+  themeColor: '#0a0a0a',
 }
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr">
-      <body>{children}</body>
+      <body className={geist.variable}>{children}</body>
     </html>
   )
+}
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\manifest.ts ====================
+// app/manifest.ts
+import type { MetadataRoute } from 'next'
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: 'Garaj34 Panel', short_name: 'Garaj34', start_url: '/', display: 'standalone',
+    background_color: '#0a0a0a', theme_color: '#0a0a0a',
+    icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }],
+  }
 }
 
 
@@ -140,33 +162,26 @@ import { getOrganizationBySlug } from '@/lib/data'
 import { getAuthedOrganization } from '@/lib/actions'
 import { AdminLogin } from '@/components/admin/admin-login'
 import { AdminShell } from '@/components/admin/admin-shell'
+import { BillingGate } from '@/components/admin/billing-gate'
+import { billingState } from '@/lib/billing'
 
-type LayoutProps = {
-  children: React.ReactNode
-  params: Promise<{ business: string }>
-}
+type LayoutProps = { children: React.ReactNode; params: Promise<{ business: string }> }
 
 export default async function AdminLayout({ children, params }: LayoutProps) {
   const { business: slug } = await params
   const org = await getOrganizationBySlug(slug)
-
   if (!org) {
     return (
       <main className="bg-grid flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
         <h1 className="text-xl font-semibold">Ä°ÅŸletme bulunamadÄ±</h1>
-        <p className="text-sm text-muted-foreground">
-          Bu adres iÃ§in kayÄ±tlÄ± bir iÅŸletme yok. LÃ¼tfen size verilen yÃ¶netim linkini kontrol edin.
-        </p>
+        <p className="text-sm text-muted-foreground">Bu adres iÃ§in kayÄ±tlÄ± bir iÅŸletme yok. LÃ¼tfen size verilen yÃ¶netim linkini kontrol edin.</p>
       </main>
     )
   }
-
   const authState = await getAuthedOrganization(slug)
-
-  if (!authState) {
-    return <AdminLogin slug={slug} businessName={org.name} />
-  }
-
+  if (!authState) return <AdminLogin slug={slug} businessName={org.name} />
+  const bill = billingState(authState.organization)
+  if (bill.status === 'expired') return <BillingGate organization={authState.organization} bill={bill} />
   return (
     <AdminShell organization={authState.organization} slug={slug} role={authState.role}>
       {children}
@@ -181,23 +196,18 @@ import { getAuthedOrganization } from '@/lib/actions'
 import { listActiveVisits, listCompletedVisits, getRetentionInsights } from '@/lib/data'
 import { AdminDashboard } from '@/components/admin/admin-dashboard'
 
-export default async function AdminDashboardPage({ params }: { params: { business: string } }) {
-  const auth = await getAuthedOrganization(params.business)
-  if (!auth) redirect(`/admin/${params.business}`)
-
+export default async function AdminDashboardPage({ params }: { params: Promise<{ business: string }> }) {
+  const { business } = await params
+  const auth = await getAuthedOrganization(business)
+  if (!auth) redirect(`/admin/${business}`)
   const org = auth.organization
-  const activeVisits = await listActiveVisits(org.id)
-  const completedVisits = await listCompletedVisits(org.id)
-  const insights = await getRetentionInsights(org.id)
-
+  const [activeVisits, completedVisits, insights] = await Promise.all([
+    listActiveVisits(org.id), listCompletedVisits(org.id), getRetentionInsights(org.id),
+  ])
   return (
     <AdminDashboard
-      organizationId={org.id}
-      businessSlug={org.slug}
-      businessName={org.name}
-      activeVisits={activeVisits}
-      completedVisits={completedVisits}
-      insights={insights}
+      organizationId={org.id} businessSlug={org.slug} businessName={org.name}
+      activeVisits={activeVisits} completedVisits={completedVisits} insights={insights}
     />
   )
 }
@@ -545,21 +555,20 @@ import { TrackingView } from '@/components/tracking-view'
 export default async function CustomerTrackingPage({
   params,
 }: {
-  params: { business: string; plate: string }
+  params: Promise<{ business: string; plate: string }>
 }) {
-  const org = await getOrganizationBySlug(params.business)
+  const { business, plate } = await params
+  const org = await getOrganizationBySlug(business)
   if (!org) notFound()
-
-  const visit = await findVisitByPlate(org.id, params.plate)
+  const visit = await findVisitByPlate(org.id, plate)
   if (!visit) notFound()
-
   return (
     <TrackingView
       visit={visit}
       businessName={org.name}
-      primaryColor={org.metadata?.primaryColor}
+      primaryColor={org.primaryColor}
       logoUrl={org.logoUrl}
-      googleMapsUrl={org.metadata?.googleMapsUrl}
+      googleMapsUrl={org.googleMapsUrl}
     />
   )
 }
@@ -955,7 +964,6 @@ export function AdminDashboard({
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\admin-login.tsx ====================
 'use client'
-
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, ArrowRight } from 'lucide-react'
@@ -963,12 +971,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { loginAction } from '@/lib/actions'
 
-type AdminLoginProps = {
-  slug: string
-  businessName: string
-}
-
-export function AdminLogin({ slug, businessName }: AdminLoginProps) {
+export function AdminLogin({ slug, businessName }: { slug: string; businessName: string }) {
   const [pin, setPin] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -977,16 +980,11 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
   function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setErrorMessage(null)
-
     startTransition(async () => {
       try {
         const result = await loginAction(slug, pin)
-        if (result.ok) {
-          window.location.href = `/admin/${slug}`
-        } else {
-          setErrorMessage(result.error || 'HatalÄ± PIN kodu')
-          setPin('')
-        }
+        if (result.ok) window.location.href = `/admin/${slug}`
+        else { setErrorMessage(result.error || 'HatalÄ± PIN kodu'); setPin('') }
       } catch (err: any) {
         setErrorMessage(err.message || 'Sunucu baÄŸlantÄ± hatasÄ± oluÅŸtu')
       }
@@ -1003,27 +1001,16 @@ export function AdminLogin({ slug, businessName }: AdminLoginProps) {
           <h1 className="mt-4 text-xl font-bold tracking-tight">{businessName}</h1>
           <p className="text-sm text-muted-foreground">Panele eriÅŸmek iÃ§in 4 haneli PIN kodunu girin.</p>
         </div>
-
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <Input
-            type="password"
-            inputMode="numeric"
-            maxLength={4}
-            placeholder="â€¢â€¢â€¢â€¢"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
+            type="password" inputMode="numeric" maxLength={4} placeholder="â€¢â€¢â€¢â€¢"
+            value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
             className={`h-14 text-center text-2xl tracking-[1em] ${errorMessage ? 'border-red-500 bg-red-500/10' : 'bg-input/40'}`}
             autoFocus
           />
-          {errorMessage && (
-            <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>
-          )}
-
-          <Button
-            type="submit"
-            disabled={isPending || pin.length === 0}
-            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:brightness-110"
-          >
+          {errorMessage && <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>}
+          <Button type="submit" disabled={isPending || pin.length === 0}
+            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:brightness-110">
             {isPending ? 'Kontrol ediliyor...' : <>GiriÅŸ Yap <ArrowRight className="ml-2 size-5" /></>}
           </Button>
         </form>
@@ -1062,8 +1049,8 @@ type AdminShellProps = {
 export function AdminShell({ organization, slug, role = 'boss', children }: AdminShellProps) {
   const pathname = usePathname()
   const base = `/admin/${slug}`
-  const primaryColor = organization.metadata?.primaryColor || '#10b981'
-  const tagline = organization.metadata?.tagline || ''
+  const primaryColor = organization.primaryColor || organization.metadata?.primaryColor || '#10b981'
+  const tagline = organization.tagline || organization.metadata?.tagline || ''
 
   function handleLogout() {
     logoutAction(slug).then(() => window.location.reload())
@@ -1113,6 +1100,61 @@ export function AdminShell({ organization, slug, role = 'boss', children }: Admi
 }
 
 
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\billing-gate.tsx ====================
+import { Lock, BadgeCheck } from 'lucide-react'
+import { PLANS, tl, type BillingState } from '@/lib/billing'
+import type { Organization } from '@/lib/data'
+import { Button } from '@/components/ui/button'
+
+export function BillingGate({ organization, bill }: { organization: Organization; bill: BillingState }) {
+  const ownerWa = process.env.NEXT_PUBLIC_OWNER_WA || ''
+  const msg = encodeURIComponent(`Merhaba! ${organization.name} iÃ§in Garaj34 aboneliÄŸimi yenilemek istiyorum.`)
+  return (
+    <main className="bg-grid flex min-h-dvh items-center justify-center p-4">
+      <div className="flex w-full max-w-3xl flex-col gap-6 rounded-2xl border border-amber-500/20 bg-background/70 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex size-12 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
+            <Lock className="size-6" />
+          </div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-400/80">{bill.plan.name} planÄ±</p>
+          <h1 className="text-xl font-bold tracking-tight">Abonelik sÃ¼resi sona erdi</h1>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Merak etmeyin: <span className="text-foreground">{organization.name}</span> verileriniz silinmedi, gÃ¼venle saklanÄ±yor.
+            Devam etmek iÃ§in size uygun planÄ± seÃ§in; aktivasyon aynÄ± gÃ¼n yapÄ±lÄ±r.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {PLANS.filter((p) => p.id !== 'trial').map((p) => (
+            <div key={p.id} className="glass flex flex-col gap-3 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">{p.name}</span>
+                {p.id === 'pro' && <BadgeCheck className="size-4 text-neon" />}
+              </div>
+              <span className="text-2xl font-bold">{tl(p.priceMonthly)}<span className="text-xs font-normal text-muted-foreground">/ay</span></span>
+              <ul className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                {p.features.slice(0, 4).map((f) => <li key={f}>â€¢ {f}</li>)}
+              </ul>
+              {p.lifetime && <p className="text-[10px] text-muted-foreground/70">Tek seferlik lisans: {tl(p.lifetime)}</p>}
+            </div>
+          ))}
+        </div>
+        {ownerWa && (
+          <Button
+            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:brightness-110"
+            render={<a href={`https://wa.me/${ownerWa}?text=${msg}`} target="_blank" rel="noopener noreferrer" />}
+          >
+            WhatsApp&apos;tan Yenile / YÃ¼kselt
+          </Button>
+        )}
+        <p className="text-center text-[11px] text-muted-foreground">
+          Ã–deme sonrasÄ± paneliniz dakikalar iÃ§inde aÃ§Ä±lÄ±r. Fatura bilgisi iÃ§in bizimle iletiÅŸiminiz yeterli.
+        </p>
+      </div>
+    </main>
+  )
+}
+
+
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\branding-form.tsx ====================
 'use client'
 
@@ -1144,8 +1186,8 @@ export function BrandingForm({ organization, slug }: BrandingFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [logoUrl, setLogoUrl] = useState(organization.logoUrl ?? '')
-  const [tagline, setTagline] = useState(organization.metadata?.tagline ?? '')
-  const [color, setColor] = useState(organization.metadata?.primaryColor ?? '#10b981')
+  const [tagline, setTagline] = useState(organization.tagline ?? '')
+  const [color, setColor] = useState(organization.primaryColor ?? '#10b981')
   const [saved, setSaved] = useState(false)
 
   function handleSave() {
@@ -1238,7 +1280,6 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
       return
     }
     startTransition(async () => {
-      // HATANIN Ã‡Ã–ZÃœLDÃœÄÃœ YER: businessSlug eklendi
       const result = await getCampaignSegmentAction(businessSlug, businessId, segment)
       setTargets(result)
       setSentPlates(new Set())
@@ -1699,10 +1740,9 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit,
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\new-job-form.tsx ====================
 'use client'
-
 import { useState, useTransition, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send, CheckCircle2, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { CheckCircle2, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -1711,23 +1751,23 @@ import { SectionCard } from '@/components/admin/section-card'
 import { buildWhatsAppLink, plateToSlug, WARRANTY_ELIGIBLE_SERVICES } from '@/lib/jobs-store'
 import { addVisitAction } from '@/lib/actions'
 
-const SERVICE_OPTIONS = ['Ä°Ã§/DÄ±ÅŸ YÄ±kama', 'DetaylÄ± Temizlik', 'Pasta & Cila', 'Seramik Kaplama', 'Motor YÄ±kama', 'Kaput Filmi', 'Cam Filmi', 'Far BakÄ±mÄ±', 'Torpedo KuafÃ¶r']
+const SERVICE_OPTIONS = ['Ä°Ã§/DÄ±ÅŸ YÄ±kama', 'DetaylÄ± Temizlik', 'Pasta & Cila', 'Seramik Kaplama', 'PPF (Kaput Filmi)', 'Cam Filmi', 'Motor YÄ±kama', 'Far BakÄ±mÄ±', 'Ozon Dezenfeksiyon', 'Torpedo KuafÃ¶r']
 const WARRANTY_PRESETS = [{ label: '12 Ay', months: 12 }, { label: '24 Ay', months: 24 }, { label: '36 Ay', months: 36 }]
 
 export function NewJobForm({ organizationId, businessSlug }: { organizationId: string, businessSlug: string }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  
   const [customerName, setCustomerName] = useState('')
   const [plate, setPlate] = useState('')
   const [carModel, setCarModel] = useState('')
   const [phone, setPhone] = useState('')
+  const [price, setPrice] = useState('')
   const [services, setServices] = useState<string[]>([])
   const [warrantyMonths, setWarrantyMonths] = useState<number | null>(null)
   const [damageNote, setDamageNote] = useState('')
   const [internalNote, setInternalNote] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
   const [lastLink, setLastLink] = useState<{ wa: string; track: string; plate: string } | null>(null)
-
   const canSubmit = plate.trim().length > 0 && services.length > 0
   const showWarranty = services.some((s) => (WARRANTY_ELIGIBLE_SERVICES as readonly string[]).includes(s))
 
@@ -1738,27 +1778,22 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!canSubmit) return
-
+    setFormError(null)
     startTransition(async () => {
-      const visit = await addVisitAction(businessSlug, organizationId, {
-        customerName,
-        plate,
-        carModel,
-        phone,
-        services,
+      const res = await addVisitAction(businessSlug, organizationId, {
+        customerName, plate, carModel, phone, services,
         warrantyMonths: showWarranty ? (warrantyMonths ?? undefined) : undefined,
-        damageNote,
-        internalNote,
+        damageNote, internalNote,
+        price: price.trim() ? Number(price.replace(',', '.')) : null,
       })
-
+      if (!res.ok) { setFormError(res.error); return }
+      const visit = res.value
       const displayPlate = visit.plate || plate
       const waLink = buildWhatsAppLink(visit.phone, displayPlate, businessSlug, window.location.origin)
-      
       setLastLink({ wa: waLink, track: `/${businessSlug}/${plateToSlug(displayPlate)}`, plate: displayPlate })
       if (waLink) window.open(waLink, '_blank', 'noopener,noreferrer')
-
-      setCustomerName(''); setPlate(''); setCarModel(''); setPhone('');
-      setServices([]); setWarrantyMonths(null); setDamageNote(''); setInternalNote('');
+      setCustomerName(''); setPlate(''); setCarModel(''); setPhone(''); setPrice('')
+      setServices([]); setWarrantyMonths(null); setDamageNote(''); setInternalNote('')
       router.refresh()
     })
   }
@@ -1783,34 +1818,33 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
             <Label>Telefon <span className="text-muted-foreground text-xs">(Ä°steÄŸe baÄŸlÄ±)</span></Label>
             <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05xx xxx xx xx" className="h-11 font-mono" />
           </div>
+          <div className="flex flex-col gap-2">
+            <Label>Tutar (â‚º) <span className="text-muted-foreground text-xs">(Ä°steÄŸe baÄŸlÄ±)</span></Label>
+            <Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.,]/g, ''))} placeholder="Ã–rn: 1500" className="h-11 font-mono" />
+          </div>
         </div>
-
         <div className="flex flex-col gap-3">
           <Label>Hizmet Tipi (En az 1 seÃ§im yapÄ±n)</Label>
           <div className="flex flex-wrap gap-2">
             {SERVICE_OPTIONS.map((service) => (
               <button key={service} type="button" onClick={() => toggleService(service)}
                 className={`rounded-full border px-4 py-2 text-sm transition-all ${
-                  services.includes(service) ? 'border-neon bg-neon/10 text-neon shadow-[0_0_10px_rgba(var(--neon-rgb),0.3)]' : 'text-muted-foreground'
-                }`}
-              >{service}</button>
+                  services.includes(service) ? 'border-neon bg-neon/10 text-neon shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'text-muted-foreground'
+                }`}>{service}</button>
             ))}
           </div>
         </div>
-
         {showWarranty && (
           <div className="flex flex-col gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
             <Label className="flex items-center gap-1.5 text-amber-400"><ShieldCheck className="size-4" /> Garanti SÃ¼resi</Label>
             <div className="flex gap-2">
               {WARRANTY_PRESETS.map((p) => (
                 <button key={p.months} type="button" onClick={() => setWarrantyMonths(p.months)}
-                  className={`rounded-full border px-4 py-1.5 text-xs transition-all ${warrantyMonths === p.months ? 'border-amber-400 bg-amber-500/15 text-amber-400' : 'text-muted-foreground'}`}
-                >{p.label}</button>
+                  className={`rounded-full border px-4 py-1.5 text-xs transition-all ${warrantyMonths === p.months ? 'border-amber-400 bg-amber-500/15 text-amber-400' : 'text-muted-foreground'}`}>{p.label}</button>
               ))}
             </div>
           </div>
         )}
-
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label className="flex items-center gap-1.5 text-amber-400"><AlertTriangle className="size-4" /> Tespit Edilen Hasar/Not (MÃ¼ÅŸteri GÃ¶recek)</Label>
@@ -1821,19 +1855,20 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
             <Textarea value={internalNote} onChange={(e) => setInternalNote(e.target.value)} placeholder="Ã–zel talepler vs..." rows={2} />
           </div>
         </div>
-
+        {formError && (
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">{formError}</p>
+        )}
         <Button type="submit" disabled={!canSubmit || isPending} className="glow-neon h-14 w-full bg-neon text-neon-foreground font-bold text-base hover:brightness-110">
           {isPending ? 'Kaydediliyor...' : 'Sisteme Kaydet & WhatsApp Linki OluÅŸtur'}
         </Button>
-
         {lastLink && (
-           <div className="flex flex-col gap-4 rounded-xl border border-neon/30 bg-neon/10 p-4 sm:flex-row sm:justify-between items-center mt-2">
-             <span className="flex items-center gap-2 text-neon font-medium"><CheckCircle2 className="size-5" /> {lastLink.plate} kaydedildi.</span>
-             <div className="flex gap-2">
-               {lastLink.wa && <Button variant="outline" className="border-neon/40 text-neon" render={<a href={lastLink.wa} target="_blank" rel="noopener noreferrer"/>}>WhatsApp'ta AÃ§</Button>}
-               <Button variant="ghost" render={<a href={lastLink.track} target="_blank" rel="noopener noreferrer"/>}><ExternalLink className="mr-2 size-4" /> Takip EkranÄ±</Button>
-             </div>
-           </div>
+          <div className="flex flex-col gap-4 rounded-xl border border-neon/30 bg-neon/10 p-4 sm:flex-row sm:justify-between items-center mt-2">
+            <span className="flex items-center gap-2 text-neon font-medium"><CheckCircle2 className="size-5" /> {lastLink.plate} kaydedildi.</span>
+            <div className="flex gap-2">
+              {lastLink.wa && <Button variant="outline" className="border-neon/40 text-neon" render={<a href={lastLink.wa} target="_blank" rel="noopener noreferrer" />}>WhatsApp&apos;ta AÃ§</Button>}
+              <Button variant="ghost" render={<a href={lastLink.track} target="_blank" rel="noopener noreferrer" />}><ExternalLink className="mr-2 size-4" /> Takip EkranÄ±</Button>
+            </div>
+          </div>
         )}
       </form>
     </SectionCard>
@@ -1936,7 +1971,7 @@ export function SectionCard({ title, description, action, children, className }:
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
   "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
@@ -2054,7 +2089,7 @@ export { Button, buttonVariants }
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\ui\card.tsx ====================
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 function Card({
   className,
@@ -2160,7 +2195,7 @@ export {
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\ui\input.tsx ====================
 import * as React from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -2183,7 +2218,7 @@ export { Input }
 "use client"
 
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
@@ -2229,37 +2264,50 @@ export { Textarea }
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\actions.ts ====================
 'use server'
-
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import * as data from '@/lib/data'
 import type { VisitStatus } from '@/lib/data'
+import { billingState } from '@/lib/billing'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30
+const authCookieName = (slug: string) => `garaj34_auth_${slug}`
+const rlCookieName = (slug: string) => `garaj34_rl_${slug}`
 
-function authCookieName(slug: string) {
-  return `garaj34_auth_${slug}`
+type Result<T> = { ok: true; value: T } | { ok: false; error: string }
+
+// --- Basit brute-force korumasÄ±: 15 dk'da 5 deneme ---
+async function rateLimited(slug: string): Promise<string | null> {
+  const jar = await cookies()
+  const raw = jar.get(rlCookieName(slug))?.value
+  if (!raw) return null
+  try {
+    const { n, t } = JSON.parse(raw) as { n: number; t: number }
+    if (Date.now() - t < 15 * 60 * 1000 && n >= 5) return 'Ã‡ok fazla hatalÄ± deneme. LÃ¼tfen 15 dakika sonra tekrar deneyin.'
+  } catch {}
+  return null
+}
+async function bumpRate(slug: string) {
+  const jar = await cookies()
+  const raw = jar.get(rlCookieName(slug))?.value
+  let n = 1, t = Date.now()
+  try { const p = JSON.parse(raw || '{}'); if (Date.now() - (p.t || 0) < 15 * 60 * 1000) n = (p.n || 0) + 1; else t = Date.now() } catch {}
+  jar.set(rlCookieName(slug), JSON.stringify({ n, t }), { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 900 })
 }
 
-export async function loginAction(slug: string, pin: string) {
-  try {
-    const business = await data.verifyBusinessPin(slug, pin)
-    if (!business) return { ok: false as const, error: 'HatalÄ± PIN kodu.' }
-
-    const jar = await cookies()
-    jar.set(authCookieName(slug), String(business.id), {
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'lax', 
-      path: '/', 
-      maxAge: COOKIE_MAX_AGE,
-    })
-
-    revalidatePath(`/admin/${slug}`, 'layout')
-    return { ok: true as const, business, role: 'boss' as const }
-  } catch {
-    return { ok: false as const, error: 'Sunucu hatasÄ± oluÅŸtu.' }
-  }
+export async function loginAction(slug: string, pin: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const limited = await rateLimited(slug)
+  if (limited) return { ok: false, error: limited }
+  const res = await data.verifyPin(slug, pin)
+  if (!res) { await bumpRate(slug); return { ok: false, error: 'HatalÄ± PIN kodu.' } }
+  const jar = await cookies()
+  jar.set(authCookieName(slug), `${res.organization.id}.${res.role}`, {
+    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: COOKIE_MAX_AGE,
+  })
+  jar.delete(rlCookieName(slug))
+  await data.logAudit(res.organization.id, res.role, 'login', 'organization', res.organization.id)
+  revalidatePath(`/admin/${slug}`, 'layout')
+  return { ok: true }
 }
 
 export async function logoutAction(slug: string) {
@@ -2268,68 +2316,130 @@ export async function logoutAction(slug: string) {
   revalidatePath(`/admin/${slug}`, 'layout')
 }
 
-// Ä°sim uyuÅŸmazlÄ±ÄŸÄ±nÄ± gidermek iÃ§in her iki ismi de export ediyoruz
-export async function getAuthedOrganization(slug: string) {
+export async function getAuthedOrganization(slug: string): Promise<{ organization: data.Organization; role: 'boss' | 'employee' } | null> {
   try {
     const jar = await cookies()
-    const cookieBusinessId = jar.get(authCookieName(slug))?.value
-    if (!cookieBusinessId) return null
-
-    const business = await data.getBusinessBySlug(slug)
-    if (!business || String(business.id) !== String(cookieBusinessId)) return null
-    
-    return { organization: business, role: 'boss' as const }
-  } catch {
-    return null
-  }
+    const raw = jar.get(authCookieName(slug))?.value
+    if (!raw) return null
+    const [id, role] = raw.split('.')
+    const org = await data.getOrganizationById(id)
+    if (!org || org.slug !== slug) return null
+    return { organization: org, role: (role === 'employee' ? 'employee' : 'boss') as 'boss' | 'employee' }
+  } catch { return null }
 }
-
-export async function getAuthedBusiness(slug: string) {
-  return getAuthedOrganization(slug)
-}
+export const getAuthedBusiness = getAuthedOrganization
 
 async function requireAuth(slug: string, businessId: string) {
   const auth = await getAuthedOrganization(slug)
-  if (!auth || String(auth.organization.id) !== String(businessId)) {
-    throw new Error('Yetkisiz islem. Lutfen tekrar giris yapin.')
-  }
+  if (!auth || String(auth.organization.id) !== String(businessId)) throw new Error('Yetkisiz islem. Lutfen tekrar giris yapin.')
+  return auth
 }
 
-export async function addJobAction(businessSlug: string, businessId: string, input: Parameters<typeof data.addJob>[1]) {
-  await requireAuth(businessSlug, businessId)
-  const job = await data.addJob(businessId, input)
+export async function addVisitAction(businessSlug: string, businessId: string, input: Parameters<typeof data.addVisit>[1]): Promise<Result<data.Visit>> {
+  const auth = await requireAuth(businessSlug, businessId)
+  const bill = billingState(auth.organization)
+  if (bill.status === 'expired')
+    return { ok: false, error: 'Abonelik sÃ¼reniz doldu. Paneliniz kilitlenmedi; verileriniz gÃ¼vende. Devam etmek iÃ§in aboneliÄŸinizi yenileyin.' }
+  const active = await data.countActiveVisits(businessId)
+  if (active >= bill.plan.maxActiveVisits)
+    return { ok: false, error: `"${bill.plan.name}" planÄ±nÄ±zda aktif araÃ§ limiti (${bill.plan.maxActiveVisits}) doldu. Ãœst plana geÃ§erek kapasiteyi aÃ§abilirsiniz.` }
+  const visit = await data.addVisit(businessId, input)
+  await data.logAudit(businessId, auth.role, 'visit.create', 'visit', visit.id, { plate: visit.plate })
   revalidatePath(`/admin/${businessSlug}`, 'layout')
-  return job
+  return { ok: true, value: visit }
 }
 
-export async function setStepAction(businessSlug: string, businessId: string, jobId: string, step: number | VisitStatus) {
-  await requireAuth(businessSlug, businessId)
-  await data.setJobStep(businessId, jobId, step)
+export async function updateVisitStatusAction(businessSlug: string, businessId: string, visitId: string, status: VisitStatus) {
+  const auth = await requireAuth(businessSlug, businessId)
+  await data.updateVisitStatus(businessId, visitId, status)
+  await data.logAudit(businessId, auth.role, 'visit.status', 'visit', visitId, { status })
   revalidatePath(`/admin/${businessSlug}`, 'layout')
 }
 
-export async function archiveJobAction(businessSlug: string, businessId: string, jobId: string) {
-  await requireAuth(businessSlug, businessId)
-  await data.archiveJob(businessId, jobId)
-  revalidatePath(`/admin/${businessSlug}`, 'layout')
-}
-
-export async function updateBrandingAction(businessSlug: string, businessId: string, input: Parameters<typeof data.updateBusinessBranding>[1]) {
-  await requireAuth(businessSlug, businessId)
-  await data.updateBusinessBranding(businessId, input)
+export async function updateBrandingAction(businessSlug: string, businessId: string, input: Parameters<typeof data.updateOrganizationBranding>[1]) {
+  const auth = await requireAuth(businessSlug, businessId)
+  await data.updateOrganizationBranding(businessId, input)
+  await data.logAudit(businessId, auth.role, 'org.branding', 'organization', businessId)
   revalidatePath(`/admin/${businessSlug}`, 'layout')
   revalidatePath(`/${businessSlug}`, 'layout')
 }
 
-export async function uploadJobPhotoAction(businessSlug: string, businessId: string, jobId: string, photoUrl: string, photoType: 'before' | 'after') {
+export async function getCampaignSegmentAction(businessSlug: string, businessId: string, segment: string) {
   await requireAuth(businessSlug, businessId)
-  await data.addJobPhoto(jobId, photoUrl, photoType)
-  revalidatePath(`/admin/${businessSlug}/aktif`, 'page')
-}
-
-export async function getCampaignSegmentAction(businessId: string, segment: any) {
   return data.getCampaignSegment(businessId, segment)
 }
+
+
+==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\billing.ts ====================
+import type { Organization } from '@/lib/data'
+
+export type PlanId = 'trial' | 'starter' | 'pro' | 'chain'
+
+export type Plan = {
+  id: PlanId
+  name: string
+  priceMonthly: number
+  priceYearly: number
+  lifetime: number | null
+  maxActiveVisits: number
+  staff: number
+  campaigns: boolean
+  bi: boolean
+  blurb: string
+  features: string[]
+}
+
+export const PLANS: Plan[] = [
+  {
+    id: 'trial', name: 'Deneme', priceMonthly: 0, priceYearly: 0, lifetime: null,
+    maxActiveVisits: 15, staff: 1, campaigns: false, bi: false,
+    blurb: '14 gÃ¼n, kartsÄ±z, risksiz.',
+    features: ['CanlÄ± araÃ§ takip', 'WhatsApp linki', '15 aktif araÃ§'],
+  },
+  {
+    id: 'starter', name: 'BaÅŸlangÄ±Ã§', priceMonthly: 499, priceYearly: 4990, lifetime: 14990,
+    maxActiveVisits: 60, staff: 1, campaigns: false, bi: false,
+    blurb: 'Tek ÅŸube, temel operasyon.',
+    features: ['SÄ±nÄ±rsÄ±z mÃ¼ÅŸteri veritabanÄ±', 'CanlÄ± takip + WhatsApp', 'Google yorum toplama linki', 'Garanti takibi'],
+  },
+  {
+    id: 'pro', name: 'Pro', priceMonthly: 999, priceYearly: 9990, lifetime: 24990,
+    maxActiveVisits: 500, staff: 3, campaigns: true, bi: true,
+    blurb: 'BÃ¼yÃ¼yen iÅŸletmeler iÃ§in tam paket.',
+    features: ['BaÅŸlangÄ±Ã§â€™taki her ÅŸey', 'Kampanya & segment mesajlarÄ±', 'Ä°ÅŸ zekasÄ± raporlarÄ± (ciro, CLV, tekrar oranÄ±)', '3 personel PINâ€™i', 'Ã–ncelikli destek'],
+  },
+  {
+    id: 'chain', name: 'Zincir', priceMonthly: 2499, priceYearly: 24990, lifetime: null,
+    maxActiveVisits: 5000, staff: 25, campaigns: true, bi: true,
+    blurb: 'Ã‡ok ÅŸubeli gruplar + benchmark.',
+    features: ['Proâ€™daki her ÅŸey', 'Ã‡oklu ÅŸube', 'Ä°stanbul benchmark raporu', 'Ã–zel renk/logo & kurulum desteÄŸi'],
+  },
+]
+
+export const PLAN_MAP = Object.fromEntries(PLANS.map((p) => [p.id, p])) as Record<PlanId, Plan>
+
+export type BillingStatus = 'trial' | 'active' | 'expired'
+export type BillingState = { status: BillingStatus; daysLeft: number; plan: Plan }
+
+const DAY = 1000 * 60 * 60 * 24
+
+export function billingState(org: Organization): BillingState {
+  const plan = PLAN_MAP[(org.planId as PlanId)] ?? PLAN_MAP.trial
+  const now = Date.now()
+  if (org.subscriptionStatus === 'active') {
+    const until = org.subscriptionRenewsAt ? new Date(org.subscriptionRenewsAt).getTime() : 0
+    return until > now
+      ? { status: 'active', daysLeft: Math.ceil((until - now) / DAY), plan }
+      : { status: 'expired', daysLeft: 0, plan }
+  }
+  const until = org.trialEndsAt ? new Date(org.trialEndsAt).getTime() : 0
+  return until > now
+    ? { status: 'trial', daysLeft: Math.ceil((until - now) / DAY), plan }
+    : { status: 'expired', daysLeft: 0, plan }
+}
+
+export const tl = (n: number) =>
+  new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(n)
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\data.ts ====================
@@ -2344,29 +2454,18 @@ export type Organization = {
   slug: string
   name: string
   logoUrl: string | null
+  tagline: string
+  primaryColor: string
+  googleMapsUrl: string | null
+  whatsappPhone: string | null
+  planId: string
+  subscriptionStatus: string
+  trialEndsAt: string | null
+  subscriptionRenewsAt: string | null
   metadata: any
   createdAt: string
 }
-
-export type Customer = {
-  id: string
-  organizationId: string
-  fullName: string
-  phone: string | null
-  createdAt: string
-}
-
-export type Vehicle = {
-  id: string
-  customerId: string | null
-  organizationId: string
-  plate: string
-  brand: string | null
-  model: string | null
-}
-
 export type VisitStatus = 'queued' | 'processing' | 'ready' | 'completed' | 'cancelled'
-
 export type Visit = {
   id: string
   vehicleId: string
@@ -2376,6 +2475,8 @@ export type Visit = {
   damageNote: string | null
   internalNote: string | null
   warrantyEndDate: string | null
+  price: number | null
+  paymentStatus: string
   createdAt: string
   completedAt: string | null
   plate?: string
@@ -2383,15 +2484,14 @@ export type Visit = {
   phone?: string
   carModel?: string
 }
-
 export type CampaignTarget = {
   plate: string
   customerName: string
   phone: string
   lastVisit: string
   services: string[]
+  warrantyEnd?: string | null
 }
-
 export type RetentionInsight = {
   plate: string
   customerName: string
@@ -2401,107 +2501,131 @@ export type RetentionInsight = {
   isOverdue: boolean
 }
 
-// --- ORGANÄ°ZASYON (TENANT) Ä°ÅLEMLERÄ° ---
-
-export async function getOrganizationBySlug(slug: string): Promise<Organization | null> {
-  const rows = await sql`SELECT * FROM neon_auth.organization WHERE slug = ${slug} LIMIT 1`
-  if (!rows.length) return null
+function mapOrg(r: any): Organization {
   return {
-    id: String(rows[0].id),
-    slug: String(rows[0].slug),
-    name: String(rows[0].name),
-    logoUrl: rows[0].logo || null,
-    metadata: rows[0].metadata || {},
-    createdAt: String(rows[0].createdat)
+    id: String(r.id),
+    slug: String(r.slug),
+    name: String(r.name),
+    logoUrl: r.logo_url || null,
+    tagline: String(r.tagline || ''),
+    primaryColor: String(r.primary_color || '#10b981'),
+    googleMapsUrl: r.google_maps_url || null,
+    whatsappPhone: r.whatsapp_phone || null,
+    planId: String(r.plan_id || 'trial'),
+    subscriptionStatus: String(r.subscription_status || 'trial'),
+    trialEndsAt: r.trial_ends_at || null,
+    subscriptionRenewsAt: r.subscription_renews_at || null,
+    metadata: r.metadata || {},
+    createdAt: String(r.created_at),
   }
 }
 
-export async function updateOrganizationBranding(
-  orgId: string,
-  input: { logoUrl?: string; tagline?: string; primaryColor?: string }
-) {
+function mapVisit(r: any): Visit {
+  return {
+    id: String(r.id),
+    vehicleId: String(r.vehicle_id),
+    organizationId: String(r.organization_id),
+    status: r.status as VisitStatus,
+    services: r.services || [],
+    damageNote: r.damage_note,
+    internalNote: r.internal_note,
+    warrantyEndDate: r.warranty_end_date,
+    price: r.price != null ? Number(r.price) : null,
+    paymentStatus: String(r.payment_status || 'paid'),
+    createdAt: r.created_at,
+    completedAt: r.completed_at,
+    plate: r.plate,
+    customerName: r.customername,
+    phone: r.phone,
+    carModel: r.carmodel,
+  }
+}
+
+// --- ORGANIZASYON ---
+export async function getOrganizationBySlug(slug: string): Promise<Organization | null> {
+  const rows = await sql`SELECT * FROM organizations WHERE slug = ${slug} LIMIT 1`
+  return rows.length ? mapOrg(rows[0]) : null
+}
+export async function getOrganizationById(id: string): Promise<Organization | null> {
+  const rows = await sql`SELECT * FROM organizations WHERE id = ${id} LIMIT 1`
+  return rows.length ? mapOrg(rows[0]) : null
+}
+export async function verifyPin(slug: string, pin: string): Promise<{ organization: Organization; role: 'boss' | 'employee' } | null> {
+  const rows = await sql`SELECT * FROM organizations WHERE slug = ${slug} LIMIT 1`
+  if (!rows.length) return null
+  if (await bcrypt.compare(pin, rows[0].pin_hash)) return { organization: mapOrg(rows[0]), role: 'boss' }
+  if (rows[0].employee_pin_hash && await bcrypt.compare(pin, rows[0].employee_pin_hash))
+    return { organization: mapOrg(rows[0]), role: 'employee' }
+  return null
+}
+export async function updateOrganizationBranding(orgId: string, input: { logoUrl?: string; tagline?: string; primaryColor?: string; googleMapsUrl?: string }) {
   await sql`
-    UPDATE neon_auth.organization 
-    SET logo = COALESCE(${input.logoUrl ?? null}, logo),
-        metadata = jsonb_set(
-          jsonb_set(COALESCE(metadata, '{}'::jsonb), '{tagline}', COALESCE(to_jsonb(${input.tagline}::text), metadata->'tagline')),
-          '{primaryColor}', COALESCE(to_jsonb(${input.primaryColor}::text), metadata->'primaryColor')
-        )
+    UPDATE organizations SET
+      logo_url = COALESCE(${input.logoUrl ?? null}, logo_url),
+      tagline = COALESCE(${input.tagline ?? null}, tagline),
+      primary_color = COALESCE(${input.primaryColor ?? null}, primary_color),
+      google_maps_url = COALESCE(${input.googleMapsUrl ?? null}, google_maps_url)
     WHERE id = ${orgId}
   `
 }
+export async function setSubscription(orgId: string, input: { planId: string; status: string; renewsAt: string | null }) {
+  await sql`
+    UPDATE organizations SET plan_id = ${input.planId}, subscription_status = ${input.status},
+      subscription_renews_at = ${input.renewsAt} WHERE id = ${orgId}
+  `
+}
+export async function logAudit(orgId: string, actor: string, action: string, entity: string, entityId: string | null, meta: Record<string, unknown> = {}) {
+  const metaJson = JSON.stringify(meta)
+  await sql`
+    INSERT INTO audit_logs (organization_id, actor, action, entity, entity_id, meta)
+    VALUES (${orgId}, ${actor}, ${action}, ${entity}, ${entityId}, ${metaJson}::jsonb)
+  `
+}
 
-// --- CRM & OPERASYON Ä°ÅLEMLERÄ° ---
+// --- OPERASYON ---
+export async function countActiveVisits(orgId: string): Promise<number> {
+  const rows = await sql`SELECT count(*)::int AS n FROM visits WHERE organization_id = ${orgId} AND status IN ('queued','processing','ready')`
+  return Number(rows[0]?.n ?? 0)
+}
 
-export async function addVisit(
-  orgId: string,
-  input: {
-    customerName?: string
-    plate: string
-    carModel?: string
-    phone?: string
-    services: string[]
-    warrantyMonths?: number
-    damageNote?: string
-    internalNote?: string
-  }
-): Promise<Visit> {
+export async function addVisit(orgId: string, input: {
+  customerName?: string; plate: string; carModel?: string; phone?: string
+  services: string[]; warrantyMonths?: number; damageNote?: string; internalNote?: string
+  price?: number | null; paymentStatus?: string
+}): Promise<Visit> {
   const customerName = input.customerName?.trim() || 'Ä°simsiz MÃ¼ÅŸteri'
   const phone = input.phone?.trim() || null
   const plate = normalizePlate(input.plate)
   const carModel = input.carModel?.trim() || null
-
-  let warrantyEndDate = null
+  let warrantyEndDate: string | null = null
   if (input.warrantyMonths) {
     const d = new Date()
     d.setMonth(d.getMonth() + input.warrantyMonths)
     warrantyEndDate = d.toISOString()
   }
-
-  let customerId = null
+  let customerId: string
   if (phone) {
-    const custRows = await sql`
+    const c = await sql`
       INSERT INTO customers (organization_id, full_name, phone)
       VALUES (${orgId}, ${customerName}, ${phone})
-      ON CONFLICT (organization_id, phone) 
-      DO UPDATE SET full_name = EXCLUDED.full_name
-      RETURNING id
-    `
-    customerId = custRows[0].id
+      ON CONFLICT (organization_id, phone) DO UPDATE SET full_name = EXCLUDED.full_name
+      RETURNING id`
+    customerId = String(c[0].id)
   } else {
-    const custRows = await sql`
-      INSERT INTO customers (organization_id, full_name)
-      VALUES (${orgId}, ${customerName})
-      RETURNING id
-    `
-    customerId = custRows[0].id
+    const c = await sql`INSERT INTO customers (organization_id, full_name) VALUES (${orgId}, ${customerName}) RETURNING id`
+    customerId = String(c[0].id)
   }
-
-  const vehRows = await sql`
+  const v = await sql`
     INSERT INTO vehicles (organization_id, customer_id, plate, model)
     VALUES (${orgId}, ${customerId}, ${plate}, ${carModel})
-    ON CONFLICT (organization_id, plate) 
-    DO UPDATE SET customer_id = EXCLUDED.customer_id, model = COALESCE(EXCLUDED.model, vehicles.model)
-    RETURNING id
-  `
-  const vehicleId = vehRows[0].id
-
-  const visitRows = await sql`
-    INSERT INTO visits (
-      organization_id, vehicle_id, status, services, damage_note, internal_note, warranty_end_date
-    ) VALUES (
-      ${orgId}, ${vehicleId}, 'queued', ${input.services}, ${input.damageNote || null}, ${input.internalNote || null}, ${warrantyEndDate}
-    )
-    RETURNING *
-  `
-  
-  return {
-    ...visitRows[0],
-    plate,
-    customerName,
-    phone,
-    carModel
-  } as Visit
+    ON CONFLICT (organization_id, plate) DO UPDATE SET customer_id = EXCLUDED.customer_id, model = COALESCE(EXCLUDED.model, vehicles.model)
+    RETURNING id`
+  const vehicleId = String(v[0].id)
+  const ins = await sql`
+    INSERT INTO visits (organization_id, vehicle_id, status, services, damage_note, internal_note, warranty_end_date, price, payment_status)
+    VALUES (${orgId}, ${vehicleId}, 'queued', ${input.services}, ${input.damageNote || null}, ${input.internalNote || null}, ${warrantyEndDate}, ${input.price ?? null}, ${input.paymentStatus || 'paid'})
+    RETURNING *`
+  return { ...mapVisit(ins[0]), plate, customerName, phone, carModel }
 }
 
 export async function listActiveVisits(orgId: string): Promise<Visit[]> {
@@ -2510,25 +2634,9 @@ export async function listActiveVisits(orgId: string): Promise<Visit[]> {
     FROM visits v
     JOIN vehicles veh ON v.vehicle_id = veh.id
     LEFT JOIN customers c ON veh.customer_id = c.id
-    WHERE v.organization_id = ${orgId} AND v.status IN ('queued', 'processing', 'ready')
-    ORDER BY v.created_at DESC
-  `
-  return rows.map((r: any) => ({
-    id: String(r.id),
-    vehicleId: String(r.vehicle_id),
-    organizationId: String(r.organization_id),
-    status: r.status as VisitStatus,
-    services: r.services || [],
-    damageNote: r.damage_note,
-    internalNote: r.internal_note,
-    warrantyEndDate: r.warranty_end_date,
-    createdAt: r.created_at,
-    completedAt: r.completed_at,
-    plate: r.plate,
-    customerName: r.customername,
-    phone: r.phone,
-    carModel: r.carmodel
-  }))
+    WHERE v.organization_id = ${orgId} AND v.status IN ('queued','processing','ready')
+    ORDER BY v.created_at DESC`
+  return rows.map(mapVisit)
 }
 
 export async function listCompletedVisits(orgId: string): Promise<Visit[]> {
@@ -2537,25 +2645,9 @@ export async function listCompletedVisits(orgId: string): Promise<Visit[]> {
     FROM visits v
     JOIN vehicles veh ON v.vehicle_id = veh.id
     LEFT JOIN customers c ON veh.customer_id = c.id
-    WHERE v.organization_id = ${orgId} AND v.status IN ('completed', 'cancelled')
-    ORDER BY v.completed_at DESC NULLS LAST
-  `
-  return rows.map((r: any) => ({
-    id: String(r.id),
-    vehicleId: String(r.vehicle_id),
-    organizationId: String(r.organization_id),
-    status: r.status as VisitStatus,
-    services: r.services || [],
-    damageNote: r.damage_note,
-    internalNote: r.internal_note,
-    warrantyEndDate: r.warranty_end_date,
-    createdAt: r.created_at,
-    completedAt: r.completed_at,
-    plate: r.plate,
-    customerName: r.customername,
-    phone: r.phone,
-    carModel: r.carmodel
-  }))
+    WHERE v.organization_id = ${orgId} AND v.status IN ('completed','cancelled')
+    ORDER BY v.completed_at DESC NULLS LAST, v.created_at DESC`
+  return rows.map(mapVisit)
 }
 
 export async function findVisitByPlate(orgId: string, slug: string): Promise<Visit | null> {
@@ -2565,97 +2657,74 @@ export async function findVisitByPlate(orgId: string, slug: string): Promise<Vis
     FROM visits v
     JOIN vehicles veh ON v.vehicle_id = veh.id
     LEFT JOIN customers c ON veh.customer_id = c.id
-    WHERE v.organization_id = ${orgId} 
-      AND REPLACE(veh.plate, ' ', '') = ${normalized}
+    WHERE v.organization_id = ${orgId}
+      AND REPLACE(veh.plate,' ','') = ${normalized}
       AND v.status != 'cancelled'
-    ORDER BY v.created_at DESC LIMIT 1
-  `
-  if (!rows.length) return null
-  const r = rows[0]
-  return {
-    id: String(r.id), vehicleId: String(r.vehicle_id), organizationId: String(r.organization_id),
-    status: r.status as VisitStatus, services: r.services || [], damageNote: r.damage_note,
-    internalNote: r.internal_note, warrantyEndDate: r.warranty_end_date, createdAt: r.created_at,
-    completedAt: r.completed_at, plate: r.plate, customerName: r.customername, phone: r.phone, carModel: r.carmodel
-  }
+    ORDER BY v.created_at DESC LIMIT 1`
+  return rows.length ? mapVisit(rows[0]) : null
 }
 
 export async function updateVisitStatus(orgId: string, visitId: string, status: VisitStatus) {
-  const completedAt = status === 'completed' ? sql`NOW()` : null
   await sql`
-    UPDATE visits 
-    SET status = ${status}, completed_at = COALESCE(${completedAt}, completed_at)
+    UPDATE visits SET status = ${status},
+      completed_at = CASE WHEN ${status} = 'completed' THEN COALESCE(completed_at, now()) ELSE NULL END
     WHERE id = ${visitId} AND organization_id = ${orgId}
   `
 }
 
-// --- KAMPANYA VE DAVRANIÅ ANALÄ°ZÄ° ---
-
+// --- KAMPANYA & BI ---
 export async function getCampaignSegment(orgId: string, segment: string): Promise<CampaignTarget[]> {
-  const base = sql`
-    SELECT 
-      veh.plate, 
-      c.full_name as customer_name, 
-      c.phone, 
-      MAX(v.created_at) AS last_visit, 
-      array_agg(DISTINCT unnest(v.services)) as all_services, 
-      COUNT(v.id) as total_visits
+  const rows = await sql`
+    SELECT veh.plate, c.full_name AS customer_name, c.phone,
+           v.created_at, v.warranty_end_date, v.price, v.services
     FROM visits v
     JOIN vehicles veh ON v.vehicle_id = veh.id
     JOIN customers c ON veh.customer_id = c.id
     WHERE v.organization_id = ${orgId} AND c.phone IS NOT NULL
-    GROUP BY veh.plate, c.full_name, c.phone
   `
-  const rows = await base
+  // JS tarafÄ±nda gÃ¼venli gruplama (SQL'de unnest+aggregate patlar)
+  const groups = new Map<string, {
+    plate: string; customerName: string; phone: string; lastVisit: string
+    services: Set<string>; warrantyEnd: string | null; totalVisits: number; totalSpend: number
+  }>()
+  for (const r of rows as any[]) {
+    const key = `${r.plate}|${r.phone}`
+    let g = groups.get(key)
+    if (!g) {
+      g = {
+        plate: String(r.plate || ''), customerName: String(r.customer_name || ''), phone: String(r.phone || ''),
+        lastVisit: String(r.created_at || ''), services: new Set<string>(), warrantyEnd: null, totalVisits: 0, totalSpend: 0,
+      }
+      groups.set(key, g)
+    }
+    if (r.created_at && new Date(r.created_at).getTime() > new Date(g.lastVisit || 0).getTime()) g.lastVisit = String(r.created_at)
+    for (const s of (Array.isArray(r.services) ? r.services : [])) g.services.add(String(s))
+    if (r.warranty_end_date && (!g.warrantyEnd || new Date(r.warranty_end_date).getTime() > new Date(g.warrantyEnd).getTime())) g.warrantyEnd = String(r.warranty_end_date)
+    g.totalVisits += 1
+    g.totalSpend += r.price != null ? Number(r.price) : 0
+  }
   const now = Date.now()
-
-  // TypeScript'e ara verimizin tipini aÃ§Ä±kÃ§a sÃ¶ylÃ¼yoruz
-  type MappedTarget = {
-    plate: string
-    customerName: string
-    phone: string
-    lastVisit: string
-    services: string[]
-    daysSince: number
-    totalVisits: number
-  }
-
-  const mapped: MappedTarget[] = rows.map((r: any) => ({
-    plate: String(r.plate || ''),
-    customerName: String(r.customer_name || ''),
-    phone: String(r.phone || ''),
-    lastVisit: String(r.last_visit || ''),
-    services: Array.isArray(r.all_services) ? r.all_services.map(String) : [],
-    daysSince: Math.floor((now - new Date(r.last_visit).getTime()) / (1000 * 60 * 60 * 24)),
-    totalVisits: Number(r.total_visits || 0)
+  const mapped = [...groups.values()].map((g) => ({
+    plate: g.plate, customerName: g.customerName, phone: g.phone, lastVisit: g.lastVisit,
+    services: [...g.services], warrantyEnd: g.warrantyEnd,
+    daysSince: Math.floor((now - new Date(g.lastVisit).getTime()) / (1000 * 60 * 60 * 24)),
+    totalVisits: g.totalVisits, totalSpend: g.totalSpend,
   }))
-
   let filtered = mapped
-
-  if (segment === 'inactive_30') {
-    filtered = mapped.filter((c) => c.daysSince >= 30 && c.daysSince < 60)
-  } else if (segment === 'inactive_60') {
-    filtered = mapped.filter((c) => c.daysSince >= 60)
-  } else if (segment === 'ceramic_ppf_only') {
-    filtered = mapped.filter((c) => c.services.some((s) => s.includes('Seramik') || s.includes('Film')))
-  } else if (segment === 'high_value') {
-    filtered = [...mapped].sort((a, b) => b.totalVisits - a.totalVisits).slice(0, 20)
-  }
-
-  // TypeScript'i mutlu etmek iÃ§in fazladan eklediÄŸimiz 'daysSince' ve 'totalVisits' verilerini
-  // dÄ±ÅŸarÄ±ya yollamadan Ã¶nce temizliyoruz (Sadece CampaignTarget tipini dÃ¶ndÃ¼rÃ¼yoruz).
-  return filtered.map(f => ({
-    plate: f.plate,
-    customerName: f.customerName,
-    phone: f.phone,
-    lastVisit: f.lastVisit,
-    services: f.services
-  }))
+  if (segment === 'inactive_30') filtered = mapped.filter((c) => c.daysSince >= 30 && c.daysSince < 60)
+  else if (segment === 'inactive_60') filtered = mapped.filter((c) => c.daysSince >= 60)
+  else if (segment === 'ceramic_ppf_only') filtered = mapped.filter((c) => c.services.some((s) => s.includes('Seramik') || s.includes('Film') || s.includes('PPF')))
+  else if (segment === 'warranty_soon')
+    filtered = mapped.filter((c) => c.warrantyEnd && new Date(c.warrantyEnd).getTime() > now && new Date(c.warrantyEnd).getTime() < now + 90 * 86400000)
+  else if (segment === 'high_value')
+    filtered = [...mapped].sort((a, b) => (b.totalSpend || b.totalVisits) - (a.totalSpend || a.totalVisits)).slice(0, 20)
+  return filtered.map((f) => ({ plate: f.plate, customerName: f.customerName, phone: f.phone, lastVisit: f.lastVisit, services: f.services, warrantyEnd: f.warrantyEnd }))
 }
 
 export async function getRetentionInsights(orgId: string): Promise<RetentionInsight[]> {
   const rows = await sql`
-    SELECT veh.plate, c.full_name as customer_name, c.phone, array_agg(v.created_at ORDER BY v.created_at DESC) AS visit_dates
+    SELECT veh.plate, c.full_name AS customer_name, c.phone,
+           array_agg(v.created_at ORDER BY v.created_at DESC) AS visit_dates
     FROM visits v
     JOIN vehicles veh ON v.vehicle_id = veh.id
     JOIN customers c ON veh.customer_id = c.id
@@ -2664,189 +2733,82 @@ export async function getRetentionInsights(orgId: string): Promise<RetentionInsi
     HAVING count(v.id) >= 2
   `
   const now = Date.now()
-  
   const mapped: RetentionInsight[] = rows.map((r: any) => {
     const dates = (Array.isArray(r.visit_dates) ? r.visit_dates : []).map((v: string) => new Date(v).getTime())
     const gaps = dates.slice(0, -1).map((d: number, i: number) => d - dates[i + 1])
-    
-    // HatanÄ±n Ã§Ã¶zÃ¼ldÃ¼ÄŸÃ¼ satÄ±r: a ve b iÃ§in : number eklendi
     const avgGap = gaps.length > 0 ? gaps.reduce((a: number, b: number) => a + b, 0) / gaps.length : 0
-    
     const sinceLast = now - (dates[0] || now)
     return {
-      plate: String(r.plate || ''), 
-      customerName: String(r.customer_name || ''), 
+      plate: String(r.plate || ''),
+      customerName: String(r.customer_name || ''),
       phone: String(r.phone || ''),
-      visitCount: dates.length, 
-      lastVisit: new Date(dates[0] || now).toISOString(), 
-      isOverdue: sinceLast > (avgGap * 1.5),
+      visitCount: dates.length,
+      lastVisit: new Date(dates[0] || now).toISOString(),
+      isOverdue: sinceLast > avgGap * 1.5,
     }
   })
-  
-  return mapped.filter(c => c.isOverdue).sort((a, b) => new Date(a.lastVisit).getTime() - new Date(b.lastVisit).getTime())
+  return mapped.filter((c) => c.isOverdue).sort((a, b) => new Date(a.lastVisit).getTime() - new Date(b.lastVisit).getTime())
 }
 
 export async function getServicePopularity(orgId: string) {
   const rows = await sql`
     SELECT unnest(services) AS service, COUNT(*) AS count
-    FROM visits
-    WHERE organization_id = ${orgId} AND status = 'completed'
-    GROUP BY service
-    ORDER BY count DESC
-    LIMIT 8
-  `
+    FROM visits WHERE organization_id = ${orgId} AND status = 'completed'
+    GROUP BY service ORDER BY count DESC LIMIT 8`
   return rows.map((r: any) => ({ service: String(r.service), count: Number(r.count) }))
 }
-
 export async function getBusiestWeekday(orgId: string) {
   const rows = await sql`
     SELECT extract(dow FROM created_at) AS weekday, COUNT(*) AS count
-    FROM visits
-    WHERE organization_id = ${orgId} AND status = 'completed'
-    GROUP BY weekday
-    ORDER BY count DESC
-  `
+    FROM visits WHERE organization_id = ${orgId} AND status = 'completed'
+    GROUP BY weekday ORDER BY count DESC`
   return rows.map((r: any) => ({ weekday: Number(r.weekday), count: Number(r.count) }))
 }
-
 export async function getNewVsReturningRatio(orgId: string) {
   const rows = await sql`
-    SELECT vehicle_id, COUNT(*) AS visits
-    FROM visits
-    WHERE organization_id = ${orgId} AND status = 'completed'
-    GROUP BY vehicle_id
-  `
+    SELECT vehicle_id, COUNT(*) AS visits FROM visits
+    WHERE organization_id = ${orgId} AND status = 'completed' GROUP BY vehicle_id`
   const total = rows.length
   const returning = rows.filter((r: any) => Number(r.visits) > 1).length
   return { total, returning, new: total - returning }
 }
-
 export async function getMonthlyVisitTrend(orgId: string) {
   const rows = await sql`
     SELECT date_trunc('month', created_at) AS month, COUNT(*) AS visits
-    FROM visits
-    WHERE organization_id = ${orgId} AND status = 'completed' AND created_at > now() - interval '6 months'
-    GROUP BY month
-    ORDER BY month ASC
-  `
+    FROM visits WHERE organization_id = ${orgId} AND status = 'completed' AND created_at > now() - interval '6 months'
+    GROUP BY month ORDER BY month ASC`
   return rows.map((r: any) => ({ month: String(r.month), visits: Number(r.visits) }))
 }
 
-// --- EKSÄ°K ESKÄ° OPERASYONEL FONKSÄ°YONLAR (Actions uyumluluÄŸu iÃ§in) ---
-
-export async function verifyBusinessPin(slug: string, pin: string): Promise<Business | null> {
-  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
-  if (!rows.length) return null
-  const ok = await bcrypt.compare(pin, rows[0].pin_hash)
-  return ok ? mapBusinessRow(rows[0]) : null
-}
-
-export async function getBusinessBySlug(slug: string): Promise<Business | null> {
-  const rows = await sql`SELECT * FROM businesses WHERE slug = ${slug} LIMIT 1`
-  return rows.length ? mapBusinessRow(rows[0]) : null
-}
-
-export type Business = {
-  id: string
-  slug: string
-  name: string
-  logoUrl: string | null
-  primaryColor: string
-  tagline: string
-  googleMapsUrl: string | null
-}
-
-function mapBusinessRow(r: any): Business {
-  return {
-    id: String(r.id),
-    slug: String(r.slug),
-    name: String(r.name),
-    logoUrl: r.logo_url || null,
-    primaryColor: String(r.primary_color || '#10b981'),
-    tagline: String(r.tagline || ''),
-    googleMapsUrl: r.google_maps_url || null,
-  }
-}
-
-export async function addJob(
-  businessId: string,
-  input: {
-    customerName?: string
-    plate: string
-    carModel?: string
-    phone?: string
-    services: string[]
-    warrantyMonths?: number
-    damageNote?: string
-    customerNotes?: string
-  },
-) {
-  let warrantyEndDate = null
-  if (input.warrantyMonths) {
-    const d = new Date()
-    d.setMonth(d.getMonth() + input.warrantyMonths)
-    warrantyEndDate = d.toISOString()
-  }
-
-  const customerName = input.customerName?.trim() || 'Ä°simsiz MÃ¼ÅŸteri'
-  const plate = normalizePlate(input.plate)
-  const carModel = input.carModel?.trim() || null
-  const phone = input.phone?.trim() || ''
-  const damageNote = input.damageNote?.trim() || null
-  const customerNotes = input.customerNotes?.trim() || null
-
+/* Gelir zekÃ¢sÄ± â€” satÄ±ÅŸÄ± kapatan metrikler */
+export async function getRevenueTrend(orgId: string) {
   const rows = await sql`
-    INSERT INTO jobs (
-      business_id, customer_name, plate, car_model, phone, services, step, 
-      warranty_end_date, damage_note, customer_notes, price, payment_status
-    )
-    VALUES (
-      ${businessId}, ${customerName}, ${plate}, ${carModel}, ${phone}, 
-      ${input.services}, 0, ${warrantyEndDate}, ${damageNote}, ${customerNotes}, 0, 'paid'
-    )
-    RETURNING *
-  `
-  return rows[0]
+    SELECT date_trunc('month', COALESCE(completed_at, created_at)) AS month,
+           COUNT(*) AS visits, COALESCE(SUM(price),0) AS revenue
+    FROM visits WHERE organization_id = ${orgId} AND status = 'completed' AND created_at > now() - interval '6 months'
+    GROUP BY month ORDER BY month ASC`
+  return rows.map((r: any) => ({ month: String(r.month), visits: Number(r.visits), revenue: Number(r.revenue) }))
 }
-
-export async function setJobStep(businessId: string, jobId: string, step: any) {
-  await sql`UPDATE jobs SET step = ${step} WHERE id = ${jobId} AND business_id = ${businessId}`
+export async function getTopCustomers(orgId: string) {
+  const rows = await sql`
+    SELECT c.full_name AS name, veh.plate, COUNT(v.id) AS visits, COALESCE(SUM(v.price),0) AS spend
+    FROM visits v JOIN vehicles veh ON v.vehicle_id = veh.id JOIN customers c ON veh.customer_id = c.id
+    WHERE v.organization_id = ${orgId} AND v.status = 'completed'
+    GROUP BY c.full_name, veh.plate ORDER BY spend DESC, visits DESC LIMIT 10`
+  return rows.map((r: any) => ({ name: String(r.name), plate: String(r.plate), visits: Number(r.visits), spend: Number(r.spend) }))
 }
-
-export async function archiveJob(businessId: string, jobId: string) {
-  await sql`
-    WITH moved_job AS (
-      DELETE FROM jobs WHERE id = ${jobId} AND business_id = ${businessId} RETURNING *
-    )
-    INSERT INTO archived_jobs (
-      business_id, customer_name, plate, phone, services, warranty_end_date, 
-      service_date, car_model, damage_note, customer_notes, price, payment_status
-    )
-    SELECT 
-      business_id, customer_name, plate, phone, services, warranty_end_date, 
-      now(), car_model, damage_note, customer_notes, 0, 'paid'
-    FROM moved_job;
-  `
+export async function getWarrantyExpirations(orgId: string, days = 90) {
+  const daysText = String(days)
+  const rows = await sql`
+    SELECT v.*, veh.plate, veh.model as carModel, c.full_name as customerName, c.phone
+    FROM visits v
+    JOIN vehicles veh ON v.vehicle_id = veh.id
+    LEFT JOIN customers c ON veh.customer_id = c.id
+    WHERE v.organization_id = ${orgId}
+      AND v.warranty_end_date BETWEEN now() AND now() + (${daysText} || ' days')::interval
+    ORDER BY v.warranty_end_date ASC LIMIT 50`
+  return rows.map(mapVisit)
 }
-
-export async function updateBusinessBranding(
-  businessId: string,
-  input: { logoUrl?: string; primaryColor?: string; tagline?: string; googleMapsUrl?: string },
-) {
-  await sql`
-    UPDATE businesses SET
-      logo_url = COALESCE(${input.logoUrl ?? null}, logo_url),
-      primary_color = COALESCE(${input.primaryColor ?? null}, primary_color),
-      tagline = COALESCE(${input.tagline ?? null}, tagline),
-      google_maps_url = COALESCE(${input.googleMapsUrl ?? null}, google_maps_url)
-    WHERE id = ${businessId}
-  `
-}
-
-export async function addJobPhoto(jobId: string, photoUrl: string, photoType: 'before' | 'after') {
-  await sql`INSERT INTO job_photos (job_id, photo_url, photo_type) VALUES (${jobId}, ${photoUrl}, ${photoType})`
-}
-
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\lib\db.ts ====================
