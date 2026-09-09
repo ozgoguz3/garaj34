@@ -46,8 +46,8 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
       return
     }
     startTransition(async () => {
-      const result = await getCampaignSegmentAction(businessSlug, businessId, segment)
-      setTargets(result)
+      const r = await getCampaignSegmentAction(businessSlug, businessId, segment)
+      setTargets(r.ok ? r.value : [])
       setSentPlates(new Set())
     })
   }, [segment, businessId, businessSlug])

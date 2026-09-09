@@ -35,3 +35,16 @@ export function buildWhatsAppLink(phone: string | undefined | null, plate: strin
   const text = `Merhaba! Aracınız işleme alındı. Canlı takip linkiniz: ${url}`
   return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`
 }
+
+export function formatPlateLive(raw: string): string {
+  const t = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10)
+  const m = t.match(/^(\d{0,2})([A-Z]{0,3})(\d{0,5})$/)
+  if (!m) return t
+  const [, d, l, n] = m
+  return [d, l, n].filter(Boolean).join(' ')
+}
+export function parsePrice(v: string): number | null {
+  const n = Number(v.replace(/\s/g, '').replace(',', '.'))
+  if (!isFinite(n) || n <= 0) return null
+  return Math.min(Math.round(n * 100) / 100, 1000000)
+}
