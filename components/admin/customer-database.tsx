@@ -1,24 +1,20 @@
 'use client'
-
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MessageCircle, Users, Calendar, X, Car, TrendingDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
 import { SectionCard } from '@/components/admin/section-card'
 import { buildWhatsAppLink } from '@/lib/jobs-store'
+import { visitWeight, valueTier, behaviorSegment, SEGMENT_META } from '@/lib/catalog'
 import type { Visit, RetentionInsight } from '@/lib/data'
+import { cn } from '@/lib/utils'
 
 const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
+  day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
 })
 
 type FilterType = 'all' | 'week' | 'month'
-
 type CustomerDatabaseProps = {
   completedVisits: Visit[]
   insights: RetentionInsight[]
@@ -30,12 +26,24 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
   const [filter, setFilter] = useState<FilterType>('all')
   const [selectedPlateForModal, setSelectedPlateForModal] = useState<string | null>(null)
 
+  const plateStats = useMemo(() => {
+    const m = new Map<string, { weight: number; last: number; visits: number }>()
+    for (const v of completedVisits) {
+      const p = v.plate || '?'
+      const s = m.get(p) || { weight: 0, last: 0, visits: 0 }
+      s.weight += visitWeight(v.services || [])
+      s.visits += 1
+      s.last = Math.max(s.last, new Date(v.createdAt).getTime())
+      m.set(p, s)
+    }
+    return m
+  }, [completedVisits])
+
   const filteredArchive = completedVisits.filter((item) => {
     if (filter === 'all') return true
     const itemDate = new Date(item.createdAt).getTime()
     const now = new Date().getTime()
     const diffDays = (now - itemDate) / (1000 * 60 * 60 * 24)
-
     if (filter === 'week') return diffDays <= 7
     if (filter === 'month') return diffDays <= 30
     return true
@@ -67,10 +75,7 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
         >
           <ul className="flex flex-col gap-2">
             {insights.slice(0, 5).map((c) => (
-              <li
-                key={c.plate}
-                className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2"
-              >
+              <li key={c.plate} className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
                 <div className="flex min-w-0 flex-col">
                   <span className="truncate text-sm font-semibold">{c.customerName}</span>
                   <span className="font-mono text-[11px] text-muted-foreground">
@@ -78,12 +83,8 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
                   </span>
                 </div>
                 {c.phone && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => recall(c.phone, c.plate)}
-                    className="shrink-0 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 hover:text-amber-400"
-                  >
+                  <Button variant="outline" size="sm" onClick={() => recall(c.phone, c.plate)}
+                    className="shrink-0 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 hover:text-amber-400">
                     <MessageCircle className="mr-1.5 size-3.5" />
                     Ulaş
                   </Button>
@@ -93,7 +94,6 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
           </ul>
         </SectionCard>
       )}
-
       <SectionCard
         className={className}
         title="Müşteri Veritabanı"
@@ -106,32 +106,16 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
         }
       >
         <div className="mb-4 flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
-          <button
-            onClick={() => setFilter('all')}
-            className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
-              filter === 'all' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'
-            }`}
-          >
+          <button onClick={() => setFilter('all')} className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filter === 'all' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'}`}>
             Tümü ({completedVisits.length})
           </button>
-          <button
-            onClick={() => setFilter('week')}
-            className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
-              filter === 'week' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'
-            }`}
-          >
+          <button onClick={() => setFilter('week')} className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filter === 'week' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'}`}>
             Bu Hafta
           </button>
-          <button
-            onClick={() => setFilter('month')}
-            className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
-              filter === 'month' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'
-            }`}
-          >
+          <button onClick={() => setFilter('month')} className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filter === 'month' ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'text-muted-foreground hover:bg-muted'}`}>
             Bu Ay
           </button>
         </div>
-
         {filteredArchive.length === 0 ? (
           <div className="py-10 text-center text-sm text-muted-foreground">
             Seçilen aralıkta kayıt bulunmuyor.
@@ -140,8 +124,8 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
           <ul className="flex flex-col divide-y divide-border">
             {filteredArchive.map((c) => {
               const totalVisits = completedVisits.filter((a) => a.plate === c.plate).length
-              const displayPlate = c.plate || 'BİLİNMİYOR'
-
+              const displayPlate = c.plate || 'BİLİNMEYOR'
+              const st = plateStats.get(displayPlate)
               return (
                 <li
                   key={c.id}
@@ -153,18 +137,28 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
                       <LicensePlate plate={displayPlate} />
                     </div>
                     <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="truncate font-semibold">{c.customerName}</span>
                         {totalVisits > 1 && (
                           <span className="rounded-full bg-cyan/10 px-2 py-0.5 text-[10px] font-mono text-cyan border border-cyan/20">
                             {totalVisits}. Ziyaret
                           </span>
                         )}
+                        {st && (() => {
+                          const days = Math.floor((Date.now() - st.last) / 86400000)
+                          const seg = behaviorSegment(st.weight, days, null)
+                          const tier = valueTier(st.weight)
+                          return (
+                            <span className={cn('flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px]', SEGMENT_META[seg].text)} title={SEGMENT_META[seg].label}>
+                              <span className={cn('size-1.5 rounded-full', SEGMENT_META[seg].dot)} />
+                              {tier.label}
+                            </span>
+                          )
+                        })()}
                       </div>
                       <time dateTime={c.createdAt} className="font-mono text-xs text-muted-foreground">
                         {dateFormatter.format(new Date(c.createdAt))}
                       </time>
-
                       {c.services && c.services.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {c.services.map((s, i) => (
@@ -176,7 +170,6 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
                       )}
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -197,7 +190,6 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
           </ul>
         )}
       </SectionCard>
-
       {selectedPlateForModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
           <div className="flex w-full max-w-lg flex-col gap-6 rounded-2xl border border-border bg-background p-6 shadow-2xl">
@@ -211,21 +203,14 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
                   <p className="font-mono text-xs text-muted-foreground">{selectedPlateForModal}</p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedPlateForModal(null)}
-                className="size-8 p-0"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setSelectedPlateForModal(null)} className="size-8 p-0">
                 <X className="size-5" />
               </Button>
             </div>
-
             <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
               <p className="text-xs text-muted-foreground">
                 Bu aracın toplam <span className="font-bold text-foreground">{modalHistory.length}</span> kayıtlı hizmet geçmişi bulunmaktadır:
               </p>
-
               {modalHistory.map((historyItem, idx) => (
                 <div key={historyItem.id} className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 p-4">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -235,12 +220,10 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
                     </span>
                     <span className="font-mono">Kayıt #{modalHistory.length - idx}</span>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">{historyItem.customerName}</span>
                     <span className="font-mono text-xs text-muted-foreground">{historyItem.phone || 'Telefon yok'}</span>
                   </div>
-
                   {historyItem.services && historyItem.services.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-1">
                       {historyItem.services.map((s, sIdx) => (
@@ -253,11 +236,7 @@ export function CustomerDatabase({ completedVisits, insights, businessSlug, clas
                 </div>
               ))}
             </div>
-
-            <Button
-              onClick={() => setSelectedPlateForModal(null)}
-              className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            >
+            <Button onClick={() => setSelectedPlateForModal(null)} className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
               Kapat
             </Button>
           </div>

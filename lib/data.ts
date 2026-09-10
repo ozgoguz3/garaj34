@@ -2,6 +2,7 @@ import 'server-only'
 import bcrypt from 'bcryptjs'
 import { sql } from '@/lib/db'
 import { normalizePlate } from '@/lib/jobs-store'
+import { visitWeight, PROTECTION_SERVICES, PAINT_SERVICES, SERVICE_CATALOG, TIER_LABELS, type ServiceTier } from '@/lib/catalog'
 
 // --- TİPLER ---
 export type Organization = {
@@ -30,8 +31,6 @@ export type Visit = {
   damageNote: string | null
   internalNote: string | null
   warrantyEndDate: string | null
-  price: number | null
-  paymentStatus: string
   createdAt: string
   completedAt: string | null
   plate?: string
@@ -46,6 +45,7 @@ export type CampaignTarget = {
   lastVisit: string
   services: string[]
   warrantyEnd?: string | null
+  weight?: number
 }
 export type RetentionInsight = {
   plate: string
@@ -74,7 +74,6 @@ function mapOrg(r: any): Organization {
     createdAt: String(r.created_at),
   }
 }
-
 function mapVisit(r: any): Visit {
   return {
     id: String(r.id),
@@ -85,8 +84,6 @@ function mapVisit(r: any): Visit {
     damageNote: r.damage_note,
     internalNote: r.internal_note,
     warrantyEndDate: r.warranty_end_date,
-    price: r.price != null ? Number(r.price) : null,
-    paymentStatus: String(r.payment_status || 'paid'),
     createdAt: r.created_at,
     completedAt: r.completed_at,
     plate: r.plate,
@@ -142,11 +139,9 @@ export async function countActiveVisits(orgId: string): Promise<number> {
   const rows = await sql`SELECT count(*)::int AS n FROM visits WHERE organization_id = ${orgId} AND status IN ('queued','processing','ready')`
   return Number(rows[0]?.n ?? 0)
 }
-
 export async function addVisit(orgId: string, input: {
   customerName?: string; plate: string; carModel?: string; phone?: string
   services: string[]; warrantyMonths?: number; damageNote?: string; internalNote?: string
-  price?: number | null; paymentStatus?: string
 }): Promise<Visit> {
   const customerName = input.customerName?.trim() || 'İsimsiz Müşteri'
   const phone = input.phone?.trim() || null
@@ -177,12 +172,11 @@ export async function addVisit(orgId: string, input: {
     RETURNING id`
   const vehicleId = String(v[0].id)
   const ins = await sql`
-    INSERT INTO visits (organization_id, vehicle_id, status, services, damage_note, internal_note, warranty_end_date, price, payment_status)
-    VALUES (${orgId}, ${vehicleId}, 'queued', ${input.services}, ${input.damageNote || null}, ${input.internalNote || null}, ${warrantyEndDate}, ${input.price ?? null}, ${input.paymentStatus || 'paid'})
+    INSERT INTO visits (organization_id, vehicle_id, status, services, damage_note, internal_note, warranty_end_date)
+    VALUES (${orgId}, ${vehicleId}, 'queued', ${input.services}, ${input.damageNote || null}, ${input.internalNote || null}, ${warrantyEndDate})
     RETURNING *`
   return { ...mapVisit(ins[0]), plate, customerName, phone, carModel }
 }
-
 export async function listActiveVisits(orgId: string): Promise<Visit[]> {
   const rows = await sql`
     SELECT v.*, veh.plate, veh.model as carModel, c.full_name as customerName, c.phone
@@ -193,7 +187,6 @@ export async function listActiveVisits(orgId: string): Promise<Visit[]> {
     ORDER BY v.created_at DESC`
   return rows.map(mapVisit)
 }
-
 export async function listCompletedVisits(orgId: string): Promise<Visit[]> {
   const rows = await sql`
     SELECT v.*, veh.plate, veh.model as carModel, c.full_name as customerName, c.phone
@@ -204,7 +197,6 @@ export async function listCompletedVisits(orgId: string): Promise<Visit[]> {
     ORDER BY v.completed_at DESC NULLS LAST, v.created_at DESC`
   return rows.map(mapVisit)
 }
-
 export async function findVisitByPlate(orgId: string, slug: string): Promise<Visit | null> {
   const normalized = slug.toUpperCase()
   const rows = await sql`
@@ -218,7 +210,6 @@ export async function findVisitByPlate(orgId: string, slug: string): Promise<Vis
     ORDER BY v.created_at DESC LIMIT 1`
   return rows.length ? mapVisit(rows[0]) : null
 }
-
 export async function updateVisitStatus(orgId: string, visitId: string, status: VisitStatus) {
   await sql`
     UPDATE visits SET status = ${status},
@@ -227,43 +218,43 @@ export async function updateVisitStatus(orgId: string, visitId: string, status: 
   `
 }
 
-// --- KAMPANYA & BI ---
+// --- KAMPANYA & DAVRANIŞ ---
 export async function getCampaignSegment(orgId: string, segment: string): Promise<CampaignTarget[]> {
   const rows = await sql`
     SELECT veh.plate, c.full_name AS customer_name, c.phone,
-           v.created_at, v.warranty_end_date, v.price, v.services
+           v.created_at, v.warranty_end_date, v.services
     FROM visits v
     JOIN vehicles veh ON v.vehicle_id = veh.id
     JOIN customers c ON veh.customer_id = c.id
     WHERE v.organization_id = ${orgId} AND c.phone IS NOT NULL
   `
-  // JS tarafında güvenli gruplama (SQL'de unnest+aggregate patlar)
   const groups = new Map<string, {
     plate: string; customerName: string; phone: string; lastVisit: string
-    services: Set<string>; warrantyEnd: string | null; totalVisits: number; totalSpend: number
+    services: Set<string>; warrantyEnd: string | null; totalVisits: number; totalWeight: number
   }>()
   for (const r of rows as any[]) {
+    const rowServices: string[] = Array.isArray(r.services) ? r.services : []
     const key = `${r.plate}|${r.phone}`
     let g = groups.get(key)
     if (!g) {
       g = {
         plate: String(r.plate || ''), customerName: String(r.customer_name || ''), phone: String(r.phone || ''),
-        lastVisit: String(r.created_at || ''), services: new Set<string>(), warrantyEnd: null, totalVisits: 0, totalSpend: 0,
+        lastVisit: String(r.created_at || ''), services: new Set<string>(), warrantyEnd: null, totalVisits: 0, totalWeight: 0,
       }
       groups.set(key, g)
     }
     if (r.created_at && new Date(r.created_at).getTime() > new Date(g.lastVisit || 0).getTime()) g.lastVisit = String(r.created_at)
-    for (const s of (Array.isArray(r.services) ? r.services : [])) g.services.add(String(s))
+    for (const s of rowServices) g.services.add(String(s))
     if (r.warranty_end_date && (!g.warrantyEnd || new Date(r.warranty_end_date).getTime() > new Date(g.warrantyEnd).getTime())) g.warrantyEnd = String(r.warranty_end_date)
     g.totalVisits += 1
-    g.totalSpend += r.price != null ? Number(r.price) : 0
+    g.totalWeight += visitWeight(rowServices)
   }
   const now = Date.now()
   const mapped = [...groups.values()].map((g) => ({
     plate: g.plate, customerName: g.customerName, phone: g.phone, lastVisit: g.lastVisit,
-    services: [...g.services], warrantyEnd: g.warrantyEnd,
+    services: [...g.services], warrantyEnd: g.warrantyEnd, weight: g.totalWeight,
     daysSince: Math.floor((now - new Date(g.lastVisit).getTime()) / (1000 * 60 * 60 * 24)),
-    totalVisits: g.totalVisits, totalSpend: g.totalSpend,
+    totalVisits: g.totalVisits, totalWeight: g.totalWeight,
   }))
   let filtered = mapped
   if (segment === 'inactive_30') filtered = mapped.filter((c) => c.daysSince >= 30 && c.daysSince < 60)
@@ -271,14 +262,16 @@ export async function getCampaignSegment(orgId: string, segment: string): Promis
   else if (segment === 'ceramic_ppf_only') filtered = mapped.filter((c) => c.services.some((s) => s.includes('Seramik') || s.includes('Film') || s.includes('PPF')))
   else if (segment === 'warranty_soon')
     filtered = mapped.filter((c) => c.warrantyEnd && new Date(c.warrantyEnd).getTime() > now && new Date(c.warrantyEnd).getTime() < now + 90 * 86400000)
-  else if (segment === 'high_value')
-    filtered = [...mapped].sort((a, b) => (b.totalSpend || b.totalVisits) - (a.totalSpend || a.totalVisits)).slice(0, 20)
-  return filtered.map((f) => ({ plate: f.plate, customerName: f.customerName, phone: f.phone, lastVisit: f.lastVisit, services: f.services, warrantyEnd: f.warrantyEnd }))
+  else if (segment === 'winback_high') filtered = mapped.filter((c) => c.totalWeight >= 25 && c.daysSince >= 45)
+  else if (segment === 'protection_upsell')
+    filtered = mapped.filter((c) => c.services.some((s) => PAINT_SERVICES.includes(s)) && !c.services.some((s) => PROTECTION_SERVICES.includes(s)))
+  else if (segment === 'high_value') filtered = [...mapped].sort((a, b) => b.totalWeight - a.totalWeight).slice(0, 20)
+  return filtered.map((f) => ({ plate: f.plate, customerName: f.customerName, phone: f.phone, lastVisit: f.lastVisit, services: f.services, warrantyEnd: f.warrantyEnd, weight: f.weight }))
 }
 
 export async function getRetentionInsights(orgId: string): Promise<RetentionInsight[]> {
   const rows = await sql`
-    SELECT veh.plate, c.full_name AS customer_name, c.phone,
+    SELECT veh.plate, c.full_name as customer_name, c.phone,
            array_agg(v.created_at ORDER BY v.created_at DESC) AS visit_dates
     FROM visits v
     JOIN vehicles veh ON v.vehicle_id = veh.id
@@ -334,24 +327,6 @@ export async function getMonthlyVisitTrend(orgId: string) {
     GROUP BY month ORDER BY month ASC`
   return rows.map((r: any) => ({ month: String(r.month), visits: Number(r.visits) }))
 }
-
-/* Gelir zekâsı — satışı kapatan metrikler */
-export async function getRevenueTrend(orgId: string) {
-  const rows = await sql`
-    SELECT date_trunc('month', COALESCE(completed_at, created_at)) AS month,
-           COUNT(*) AS visits, COALESCE(SUM(price),0) AS revenue
-    FROM visits WHERE organization_id = ${orgId} AND status = 'completed' AND created_at > now() - interval '6 months'
-    GROUP BY month ORDER BY month ASC`
-  return rows.map((r: any) => ({ month: String(r.month), visits: Number(r.visits), revenue: Number(r.revenue) }))
-}
-export async function getTopCustomers(orgId: string) {
-  const rows = await sql`
-    SELECT c.full_name AS name, veh.plate, COUNT(v.id) AS visits, COALESCE(SUM(v.price),0) AS spend
-    FROM visits v JOIN vehicles veh ON v.vehicle_id = veh.id JOIN customers c ON veh.customer_id = c.id
-    WHERE v.organization_id = ${orgId} AND v.status = 'completed'
-    GROUP BY c.full_name, veh.plate ORDER BY spend DESC, visits DESC LIMIT 10`
-  return rows.map((r: any) => ({ name: String(r.name), plate: String(r.plate), visits: Number(r.visits), spend: Number(r.spend) }))
-}
 export async function getWarrantyExpirations(orgId: string, days = 90) {
   const daysText = String(days)
   const rows = await sql`
@@ -363,6 +338,47 @@ export async function getWarrantyExpirations(orgId: string, days = 90) {
       AND v.warranty_end_date BETWEEN now() AND now() + (${daysText} || ' days')::interval
     ORDER BY v.warranty_end_date ASC LIMIT 50`
   return rows.map(mapVisit)
+}
+
+// --- İŞ ZEKASI: HİZMET AĞIRLIĞI (para yok, sinyal var) ---
+export async function getBehaviorStats(orgId: string) {
+  const rows = await sql`
+    SELECT v.services, v.created_at, veh.plate, c.full_name AS name
+    FROM visits v
+    JOIN vehicles veh ON v.vehicle_id = veh.id
+    LEFT JOIN customers c ON veh.customer_id = c.id
+    WHERE v.organization_id = ${orgId} AND v.status = 'completed'`
+  const monthMap = new Map<string, { weight: number; visits: number }>()
+  const custMap = new Map<string, { name: string; plate: string; visits: number; weight: number; last: number }>()
+  const tierMix = new Map<string, number>()
+  let protection = 0, total = 0, weightTotal = 0
+  for (const r of rows as any[]) {
+    const services: string[] = Array.isArray(r.services) ? r.services : []
+    const w = visitWeight(services)
+    const d = new Date(r.created_at)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const m = monthMap.get(key) || { weight: 0, visits: 0 }
+    m.weight += w; m.visits += 1; monthMap.set(key, m)
+    const ck = `${r.plate}|${r.name}`
+    const c = custMap.get(ck) || { name: String(r.name || ''), plate: String(r.plate || ''), visits: 0, weight: 0, last: 0 }
+    c.visits += 1; c.weight += w; c.last = Math.max(c.last, d.getTime()); custMap.set(ck, c)
+    const tiers = new Set(services.map((s) => SERVICE_CATALOG.find((x) => x.name === s)?.tier).filter(Boolean))
+    tiers.forEach((t) => {
+      const label = TIER_LABELS[t as ServiceTier]
+      tierMix.set(label, (tierMix.get(label) || 0) + 1)
+    })
+    if (services.some((s) => PROTECTION_SERVICES.includes(s))) protection += 1
+    total += 1; weightTotal += w
+  }
+  return {
+    monthWeight: [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0])).slice(-6).map(([month, v]) => ({ month, weight: v.weight, visits: v.visits })),
+    top: [...custMap.values()].sort((a, b) => b.weight - a.weight).slice(0, 10),
+    tierMix: [...tierMix.entries()].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count),
+    protectionShare: total ? Math.round((protection / total) * 100) : 0,
+    avgWeight: total ? Math.round((weightTotal / total) * 10) / 10 : 0,
+    totalWeight: weightTotal,
+    totalVisits: total,
+  }
 }
 
 // --- RATE LIMIT (sunucu tarafı) ---

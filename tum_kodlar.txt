@@ -3,29 +3,31 @@
 
 @layer base {
   :root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 212 22% 7%;
+    --foreground: 210 24% 94%;
+    --card: 212 18% 10%;
+    --card-foreground: 210 24% 94%;
+    --popover: 212 18% 10%;
+    --popover-foreground: 210 24% 94%;
+    --primary: 210 24% 94%;
+    --primary-foreground: 212 22% 7%;
+    --secondary: 212 14% 16%;
+    --secondary-foreground: 210 24% 94%;
+    --muted: 212 14% 15%;
+    --muted-foreground: 213 12% 64%;
+    --accent: 212 14% 16%;
+    --accent-foreground: 210 24% 94%;
+    --destructive: 0 62% 42%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 83.1%;
-    --radius: 0.75rem;
-    --neon: #10b981;
-    --cyan: #22d3ee;
-    --gold: #fbbf24;
+    --border: 212 14% 19%;
+    --input: 212 14% 22%;
+    --ring: 213 90% 62%;
+    --radius: 0.5rem;
+    /* ATÃ–LYE PALETÄ° */
+    --neon: #4c8df6;  /* Ã§elik mavisi: marka + aksiyon */
+    --cyan: #e0954a;  /* bakÄ±r: iÅŸlemde + ibre */
+    --gold: #e5b567;  /* amber: garanti + uyarÄ± */
+    --ok: #2ebd85;    /* yeÅŸil: SADECE hazÄ±r/tamam */
   }
 }
 
@@ -49,53 +51,75 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  /* Eksik olan tasarÄ±m token'larÄ± â€” bunlar olmadan bg-neon vs. Ã§alÄ±ÅŸmÄ±yordu */
   --color-neon: var(--neon);
-  --color-neon-foreground: #05130d;
+  --color-neon-foreground: #071120;
   --color-cyan: var(--cyan);
+  --color-cyan-foreground: #1a1206;
   --color-gold: var(--gold);
+  --color-ok: var(--ok);
+  --color-ok-foreground: #06170f;
+  --color-steel: var(--neon);
+  --color-copper: var(--cyan);
   --color-plate: #f4f4f5;
   --color-plate-foreground: #101014;
   --color-plate-stripe: #003399;
+  --font-mono: var(--font-jbmono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
 }
 
 @layer base {
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: color-mix(in srgb, var(--neon) 35%, transparent); }
+  ::selection { background: color-mix(in srgb, var(--neon) 30%, transparent); }
 }
 
-/* Custom UI Effects */
+/* Zemin: ince teknik grid (eskisinden daha sessiz) */
 .bg-grid {
-  background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
 }
+
+/* BLUR YOK. Paneller dÃ¼z, mat, saÄŸlam. */
 .glass {
-  background: rgba(13, 15, 14, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
 }
 .glass-blur {
-  background: rgba(10, 12, 11, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, hsl(var(--card)) 94%, transparent);
+  border: 1px solid hsl(var(--border));
 }
-.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
 
-
-.glow-neon { box-shadow: 0 0 20px color-mix(in srgb, var(--neon) 45%, transparent); }
-.glow-cyan { box-shadow: 0 0 18px color-mix(in srgb, var(--cyan) 40%, transparent); }
-.glow-neon-text, .text-glow-neon { text-shadow: 0 0 12px color-mix(in srgb, var(--neon) 60%, transparent); }
-
-@keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
+/* Ä°Å FÄ°ÅÄ°: sol kenarÄ± zÄ±mba delikli docket */
+.docket {
+  position: relative;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
 }
+.docket::before {
+  content: '';
+  position: absolute;
+  left: 9px; top: 16px; bottom: 16px; width: 2px;
+  background-image: radial-gradient(circle, hsl(var(--border)) 1px, transparent 1.6px);
+  background-size: 2px 9px;
+  background-repeat: repeat-y;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* IÅŸÄ±ma: artÄ±k sadece ince bir halka + yumuÅŸak gÃ¶lge (lazer yok) */
+.glow-neon { box-shadow: 0 0 0 1px color-mix(in srgb, var(--neon) 35%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--neon) 55%, transparent); }
+.glow-cyan { box-shadow: 0 0 0 1px color-mix(in srgb, var(--cyan) 35%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--cyan) 50%, transparent); }
+.glow-ok   { box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 40%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--ok) 55%, transparent); }
+.glow-neon-text, .text-glow-neon { text-shadow: 0 0 10px color-mix(in srgb, var(--neon) 25%, transparent); }
+
+@keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
 .skeleton {
   animation: shimmer 2s infinite linear;
   background: linear-gradient(90deg, hsl(var(--muted)) 0%, rgba(255,255,255,0.05) 50%, hsl(var(--muted)) 100%);
@@ -109,20 +133,24 @@
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\layout.tsx ====================
-// app/layout.tsx
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const grotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-grotesk' })
+const jbmono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jbmono' })
+
 export const metadata: Metadata = {
   title: { default: 'Garaj34', template: '%s Â· Garaj34' },
-  description: 'Premium Detailing & Oto YÄ±kama YÃ¶netim Sistemi',
-  themeColor: '#0a0a0a',
+  description: 'DetaylÄ± bakÄ±m ve kaplama atÃ¶lyeleri iÃ§in canlÄ± araÃ§ takibi ve mÃ¼ÅŸteri yÃ¶netim sistemi.',
+  themeColor: '#101418',
 }
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="tr">
-      <body className={geist.variable}>{children}</body>
+      <body className={`${inter.variable} ${grotesk.variable} ${jbmono.variable}`}>{children}</body>
     </html>
   )
 }
@@ -141,25 +169,45 @@ export default function manifest(): MetadataRoute.Manifest {
 
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\app\page.tsx ====================
-import { Sparkles } from 'lucide-react'
+import { LicensePlate } from '@/components/license-plate'
 
-// ArtÄ±k mÃ¼ÅŸteriler bu sayfada plaka aramÄ±yor â€” her mÃ¼ÅŸteri kendi iÅŸletmesinden
-// aldÄ±ÄŸÄ± Ã¶zel linkle (/{isletme}/{plaka}) direkt kendi aracÄ±nÄ±n durumuna gidiyor.
-// Admin de kendi paneline direkt /admin/{isletme} linkiyle giriyor (tarayÄ±cÄ±ya
-// eklediÄŸi bir yer imi Ã¼zerinden). Bu yÃ¼zden bu sayfa artÄ±k sadece nÃ¶tr bir
-// karÅŸÄ±lama ekranÄ±; hiÃ§bir iÅŸlevsel form barÄ±ndÄ±rmÄ±yor.
+const FEATURES = ['Ã‡oklu iÅŸleme', 'CanlÄ± takip linki', 'WhatsApp entegrasyonu', 'MÃ¼ÅŸteri sadakati analizi']
+
 export default function HomePage() {
   return (
-    <main className="bg-grid flex min-h-dvh flex-col items-center justify-center p-6 text-center">
-      <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-2xl border border-neon/20 bg-background/60 p-8 shadow-2xl backdrop-blur-xl">
-        <div className="glow-neon flex size-16 items-center justify-center rounded-2xl bg-neon text-neon-foreground">
-          <Sparkles className="size-8" />
+    <main className="bg-grid flex min-h-dvh flex-col">
+      <header className="border-b border-border/60">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
+          <span className="font-display text-sm font-bold tracking-tight">
+            garaj<span className="text-neon">34</span>
+          </span>
+          <span className="font-mono text-[11px] text-muted-foreground">atÃ¶lye yÃ¶netim sistemi</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Garaj34 Premium</h1>
-        <p className="text-sm text-muted-foreground">
-          CanlÄ± araÃ§ takip ve mÃ¼ÅŸteri yÃ¶netim sistemi.
+      </header>
+
+      <div className="flex flex-1 flex-col items-center justify-center px-5 py-16 text-center">
+        <LicensePlate plate="34 GRJ 34" size="lg" className="shadow-2xl" />
+        <h1 className="font-display mt-10 max-w-2xl text-balance text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+          AtÃ¶lyeni <span className="text-neon">enstrÃ¼man</span> hassasiyetiyle yÃ¶net.
+        </h1>
+        <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+          Garaj34 â€” detaylÄ± bakÄ±m ve kaplama atÃ¶lyeleri iÃ§in canlÄ± araÃ§ takibi ve mÃ¼ÅŸteri yÃ¶netim sistemi.
         </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+          {FEATURES.map((f) => (
+            <span key={f} className="rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground">
+              {f}
+            </span>
+          ))}
+        </div>
       </div>
+
+      <footer className="border-t border-border/60">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 font-mono text-[11px] text-muted-foreground">
+          <span>Â© {new Date().getFullYear()} garaj34</span>
+          <span>tr Â· v2</span>
+        </div>
+      </footer>
     </main>
   )
 }
@@ -367,7 +415,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                 <span className="w-32 shrink-0 truncate text-sm font-medium sm:w-40">{s.service}</span>
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-neon to-cyan transition-all duration-300" 
+                    className="h-full rounded-full bg-neon transition-all duration-300" 
                     style={{ width: `${(s.count / maxServiceCount) * 100}%` }} 
                   />
                 </div>
@@ -388,7 +436,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                 <span className="w-24 shrink-0 text-sm font-medium">{WEEKDAYS[w.weekday]}</span>
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-cyan to-neon transition-all duration-300" 
+                    className="h-full rounded-full bg-cyan transition-all duration-300" 
                     style={{ width: `${(w.count / maxWeekdayCount) * 100}%` }} 
                   />
                 </div>
@@ -420,7 +468,7 @@ export default async function AnalizPage({ params }: { params: Promise<{ busines
                 <div key={t.month} className="group flex flex-1 flex-col items-center gap-2">
                   <div className="relative w-full">
                     <div
-                      className="w-full rounded-t-lg bg-gradient-to-t from-neon to-cyan transition-all duration-300 hover:brightness-110 cursor-pointer"
+                      className="w-full rounded-t-lg bg-neon transition-all duration-300 hover:brightness-110 cursor-pointer"
                       style={{ height: `${heightPct}%`, minHeight: '32px' }}
                       title={`${t.visits} AraÃ§ - ${monthFormatter.format(new Date(t.month))}`}
                     >
@@ -603,6 +651,8 @@ export default async function CustomerTrackingPage({
       primaryColor={org.primaryColor}
       logoUrl={org.logoUrl}
       googleMapsUrl={org.googleMapsUrl}
+      whatsappPhone={org.whatsappPhone}
+      
     />
   )
 }
@@ -667,7 +717,6 @@ const ICONS = [Clock, Droplets, Wind, KeyRound] as const
 
 export function StatusTracker({ status }: { status: VisitStatus }) {
   const currentStep = STATUS_INDEX[status] ?? 0
-
   return (
     <ol className="relative flex flex-col" aria-label="Ä°ÅŸlem durumu">
       {STEPS.map((s, i) => {
@@ -675,48 +724,29 @@ export function StatusTracker({ status }: { status: VisitStatus }) {
         const isDone = i < currentStep
         const isActive = i === currentStep
         const isLast = i === STEPS.length - 1
-
         return (
           <li key={s.key} className="relative flex gap-4 pb-8 last:pb-0">
             {!isLast && (
-              <span
-                aria-hidden
-                className={cn(
-                  'absolute left-[19px] top-10 h-[calc(100%-2.5rem)] w-0.5 rounded-full transition-colors duration-200',
-                  isDone ? 'bg-neon' : 'bg-border',
-                )}
-              />
+              <span aria-hidden className={cn('absolute left-[19px] top-10 h-[calc(100%-2.5rem)] w-0.5 rounded-full', isDone ? 'bg-ok/50' : 'bg-border')} />
             )}
-
             <div className="relative shrink-0">
-              <div
-                className={cn(
-                  'flex size-10 items-center justify-center rounded-full border transition-all duration-200',
-                  isDone && 'border-neon bg-neon text-neon-foreground',
-                  isActive && 'glow-neon border-neon bg-neon/15 text-neon',
-                  !isDone && !isActive && 'border-border bg-muted text-muted-foreground',
-                )}
-              >
+              <div className={cn(
+                'flex size-10 items-center justify-center rounded-full border transition-colors duration-200',
+                isDone && 'border-ok bg-ok text-ok-foreground',
+                isActive && 'glow-cyan border-cyan bg-cyan/10 text-cyan',
+                !isDone && !isActive && 'border-border bg-muted text-muted-foreground',
+              )}>
                 {isDone ? <Check className="size-5" strokeWidth={3} /> : <Icon className="size-5" />}
               </div>
               {isActive && (
                 <span className="absolute -right-0.5 -top-0.5 flex size-3.5">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-neon opacity-75" />
-                  <span className="relative inline-flex size-3.5 rounded-full bg-neon" />
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-cyan opacity-70" />
+                  <span className="relative inline-flex size-3.5 rounded-full bg-cyan" />
                 </span>
               )}
             </div>
-
             <div className={cn('flex flex-col gap-1 pt-1.5', !isDone && !isActive && 'opacity-50')}>
-              <p
-                className={cn(
-                  'font-semibold leading-tight',
-                  isActive ? 'text-glow-neon text-lg text-neon' : 'text-foreground',
-                )}
-                aria-current={isActive ? 'step' : undefined}
-              >
-                {s.title}
-              </p>
+              <p className={cn('font-display font-semibold leading-tight', isActive ? 'text-cyan' : isDone ? 'text-foreground' : 'text-foreground')}>{s.title}</p>
               <p className="text-sm leading-relaxed text-muted-foreground">{s.description}</p>
             </div>
           </li>
@@ -729,13 +759,15 @@ export function StatusTracker({ status }: { status: VisitStatus }) {
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\tracking-view.tsx ====================
 'use client'
-import { Sparkles, Star, ShieldCheck, Wrench, AlertTriangle } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Fragment } from 'react'
+import { Star, ShieldCheck, AlertTriangle, MessageCircle, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LicensePlate } from '@/components/license-plate'
-import { StatusTracker } from '@/components/status-tracker'
 import { STEPS, STATUS_INDEX } from '@/lib/jobs-store'
 import type { Visit } from '@/lib/data'
+import { cn } from '@/lib/utils'
+
+const timeFmt = new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit' })
 
 type TrackingViewProps = {
   visit: Visit
@@ -743,6 +775,7 @@ type TrackingViewProps = {
   primaryColor?: string
   logoUrl?: string | null
   googleMapsUrl?: string | null
+  whatsappPhone?: string | null
 }
 
 export function TrackingView({
@@ -751,96 +784,117 @@ export function TrackingView({
   primaryColor,
   logoUrl,
   googleMapsUrl,
+  whatsappPhone,
 }: TrackingViewProps) {
-  const currentIndex = STATUS_INDEX[visit.status] ?? 0
-  const isCompleted = visit.status === 'completed' || visit.status === 'ready'
-  const displayPlate = visit.plate || 'BÄ°LÄ°NÄ°YOR'
+  const idx = STATUS_INDEX[visit.status] ?? 0
+  const isReady = visit.status === 'ready' || visit.status === 'completed'
   const firstName = visit.customerName ? visit.customerName.split(' ')[0] : 'DeÄŸerli MÃ¼ÅŸterimiz'
+  const waLink = whatsappPhone
+    ? `https://wa.me/${whatsappPhone.replace(/\D/g, '').replace(/^0/, '90')}?text=${encodeURIComponent('Merhaba, aracÄ±m hakkÄ±nda bilgi almak istiyorum.')}`
+    : ''
 
   return (
-    <main
-      className="bg-grid relative min-h-dvh overflow-hidden pb-12"
-      style={primaryColor ? ({ '--neon': primaryColor } as React.CSSProperties) : undefined}
-    >
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.18),transparent_65%)]" />
-
-      <div className="relative mx-auto flex w-full max-w-md flex-col gap-8 px-5 pt-8">
-        <header className="flex flex-col items-center gap-3 text-center">
+    <main className="bg-grid relative min-h-dvh overflow-hidden pb-16" style={primaryColor ? ({ '--neon': primaryColor } as React.CSSProperties) : undefined}>
+      <div className="relative mx-auto flex w-full max-w-md flex-col gap-7 px-5 pt-10">
+        <header className="flex flex-col items-center gap-4 text-center">
           {logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={businessName} className="size-16 rounded-2xl object-cover shadow-lg border border-white/10" />
+            <img src={logoUrl} alt={businessName} className="size-14 rounded-xl border border-border object-cover" />
           )}
-          <Badge className="glow-neon gap-1.5 border-neon/40 bg-neon/15 px-3 py-1 text-neon">
-            <Sparkles className="size-3.5" /> CanlÄ± Takip
-          </Badge>
-          <h1 className="text-balance text-2xl font-bold tracking-tight">{businessName}</h1>
-          <p className="text-sm text-muted-foreground">SayÄ±n {firstName}, aracÄ±nÄ±z gÃ¼venli ellerde.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">{businessName}</p>
+          <LicensePlate plate={visit.plate || 'BÄ°LÄ°NMEYOR'} size="lg" className="shadow-2xl" />
+          {visit.carModel && <p className="text-sm text-muted-foreground">{visit.carModel}</p>}
         </header>
 
-        <section className="flex flex-col items-center gap-4">
-          <LicensePlate plate={displayPlate} size="lg" className="shadow-2xl" />
-          {visit.carModel && <div className="font-semibold text-lg text-white/90">{visit.carModel}</div>}
-          {visit.services && visit.services.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
-              {visit.services.map((s, i) => (
-                <span key={i} className="flex items-center gap-1 rounded-full border border-neon/30 bg-neon/10 px-3 py-1 text-xs font-medium text-neon">
-                  <Wrench className="size-3" /> {s}
-                </span>
-              ))}
-            </div>
-          )}
-          {visit.damageNote && (
-            <div className="mt-2 flex w-full items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-left text-sm text-amber-200">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
-              <div>
-                <span className="font-semibold text-amber-500">Teslim Alma Notu: </span>
-                {visit.damageNote}
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section className="glass rounded-2xl p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Ä°ÅŸlem AdÄ±mlarÄ±</h2>
-            <span className="font-mono text-xs text-neon">{Math.min(currentIndex + 1, STEPS.length)}/{STEPS.length}</span>
+        {/* Yatay ilerleme ibresi */}
+        <section className="docket p-5 pl-7">
+          <div className="mb-5 flex items-center justify-between">
+            <span className={cn('flex items-center gap-1.5 text-xs font-medium', isReady ? 'text-ok' : 'text-cyan')}>
+              <span className={cn('size-1.5 rounded-full', isReady ? 'bg-ok' : 'bg-cyan animate-pulse')} />
+              {isReady ? 'AracÄ±nÄ±z hazÄ±r' : 'Ä°ÅŸleminiz sÃ¼rÃ¼yor'}
+            </span>
+            <span className="font-mono text-[11px] text-muted-foreground">{Math.min(idx + 1, 3)}/3</span>
           </div>
-          <StatusTracker status={visit.status} />
+          <div className="flex items-center px-1">
+            {STEPS.map((s, i) => (
+              <Fragment key={s.key}>
+                <span className={cn(
+                  'size-3.5 shrink-0 rounded-full border-2 transition-colors',
+                  isReady ? 'border-ok bg-ok' : i <= idx ? 'border-cyan bg-cyan' : 'border-border bg-transparent',
+                  i === idx && !isReady && 'ring-4 ring-cyan/20',
+                )} />
+                {i < STEPS.length - 1 && (
+                  <span className={cn('mx-1.5 h-0.5 flex-1 rounded-full', isReady ? 'bg-ok/60' : i < idx ? 'bg-cyan' : 'bg-border')} />
+                )}
+              </Fragment>
+            ))}
+          </div>
+          <div className="mt-3 grid grid-cols-3 text-center">
+            {STEPS.map((s, i) => (
+              <span key={s.key} className={cn('text-[11px] font-medium', isReady ? 'text-ok' : i <= idx ? 'text-cyan' : 'text-muted-foreground')}>
+                {s.adminLabel}
+              </span>
+            ))}
+          </div>
+          {isReady && (
+            <div className="mt-5 flex items-center justify-center">
+              <span className="glow-ok rounded-md border border-ok/40 bg-ok/10 px-4 py-1.5 font-mono text-sm font-bold tracking-[0.25em] text-ok">HAZIR</span>
+            </div>
+          )}
         </section>
 
-        {isCompleted && googleMapsUrl && (
-          <section className="flex flex-col items-center gap-5 pt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="flex gap-1.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className="size-7 fill-gold text-gold drop-shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse"
-                  style={{ animationDelay: `${i * 100}ms` }}
-                />
-              ))}
-            </div>
-            <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">AracÄ±nÄ±z Teslimata HazÄ±r!</h2>
-              <p className="text-sm text-muted-foreground">Hizmetimizden memnun kaldÄ±ysanÄ±z bize 5 yÄ±ldÄ±z vererek destek olabilirsiniz.</p>
-            </div>
-            <Button
-              size="lg"
-              className="glow-neon h-14 w-full rounded-xl bg-neon text-base font-bold text-neon-foreground transition-all hover:scale-105"
-              render={<a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" />}
-            >
-              Bizi Google&apos;da DeÄŸerlendirin
-            </Button>
+        {/* Bilgi fiÅŸi */}
+        <section className="docket divide-y divide-border/60 text-sm">
+          <Row label="MÃ¼ÅŸteri" value={`SayÄ±n ${firstName}`} />
+          <Row label="Hizmet" value={visit.services?.length ? visit.services.join(', ') : 'â€”'} />
+          <Row label="GiriÅŸ saati" value={timeFmt.format(new Date(visit.createdAt))} mono />
+          {!isReady && <Row label="Tahmini sÃ¼re" value="~3 saat" mono />}
+          <Row label="AtÃ¶lye" value={businessName} />
+        </section>
+
+        {visit.damageNote && (
+          <section className="docket flex items-start gap-2.5 border-gold/30 bg-gold/5 p-4 pl-6 text-sm text-gold">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <p><span className="font-semibold">Teslim alma notu: </span>{visit.damageNote}</p>
           </section>
         )}
 
-        <footer className="flex flex-col items-center gap-2 pt-6 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="size-3.5 text-neon" />
-            {businessName} - Premium Takip Sistemi
-          </span>
+        {isReady && (
+          <section className="flex flex-col items-center gap-4 pt-2 text-center">
+            <div className="flex gap-1.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className="size-6 fill-gold text-gold" style={{ animationDelay: `${i * 80}ms` }} />
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground">Hizmetimizden memnun kaldÄ±ysanÄ±z bizi deÄŸerlendirmeniz Ã§ok deÄŸerli.</p>
+            {googleMapsUrl && (
+              <Button className="h-12 w-full border-neon/40 bg-transparent text-neon hover:bg-neon/10" render={<a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" />}>
+                <MapPin className="mr-2 size-4" /> Google&apos;da DeÄŸerlendirin
+              </Button>
+            )}
+          </section>
+        )}
+
+        {waLink && (
+          <Button className="h-13 w-full bg-ok py-3.5 text-base font-bold text-ok-foreground hover:brightness-110" render={<a href={waLink} target="_blank" rel="noopener noreferrer" />}>
+            <MessageCircle className="mr-2 size-5" /> WhatsApp&apos;tan Sor
+          </Button>
+        )}
+
+        <footer className="flex items-center justify-center gap-1.5 pt-2 text-[11px] text-muted-foreground">
+          <ShieldCheck className="size-3.5 text-neon" /> {businessName} Â· canlÄ± takip
         </footer>
       </div>
     </main>
+  )
+}
+
+function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-4 py-3 pl-6">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn('text-right font-medium', mono && 'font-mono')}>{value}</span>
+    </div>
   )
 }
 
@@ -866,7 +920,7 @@ export function ActiveJobs({ visits, organizationId, businessSlug }: ActiveJobsP
       title="Aktif Ä°ÅŸlemler"
       description="Åu anda serviste bulunan araÃ§lar."
       action={
-        <Badge className="border-cyan/40 bg-cyan/10 font-mono text-cyan">
+        <Badge className="border-neon/40 bg-neon/10 font-mono text-neon">
           {visits.length} araÃ§
         </Badge>
       }
@@ -1061,21 +1115,28 @@ export function AdminDashboard({ organizationId, businessSlug, activeVisits, com
 
 ==================== C:\Users\Oğuzhan\OneDrive\Masaüstü\garaj34sa\components\admin\admin-login.tsx ====================
 'use client'
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { Lock, ArrowRight } from 'lucide-react'
+import { useState, useTransition, type FormEvent } from 'react'
+import { Delete, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { loginAction } from '@/lib/actions'
+
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
 export function AdminLogin({ slug, businessName }: { slug: string; businessName: string }) {
   const [pin, setPin] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
 
-  function handleLogin(e: React.FormEvent) {
+  function press(k: string) {
+    setErrorMessage(null)
+    if (k === '') return
+    if (k === 'del') { setPin((p) => p.slice(0, -1)); return }
+    setPin((p) => (p.length < 4 ? p + k : p))
+  }
+
+  function handleLogin(e: FormEvent) {
     e.preventDefault()
+    if (pin.length !== 4) return
     setErrorMessage(null)
     startTransition(async () => {
       try {
@@ -1090,30 +1151,60 @@ export function AdminLogin({ slug, businessName }: { slug: string; businessName:
 
   return (
     <div className="bg-grid flex min-h-dvh items-center justify-center p-4">
-      <div className="flex w-full max-w-sm flex-col gap-6 rounded-2xl border border-neon/20 bg-background/60 p-8 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="glow-neon flex size-12 items-center justify-center rounded-xl bg-neon text-neon-foreground">
-            <Lock className="size-6" />
-          </div>
-          <h1 className="mt-4 text-xl font-bold tracking-tight">{businessName}</h1>
-          <p className="text-sm text-muted-foreground">Panele eriÅŸmek iÃ§in 4 haneli PIN kodunu girin.</p>
+      <form onSubmit={handleLogin} className="docket flex w-full max-w-xs flex-col items-center gap-6 p-6">
+        <div className="flex size-12 items-center justify-center rounded-xl border border-neon/30 bg-neon/10 text-neon">
+          <Lock className="size-5" />
         </div>
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <Input
-            type="password" inputMode="numeric" maxLength={4} placeholder="â€¢â€¢â€¢â€¢"
-            value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            className={`h-14 text-center text-2xl tracking-[1em] ${errorMessage ? 'border-red-500 bg-red-500/10' : 'bg-input/40'}`}
-            autoFocus
-          />
-          {errorMessage && <p className="text-center text-xs font-medium text-red-500">{errorMessage}</p>}
-          <Button type="submit" disabled={isPending || pin.length === 0}
-            className="glow-neon h-12 w-full bg-neon text-base font-bold text-neon-foreground hover:brightness-110">
-            {isPending ? 'Kontrol ediliyor...' : <>GiriÅŸ Yap <ArrowRight className="ml-2 size-5" /></>}
-          </Button>
-        </form>
-      </div>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <h1 className="font-display text-lg font-bold tracking-tight">{businessName}</h1>
+          <p className="text-xs text-muted-foreground">Panele girmek iÃ§in 4 haneli PIN</p>
+        </div>
+
+        <div className="flex items-center gap-3" aria-label="PIN noktalarÄ±">
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className={cnDot(i < pin.length, errorMessage !== null)} />
+          ))}
+        </div>
+        <input
+          className="sr-only"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          value={pin}
+          autoFocus
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(e as any) }}
+        />
+
+        {errorMessage && <p className="text-center text-xs font-medium text-red-400">{errorMessage}</p>}
+
+        <div className="grid w-full grid-cols-3 gap-2">
+          {KEYS.map((k, i) =>
+            k === '' ? (
+              <span key={i} />
+            ) : (
+              <button
+                key={i}
+                type="button"
+                onClick={() => press(k)}
+                className="flex h-14 items-center justify-center rounded-lg border border-border bg-background/40 font-mono text-lg font-semibold transition-all duration-150 hover:border-neon/40 hover:text-neon active:scale-95"
+              >
+                {k === 'del' ? <Delete className="size-5" /> : k}
+              </button>
+            ),
+          )}
+        </div>
+
+        <Button type="submit" disabled={pin.length !== 4 || isPending} className="h-11 w-full bg-neon font-bold text-neon-foreground hover:brightness-110">
+          {isPending ? 'Kontrol ediliyor...' : 'GiriÅŸ Yap'}
+        </Button>
+        <p className="text-center text-[10px] text-muted-foreground">Her iÅŸletmenin kendi paneli ve PIN&apos;i vardÄ±r</p>
+      </form>
     </div>
   )
+}
+
+function cnDot(filled: boolean, error: boolean) {
+  return `size-3 rounded-full border transition-colors duration-150 ${error ? 'border-red-400 bg-red-400/60' : filled ? 'border-neon bg-neon' : 'border-border bg-transparent'}`
 }
 
 
@@ -1121,88 +1212,74 @@ export function AdminLogin({ slug, businessName }: { slug: string; businessName:
 'use client'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, CarFront, Users, Megaphone, Settings, LogOut, Sparkles } from 'lucide-react'
+import { LayoutDashboard, CarFront, Users, Megaphone, Settings, LogOut, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { PlatesRail } from '@/components/admin/plates-rail'
 import { logoutAction } from '@/lib/actions'
-import type { Organization, Visit } from '@/lib/data'
+import type { Organization } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
-  { href: '', label: 'Panel', icon: LayoutDashboard, roles: ['boss', 'employee'] },
-  { href: '/aktif', label: 'Aktif', icon: CarFront, roles: ['boss', 'employee'] },
+  { href: '', label: 'Panel', icon: LayoutDashboard, roles: ['boss'] },
+  { href: '/aktif', label: 'Aktif Ä°ÅŸler', icon: CarFront, roles: ['boss', 'employee'] },
   { href: '/musteriler', label: 'MÃ¼ÅŸteriler', icon: Users, roles: ['boss', 'employee'] },
   { href: '/kampanya', label: 'Kampanya', icon: Megaphone, roles: ['boss'] },
   { href: '/ayarlar', label: 'Ayarlar', icon: Settings, roles: ['boss'] },
 ]
 
-type AdminShellProps = {
-  organization: Organization
-  slug: string
-  role?: 'boss' | 'employee'
-  activeVisits?: Visit[]
-  children: React.ReactNode
-}
+type AdminShellProps = { organization: Organization; slug: string; role?: 'boss' | 'employee'; children: React.ReactNode }
 
-export function AdminShell({ organization, slug, role = 'boss', activeVisits = [], children }: AdminShellProps) {
+export function AdminShell({ organization, slug, role = 'boss', children }: AdminShellProps) {
   const pathname = usePathname()
   const base = `/admin/${slug}`
-  const primaryColor = organization.primaryColor || organization.metadata?.primaryColor || '#10b981'
-  const tagline = organization.tagline || organization.metadata?.tagline || ''
-  const nav = NAV_ITEMS.filter((item) => item.roles.includes(role))
+  const primaryColor = organization.primaryColor || '#4c8df6'
+  const allowed = NAV_ITEMS.filter((i) => i.roles.includes(role))
 
-  function handleLogout() {
-    logoutAction(slug).then(() => window.location.reload())
-  }
+  function handleLogout() { logoutAction(slug).then(() => window.location.reload()) }
 
   return (
     <div className="bg-grid flex min-h-dvh flex-col" style={{ '--neon': primaryColor } as React.CSSProperties}>
-      <header className="glass-blur sticky top-0 z-20 border-x-0 border-t-0">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+      <header className="sticky top-0 z-20 border-b border-border bg-card">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link href={base} className="flex min-w-0 items-center gap-2.5">
             {organization.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={organization.logoUrl} alt={organization.name} className="size-8 rounded-lg object-cover" />
+              <img src={organization.logoUrl} alt={organization.name} className="size-8 rounded-md border border-border object-cover" />
             ) : (
-              <div className="glow-neon flex size-8 shrink-0 items-center justify-center rounded-lg bg-neon text-neon-foreground"><Sparkles className="size-4" /></div>
+              <span className="flex size-8 items-center justify-center rounded-md border border-neon/30 bg-neon/10 text-neon"><Wrench className="size-4" /></span>
             )}
-            <div className="min-w-0">
-              <h1 className="truncate text-sm font-bold leading-tight">{organization.name}</h1>
-              {tagline && <p className="hidden truncate text-[10px] text-muted-foreground sm:block">{tagline}</p>}
-            </div>
+            <span className="min-w-0">
+              <span className="font-display block truncate text-sm font-bold leading-tight">{organization.name}</span>
+              {organization.tagline && <span className="hidden truncate text-[11px] text-muted-foreground sm:block">{organization.tagline}</span>}
+            </span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
-            {nav.map((item) => {
+            {allowed.map((item) => {
               const href = `${base}${item.href}`
               const isActive = item.href === '' ? pathname === base : pathname.startsWith(href)
               return (
-                <Link key={item.href} href={href} className={cn('flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150', isActive ? 'bg-neon/15 text-neon' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
+                <Link key={item.href} href={href}
+                  className={cn('flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150',
+                    isActive ? 'bg-neon/10 text-neon' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
                   <item.icon className="size-4" />{item.label}
                 </Link>
               )
             })}
           </nav>
           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-red-400">
-            <LogOut className="size-4 md:mr-1.5" />
-            <span className="hidden md:inline">Ã‡Ä±kÄ±ÅŸ</span>
+            <LogOut className="size-4 md:mr-1.5" /><span className="hidden md:inline">Ã‡Ä±kÄ±ÅŸ</span>
           </Button>
         </div>
-        <div className="mx-auto max-w-6xl">
-          <PlatesRail visits={activeVisits} businessName={organization.name} />
-        </div>
       </header>
-
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-4 sm:px-6 sm:pb-10">{children}</main>
-
-      <nav className="glass-blur fixed inset-x-0 bottom-0 z-20 border-t border-border/60 pb-[env(safe-area-inset-bottom)] md:hidden">
-        <div className="grid" style={{ gridTemplateColumns: `repeat(${nav.length}, 1fr)` }}>
-          {nav.map((item) => {
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-6 sm:pb-8">{children}</main>
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
+        <div className="grid" style={{ gridTemplateColumns: `repeat(${allowed.length}, 1fr)` }}>
+          {allowed.map((item) => {
             const href = `${base}${item.href}`
             const isActive = item.href === '' ? pathname === base : pathname.startsWith(href)
             return (
-              <Link key={item.href} href={href} className={cn('flex flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors duration-150', isActive ? 'text-neon' : 'text-muted-foreground')}>
-                <item.icon className="size-5" />
-                {item.label}
+              <Link key={item.href} href={href}
+                className={cn('flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors', isActive ? 'text-neon' : 'text-muted-foreground')}>
+                <item.icon className="size-5" />{item.label}
               </Link>
             )
           })}
@@ -1589,7 +1666,7 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
               {SEGMENTS.map((s) => {
                 const Icon = s.icon
                 return (
-                  <button key={s.value} onClick={() => setSegment(s.value)} className={cn('flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-all', segment === s.value ? 'border-neon bg-neon/10 shadow-[0_0_15px_rgba(var(--neon-rgb),0.2)] scale-[1.02]' : 'border-border hover:bg-muted/40 hover:border-neon/30 hover:scale-[1.01]')}>
+                  <button key={s.value} onClick={() => setSegment(s.value)} className={cn('flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-all', segment === s.value ? 'border-neon bg-neon/10 ring-1 ring-neon/40 scale-[1.02]' : 'border-border hover:bg-muted/40 hover:border-neon/30 hover:scale-[1.01]')}>
                     <div className="flex items-center gap-2">
                       <Icon className={cn('size-4', segment === s.value && 'text-neon')} />
                       <span className={cn('text-sm font-semibold', segment === s.value && 'text-neon')}>{s.label}</span>
@@ -1958,6 +2035,7 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit;
   const [status, setStatus] = useState<VisitStatus>(visit.status)
   const [isPending, startTransition] = useTransition()
   const currentIndex = STATUS_INDEX[status] ?? 0
+  const isReady = status === 'ready'
   const displayPlate = visit.plate || 'BÄ°LÄ°NMEYOR'
 
   function apply(next: VisitStatus) {
@@ -1972,7 +2050,7 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit;
   }
 
   return (
-    <article className={cn('flex flex-col gap-4 rounded-xl border bg-background/40 p-4 transition-all duration-200', status === 'ready' ? 'border-neon/40 glow-neon' : 'border-border', isPending && 'opacity-80')}>
+    <article className={cn('flex flex-col gap-4 rounded-xl border bg-background/40 p-4 transition-all duration-200', isReady ? 'border-ok/40 glow-ok' : 'border-border', isPending && 'opacity-80')}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
           <h3 className="truncate text-base font-bold leading-tight">{visit.customerName}</h3>
@@ -1991,8 +2069,8 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit;
           return (
             <button key={s.key} disabled={isPending} onClick={() => apply(s.key)}
               className={cn('flex h-9 items-center justify-center rounded-lg border text-[11px] font-bold transition-all duration-150 active:scale-[0.97]',
-                active && 'glow-cyan border-cyan bg-cyan/15 text-cyan',
-                done && 'border-neon/30 bg-neon/10 text-neon',
+                active && 'glow-cyan border-cyan bg-cyan/10 text-cyan',
+                done && 'border-ok/30 bg-ok/10 text-ok',
                 !active && !done && 'border-border bg-muted/60 text-muted-foreground')}>
               {s.adminLabel}
             </button>
@@ -2239,7 +2317,7 @@ import { Button } from '@/components/ui/button'
 import type { Visit } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
-const STATUS_DOT: Record<string, string> = { queued: 'bg-amber-400', processing: 'bg-cyan', ready: 'bg-neon' }
+const STATUS_DOT: Record<string, string> = { queued: 'bg-muted-foreground', processing: 'bg-neon', ready: 'bg-ok' }
 
 export function PlatesRail({ visits, businessName }: { visits: Visit[]; businessName: string }) {
   const [preview, setPreview] = useState<Visit | null>(null)
@@ -2289,10 +2367,10 @@ type SectionCardProps = {
 
 export function SectionCard({ title, description, action, children, className }: SectionCardProps) {
   return (
-    <section className={cn('glass flex flex-col gap-6 rounded-2xl p-6', className)}>
+    <section className={cn('docket flex flex-col gap-5 p-5 pl-7 sm:p-6 sm:pl-8', className)}>
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+          <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>
           {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
         {action}
@@ -2365,11 +2443,11 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
+        default: 'bg-neon text-neon-foreground hover:brightness-110 active:brightness-95',
         outline:
           'border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
         secondary:

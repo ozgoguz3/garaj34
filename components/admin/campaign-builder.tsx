@@ -1,20 +1,22 @@
 'use client'
-
 import { useState, useTransition, useEffect, useRef } from 'react'
-import { Megaphone, MessageCircle, CheckCircle2, Loader2, Sparkles, Download, Copy, TrendingUp, Clock, Users, Zap } from 'lucide-react'
+import { Megaphone, MessageCircle, CheckCircle2, Loader2, Sparkles, Download, Copy, TrendingUp, Clock, Users, Zap, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { SectionCard } from '@/components/admin/section-card'
 import { getCampaignSegmentAction } from '@/lib/actions'
+import { valueTier } from '@/lib/catalog'
 import type { CampaignTarget } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
 const SEGMENTS = [
   { value: 'inactive_30', label: '30-60 Gün Gelmeyenler', description: 'Yakında unutmaya başlayacaklar – hatırlatma için ideal.', icon: Clock },
   { value: 'inactive_60', label: '60+ Gün Gelmeyenler', description: 'Uzun süredir uğramayan, kaybetme riski olan müşteriler.', icon: TrendingUp },
-  { value: 'ceramic_ppf_only', label: 'Seramik & Film Yaptıranlar', description: 'Garantili işlemler – periyodik bakım veya yenileme satmak için.', icon: Sparkles },
-  { value: 'high_value', label: 'En Değerli 20 Müşteri', description: 'Toplam harcamaya göre en çok kazandıran müşteriler.', icon: Zap },
+  { value: 'winback_high', label: 'Yüksek Öncelikli Geri Kazanım', description: 'Değerli müşteri ama normal döngüsünün dışında kaldı.', icon: AlertTriangle },
+  { value: 'protection_upsell', label: 'Koruma Satılabilecekler', description: 'Boya işi yaptırmış ama seramik/PPF/film almamış — çapraz satış.', icon: ShieldCheck },
+  { value: 'ceramic_ppf_only', label: 'Seramik & PPF Müşterileri', description: 'Garantili işlemler — periyodik bakım veya yenileme satışı.', icon: Sparkles },
+  { value: 'high_value', label: 'Yüksek Değerli 20 Müşteri', description: 'Hizmet ağırlığına göre en stratejik müşteriler.', icon: Zap },
   { value: 'all_customers', label: 'Tüm Müşteriler', description: 'Genel bir duyuru/kampanya için tüm müşteri listesi.', icon: Users },
 ]
 
@@ -115,7 +117,7 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
           </div>
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="template">Mesaj Şablonu</Label>
+              <Label htmlFor="template">Mesaj şablonu</Label>
               <div className="flex gap-2">
                 <Button type="button" variant="ghost" size="xs" onClick={copyTemplate} className={cn(copiedTemplate && 'text-neon')}>
                   {copiedTemplate ? <CheckCircle2 className="mr-1 size-3" /> : <Copy className="mr-1 size-3" />}
@@ -139,16 +141,20 @@ export function CampaignBuilder({ businessId, businessSlug, initialData = [] }: 
         {isPending ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-sm text-muted-foreground"><Loader2 className="size-6 animate-spin text-neon" /> <span>Liste hazırlanıyor...</span></div>
         ) : targets.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-12 text-center text-sm text-muted-foreground"><div className="flex size-12 items-center justify-center rounded-full bg-muted/50 mb-2"><Megaphone className="size-6 text-muted-foreground/50" /></div>Bulunamadı.</div>
+          <div className="flex flex-col items-center gap-2 py-12 text-center text-sm text-muted-foreground"><div className="flex size-12 items-center justify-center rounded-full bg-muted/50 mb-2"><Megaphone className="size-6 text-muted-foreground/50" /></div>Bu segmentte müşteri bulunamadı.</div>
         ) : (
           <ul className="flex flex-col divide-y divide-border/50">
             {targets.map((t) => {
               const isSent = sentPlates.has(t.plate)
               const daysSince = Math.floor((Date.now() - new Date(t.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
+              const tier = valueTier(t.weight || 0)
               return (
                 <li key={t.plate} className="flex items-center justify-between gap-3 py-3.5 px-2 hover:bg-muted/20 rounded-lg">
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-medium">{t.customerName}</span>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      {t.customerName}
+                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">{tier.label}</span>
+                    </span>
                     <span className="font-mono text-[11.5px] text-muted-foreground"><span className="rounded bg-muted/50 px-1.5 py-0.5">{t.plate}</span> {t.phone} <span className="text-amber-400">• {daysSince} gün önce</span></span>
                   </div>
                   <Button size="sm" variant={isSent ? 'ghost' : 'outline'} onClick={() => sendTo(t)} className={cn('shrink-0', !isSent && 'border-neon/40 text-neon hover:bg-neon/15 hover:text-neon shadow-sm', isSent && 'text-muted-foreground opacity-60')}>

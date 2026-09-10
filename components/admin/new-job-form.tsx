@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { SectionCard } from '@/components/admin/section-card'
-import { buildWhatsAppLink, plateToSlug, formatPlateLive, parsePrice, WARRANTY_ELIGIBLE_SERVICES } from '@/lib/jobs-store'
+import { buildWhatsAppLink, plateToSlug, formatPlateLive, WARRANTY_ELIGIBLE_SERVICES } from '@/lib/jobs-store'
+import { SERVICE_CATALOG, TIER_LABELS, type ServiceTier } from '@/lib/catalog'
 import { addVisitAction } from '@/lib/actions'
 import { cn } from '@/lib/utils'
 
-const SERVICE_OPTIONS = ['İç/Dış Yıkama', 'Detaylı Temizlik', 'Pasta & Cila', 'Seramik Kaplama', 'PPF (Kaput Filmi)', 'Cam Filmi', 'Motor Yıkama', 'Far Bakımı', 'Ozon Dezenfeksiyon', 'Torpedo Kuaför']
+const QUICK_PICKS = ['İç + Dış Yıkama', 'Premium Yıkama', 'Motor Temizliği', 'Detaylı İç Temizlik', 'Pasta & Cila', 'Seramik Kaplama', 'Cam Filmi', 'PPF Kaplama']
 const WARRANTY_PRESETS = [{ label: '12 Ay', months: 12 }, { label: '24 Ay', months: 24 }, { label: '36 Ay', months: 36 }]
 
 export function NewJobForm({ organizationId, businessSlug }: { organizationId: string; businessSlug: string }) {
@@ -19,8 +20,8 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
   const [isPending, startTransition] = useTransition()
   const [plate, setPlate] = useState('')
   const [phone, setPhone] = useState('')
-  const [price, setPrice] = useState('')
   const [services, setServices] = useState<string[]>([])
+  const [showAllServices, setShowAllServices] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [customerName, setCustomerName] = useState('')
   const [carModel, setCarModel] = useState('')
@@ -46,7 +47,6 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
         customerName, plate, carModel, phone, services,
         warrantyMonths: showWarranty ? (warrantyMonths ?? undefined) : undefined,
         damageNote, internalNote,
-        price: parsePrice(price),
       })
       if (!res.ok) { setFormError(res.error); return }
       const visit = res.value
@@ -54,7 +54,7 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
       const waLink = buildWhatsAppLink(visit.phone, displayPlate, businessSlug, window.location.origin)
       setLastLink({ wa: waLink, track: `/${businessSlug}/${plateToSlug(displayPlate)}`, plate: displayPlate })
       if (waLink) window.open(waLink, '_blank', 'noopener,noreferrer')
-      setPlate(''); setPhone(''); setPrice(''); setServices([])
+      setPlate(''); setPhone(''); setServices([])
       setCustomerName(''); setCarModel(''); setWarrantyMonths(null); setDamageNote(''); setInternalNote('')
       setShowDetails(false)
       router.refresh()
@@ -74,20 +74,24 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
             autoComplete="off"
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-2">
-            <Label>Telefon</Label>
-            <Input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))} placeholder="05xx xxx xx xx" className="h-11 font-mono" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>Tutar (₺)</Label>
-            <Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.,]/g, ''))} placeholder="Ops." className="h-11 font-mono" />
-          </div>
+        <div className="flex flex-col gap-2">
+          <Label>Telefon</Label>
+          <Input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 11))} placeholder="05xx xxx xx xx" className="h-11 font-mono" />
         </div>
         <div className="flex flex-col gap-2">
-          <Label>Hizmetler <span className="text-neon">*</span> <span className="text-xs font-normal text-muted-foreground">(kaydır →)</span></Label>
+          <Label>Hizmetler <span className="text-neon">*</span></Label>
+          {services.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {services.map((s) => (
+                <button key={s} type="button" onClick={() => toggleService(s)}
+                  className="flex items-center gap-1 rounded-full border border-neon/40 bg-neon/10 px-2.5 py-1 text-[11px] font-medium text-neon">
+                  {s} <span aria-hidden>×</span>
+                </button>
+              ))}
+            </div>
+          )}
           <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 py-1">
-            {SERVICE_OPTIONS.map((s) => (
+            {QUICK_PICKS.map((s) => (
               <button key={s} type="button" onClick={() => toggleService(s)}
                 className={cn('shrink-0 rounded-full border px-3.5 py-2 text-xs font-medium transition-all duration-150 active:scale-95',
                   services.includes(s) ? 'border-neon bg-neon/15 text-neon' : 'border-border text-muted-foreground')}>
@@ -95,14 +99,32 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
               </button>
             ))}
           </div>
+          <button type="button" onClick={() => setShowAllServices((v) => !v)}
+            className="self-start text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+            {showAllServices ? 'Hızlı listeye dön' : 'Tüm hizmetler (kademeli)'}
+          </button>
+          {showAllServices && (
+            <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/20 p-3">
+              {(Object.keys(TIER_LABELS) as ServiceTier[]).map((tier) => (
+                <div key={tier} className="flex flex-wrap items-center gap-1.5">
+                  <span className="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{TIER_LABELS[tier]}</span>
+                  {SERVICE_CATALOG.filter((s) => s.tier === tier).map((s) => (
+                    <button key={s.name} type="button" onClick={() => toggleService(s.name)}
+                      className={cn('rounded-full border px-2.5 py-1 text-[11px] transition-all duration-150',
+                        services.includes(s.name) ? 'border-neon bg-neon/15 text-neon' : 'border-border text-muted-foreground')}>
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-
         <button type="button" onClick={() => setShowDetails((v) => !v)}
           className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors">
           Detay ekle (müşteri, hasar, not)
           <ChevronDown className={cn('size-4 transition-transform duration-200', showDetails && 'rotate-180')} />
         </button>
-
         {showDetails && (
           <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/20 p-3">
             <div className="grid grid-cols-2 gap-3">
@@ -124,18 +146,15 @@ export function NewJobForm({ organizationId, businessSlug }: { organizationId: s
             <Textarea value={internalNote} onChange={(e) => setInternalNote(e.target.value)} placeholder="Dahili not (sizden başkası görmez)" rows={2} />
           </div>
         )}
-
         {formError && (
           <p className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />{formError}
           </p>
         )}
-
         <Button type="submit" disabled={!canSubmit || isPending}
           className="glow-neon h-13 w-full bg-neon py-3.5 text-base font-bold text-neon-foreground hover:brightness-110">
           {isPending ? 'Kaydediliyor...' : 'Kaydet & WhatsApp Linki Gönder'}
         </Button>
-
         {lastLink && (
           <div className="flex flex-col gap-3 rounded-xl border border-neon/30 bg-neon/10 p-4 sm:flex-row sm:items-center sm:justify-between">
             <span className="flex items-center gap-2 font-medium text-neon"><CheckCircle2 className="size-5" /> {lastLink.plate} kaydedildi</span>
