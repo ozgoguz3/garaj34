@@ -1,3 +1,4 @@
+// app/admin/[business]/loading.tsx
 export default function AdminLoading() {
   return (
     <div className="flex flex-col gap-5">

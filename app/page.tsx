@@ -1,3 +1,4 @@
+// app/page.tsx
 import { LicensePlate } from '@/components/license-plate'
 
 const FEATURES = ['Çoklu işleme', 'Canlı takip linki', 'WhatsApp entegrasyonu', 'Müşteri sadakati analizi']
@@ -13,7 +14,6 @@ export default function HomePage() {
           <span className="font-mono text-[11px] text-muted-foreground">atölye yönetim sistemi</span>
         </div>
       </header>
-
       <div className="flex flex-1 flex-col items-center justify-center px-5 py-16 text-center">
         <LicensePlate plate="34 GRJ 34" size="lg" className="shadow-2xl" />
         <h1 className="font-display mt-10 max-w-2xl text-balance text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
@@ -30,11 +30,10 @@ export default function HomePage() {
           ))}
         </div>
       </div>
-
       <footer className="border-t border-border/60">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 font-mono text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} garaj34</span>
-          <span>tr · v2</span>
+          <span>tr · v3</span>
         </div>
       </footer>
     </main>

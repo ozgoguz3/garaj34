@@ -1,3 +1,4 @@
+// lib/actions.ts
 'use server'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
@@ -8,6 +9,7 @@ import { validateVisit, type VisitInput } from '@/lib/validate'
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 const authCookieName = (slug: string) => `garaj34_auth_${slug}`
+
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string }
 export type Void = { ok: true } | { ok: false; error: string }
 const fail = (e: unknown) => (e instanceof Error ? e.message : 'Beklenmeyen bir hata oluştu.')
@@ -17,10 +19,7 @@ export async function loginAction(slug: string, pin: string): Promise<Void> {
     const res = await data.verifyPin(slug, pin)
     if (!res) return { ok: false, error: 'Hatalı PIN kodu.' }
     const jar = await cookies()
-    jar.set(authCookieName(slug), `${res.organization.id}.${res.role}`, {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: COOKIE_MAX_AGE,
-    })
-    data.logAudit(res.organization.id, res.role, 'login', 'organization', res.organization.id).catch(() => {})
+    jar.set(authCookieName(slug), `${res.organization.id}.${res.role}`, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: COOKIE_MAX_AGE })
     revalidatePath(`/admin/${slug}`, 'layout')
     return { ok: true }
   } catch (e) { return { ok: false, error: fail(e) } }
@@ -43,51 +42,38 @@ export async function getAuthedOrganization(slug: string): Promise<{ organizatio
     return { organization: org, role: (role === 'employee' ? 'employee' : 'boss') as 'boss' | 'employee' }
   } catch { return null }
 }
-export const getAuthedBusiness = getAuthedOrganization
 
 async function requireAuth(slug: string, businessId: string) {
   const auth = await getAuthedOrganization(slug)
-  if (!auth || String(auth.organization.id) !== String(businessId)) throw new Error('Oturum doğrulanamadı, lütfen tekrar giriş yapın.')
+  if (!auth || String(auth.organization.id) !== String(businessId)) throw new Error('Oturum doğrulanamadı.')
   return auth
 }
 
 export async function addVisitAction(businessSlug: string, businessId: string, input: VisitInput): Promise<Result<data.Visit>> {
   try {
     const auth = await requireAuth(businessSlug, businessId)
-    const bill = billingState(auth.organization)
-    if (bill.status === 'expired')
-      return { ok: false, error: 'Abonelik süreniz doldu. Verileriniz güvende; yenilemek için yöneticinize ulaşın.' }
     const v = validateVisit(input)
     if (!v.ok) return { ok: false, error: v.error }
-    const active = await data.countActiveVisits(businessId)
-    if (active >= bill.plan.maxActiveVisits)
-      return { ok: false, error: `"${bill.plan.name}" planında aktif araç limiti (${bill.plan.maxActiveVisits}) doldu.` }
     const visit = await data.addVisit(businessId, v.value)
-    data.logAudit(businessId, auth.role, 'visit.create', 'visit', visit.id, { plate: visit.plate }).catch(() => {})
     revalidatePath(`/admin/${businessSlug}`)
     return { ok: true, value: visit }
-  } catch (e) {
-    return { ok: false, error: `Kayıt hatası: ${fail(e)}` }
-  }
+  } catch (e) { return { ok: false, error: fail(e) } }
 }
 
 export async function updateVisitStatusAction(businessSlug: string, businessId: string, visitId: string, status: VisitStatus): Promise<Void> {
   try {
-    const auth = await requireAuth(businessSlug, businessId)
+    await requireAuth(businessSlug, businessId)
     await data.updateVisitStatus(businessId, visitId, status)
-    data.logAudit(businessId, auth.role, 'visit.status', 'visit', visitId, { status }).catch(() => {})
     revalidatePath(`/admin/${businessSlug}`)
     return { ok: true }
   } catch (e) { return { ok: false, error: fail(e) } }
 }
 
-export async function updateBrandingAction(businessSlug: string, businessId: string, input: Parameters<typeof data.updateOrganizationBranding>[1]): Promise<Void> {
+export async function updateBrandingAction(businessSlug: string, businessId: string, input: any): Promise<Void> {
   try {
-    const auth = await requireAuth(businessSlug, businessId)
+    await requireAuth(businessSlug, businessId)
     await data.updateOrganizationBranding(businessId, input)
-    data.logAudit(businessId, auth.role, 'org.branding', 'organization', businessId).catch(() => {})
     revalidatePath(`/admin/${businessSlug}`)
-    revalidatePath(`/${businessSlug}`, 'layout')
     return { ok: true }
   } catch (e) { return { ok: false, error: fail(e) } }
 }

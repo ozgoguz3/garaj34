@@ -1,3 +1,4 @@
+// components/admin/empty-state.tsx
 import type { ElementType } from 'react'
 
 export function EmptyState({ icon: Icon, title, description }: { icon: ElementType; title: string; description?: string }) {

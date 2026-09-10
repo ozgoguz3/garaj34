@@ -1,13 +1,8 @@
+// components/admin/section-card.tsx
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-type SectionCardProps = {
-  title: string
-  description?: string
-  action?: ReactNode
-  children: ReactNode
-  className?: string
-}
+type SectionCardProps = { title: string; description?: string; action?: ReactNode; children: ReactNode; className?: string }
 
 export function SectionCard({ title, description, action, children, className }: SectionCardProps) {
   return (

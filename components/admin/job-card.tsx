@@ -1,3 +1,4 @@
+// components/admin/job-card.tsx
 'use client'
 import { useTransition, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -39,7 +40,6 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit;
             <span className="flex items-center gap-1"><Clock className="size-3" /> <time>{timeFormatter.format(new Date(visit.createdAt))}</time></span>
             {visit.phone && <span>· {visit.phone}</span>}
           </div>
-          {visit.services && <div className="mt-1 flex flex-wrap gap-1">{visit.services.map((s, i) => <span key={i} className="rounded-md bg-secondary/60 px-1.5 py-0.5 text-[10px]">{s}</span>)}</div>}
         </div>
         <div className="flex shrink-0"><LicensePlate plate={displayPlate} /></div>
       </div>
@@ -48,20 +48,14 @@ export function JobCard({ visit, organizationId, businessSlug }: { visit: Visit;
           const active = s.key === status
           const done = i < currentIndex
           return (
-            <button key={s.key} disabled={isPending} onClick={() => apply(s.key)}
-              className={cn('flex h-9 items-center justify-center rounded-lg border text-[11px] font-bold transition-all duration-150 active:scale-[0.97]',
-                active && 'glow-cyan border-cyan bg-cyan/10 text-cyan',
-                done && 'border-ok/30 bg-ok/10 text-ok',
-                !active && !done && 'border-border bg-muted/60 text-muted-foreground')}>
+            <button key={s.key} disabled={isPending} onClick={() => apply(s.key)} className={cn('flex h-9 items-center justify-center rounded-lg border text-[11px] font-bold transition-all active:scale-[0.97]', active && 'glow-cyan border-cyan bg-cyan/10 text-cyan', done && 'border-ok/30 bg-ok/10 text-ok', !active && !done && 'border-border bg-muted/60 text-muted-foreground')}>
               {s.adminLabel}
             </button>
           )
         })}
       </div>
       <div className="flex flex-col gap-1.5 sm:flex-row">
-        <Button variant="secondary" disabled={isPending} onClick={() => apply('completed')} className="h-9 flex-1 text-xs">
-          <Archive className="mr-1.5 size-3.5" /> Teslim Edildi
-        </Button>
+        <Button variant="secondary" disabled={isPending} onClick={() => apply('completed')} className="h-9 flex-1 text-xs"><Archive className="mr-1.5 size-3.5" /> Teslim Edildi</Button>
         <Button variant="ghost" className="h-9 text-xs text-muted-foreground" render={<a href={`/${businessSlug}/${plateToSlug(displayPlate)}`} target="_blank" rel="noopener noreferrer" />}>
           <ExternalLink className="mr-1.5 size-3.5" /> Takip
         </Button>

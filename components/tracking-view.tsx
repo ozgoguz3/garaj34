@@ -1,3 +1,4 @@
+// components/tracking-view.tsx
 'use client'
 import { Fragment } from 'react'
 import { Star, ShieldCheck, AlertTriangle, MessageCircle, MapPin } from 'lucide-react'
@@ -18,17 +19,11 @@ type TrackingViewProps = {
   whatsappPhone?: string | null
 }
 
-export function TrackingView({
-  visit,
-  businessName = 'Garaj34 Premium Detailing',
-  primaryColor,
-  logoUrl,
-  googleMapsUrl,
-  whatsappPhone,
-}: TrackingViewProps) {
+export function TrackingView({ visit, businessName = 'Garaj34 Premium Detailing', primaryColor, logoUrl, googleMapsUrl, whatsappPhone }: TrackingViewProps) {
   const idx = STATUS_INDEX[visit.status] ?? 0
   const isReady = visit.status === 'ready' || visit.status === 'completed'
   const firstName = visit.customerName ? visit.customerName.split(' ')[0] : 'Değerli Müşterimiz'
+  
   const waLink = whatsappPhone
     ? `https://wa.me/${whatsappPhone.replace(/\D/g, '').replace(/^0/, '90')}?text=${encodeURIComponent('Merhaba, aracım hakkında bilgi almak istiyorum.')}`
     : ''
@@ -37,10 +32,7 @@ export function TrackingView({
     <main className="bg-grid relative min-h-dvh overflow-hidden pb-16" style={primaryColor ? ({ '--neon': primaryColor } as React.CSSProperties) : undefined}>
       <div className="relative mx-auto flex w-full max-w-md flex-col gap-7 px-5 pt-10">
         <header className="flex flex-col items-center gap-4 text-center">
-          {logoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={businessName} className="size-14 rounded-xl border border-border object-cover" />
-          )}
+          {logoUrl && <img src={logoUrl} alt={businessName} className="size-14 rounded-xl border border-border object-cover" />}
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">{businessName}</p>
           <LicensePlate plate={visit.plate || 'BİLİNMEYOR'} size="lg" className="shadow-2xl" />
           {visit.carModel && <p className="text-sm text-muted-foreground">{visit.carModel}</p>}
@@ -58,22 +50,14 @@ export function TrackingView({
           <div className="flex items-center px-1">
             {STEPS.map((s, i) => (
               <Fragment key={s.key}>
-                <span className={cn(
-                  'size-3.5 shrink-0 rounded-full border-2 transition-colors',
-                  isReady ? 'border-ok bg-ok' : i <= idx ? 'border-cyan bg-cyan' : 'border-border bg-transparent',
-                  i === idx && !isReady && 'ring-4 ring-cyan/20',
-                )} />
-                {i < STEPS.length - 1 && (
-                  <span className={cn('mx-1.5 h-0.5 flex-1 rounded-full', isReady ? 'bg-ok/60' : i < idx ? 'bg-cyan' : 'bg-border')} />
-                )}
+                <span className={cn('size-3.5 shrink-0 rounded-full border-2 transition-colors', isReady ? 'border-ok bg-ok' : i <= idx ? 'border-cyan bg-cyan' : 'border-border bg-transparent', i === idx && !isReady && 'ring-4 ring-cyan/20')} />
+                {i < STEPS.length - 1 && <span className={cn('mx-1.5 h-0.5 flex-1 rounded-full', isReady ? 'bg-ok/60' : i < idx ? 'bg-cyan' : 'bg-border')} />}
               </Fragment>
             ))}
           </div>
           <div className="mt-3 grid grid-cols-3 text-center">
             {STEPS.map((s, i) => (
-              <span key={s.key} className={cn('text-[11px] font-medium', isReady ? 'text-ok' : i <= idx ? 'text-cyan' : 'text-muted-foreground')}>
-                {s.adminLabel}
-              </span>
+              <span key={s.key} className={cn('text-[11px] font-medium', isReady ? 'text-ok' : i <= idx ? 'text-cyan' : 'text-muted-foreground')}>{s.adminLabel}</span>
             ))}
           </div>
           {isReady && (
@@ -109,7 +93,7 @@ export function TrackingView({
             <p className="text-sm text-muted-foreground">Hizmetimizden memnun kaldıysanız bizi değerlendirmeniz çok değerli.</p>
             {googleMapsUrl && (
               <Button className="h-12 w-full border-neon/40 bg-transparent text-neon hover:bg-neon/10" render={<a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" />}>
-                <MapPin className="mr-2 size-4" /> Google&apos;da Değerlendirin
+                <MapPin className="mr-2 size-4" /> Google'da Değerlendirin
               </Button>
             )}
           </section>
@@ -117,10 +101,10 @@ export function TrackingView({
 
         {waLink && (
           <Button className="h-13 w-full bg-ok py-3.5 text-base font-bold text-ok-foreground hover:brightness-110" render={<a href={waLink} target="_blank" rel="noopener noreferrer" />}>
-            <MessageCircle className="mr-2 size-5" /> WhatsApp&apos;tan Sor
+            <MessageCircle className="mr-2 size-5" /> WhatsApp'tan Sor
           </Button>
         )}
-
+        
         <footer className="flex items-center justify-center gap-1.5 pt-2 text-[11px] text-muted-foreground">
           <ShieldCheck className="size-3.5 text-neon" /> {businessName} · canlı takip
         </footer>

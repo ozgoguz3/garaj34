@@ -1,32 +1,35 @@
+/* app/globals.css */
 @import "tailwindcss";
 
 @layer base {
   :root {
-    --background: 212 22% 7%;
-    --foreground: 210 24% 94%;
-    --card: 212 18% 10%;
-    --card-foreground: 210 24% 94%;
-    --popover: 212 18% 10%;
-    --popover-foreground: 210 24% 94%;
-    --primary: 210 24% 94%;
-    --primary-foreground: 212 22% 7%;
-    --secondary: 212 14% 16%;
-    --secondary-foreground: 210 24% 94%;
-    --muted: 212 14% 15%;
-    --muted-foreground: 213 12% 64%;
-    --accent: 212 14% 16%;
-    --accent-foreground: 210 24% 94%;
-    --destructive: 0 62% 42%;
+    /* GRAFİT ZEMİN — kurumsal, ciddi, premium */
+    --background: 220 15% 8%;
+    --foreground: 220 10% 92%;
+    --card: 220 14% 11%;
+    --card-foreground: 220 10% 92%;
+    --popover: 220 14% 11%;
+    --popover-foreground: 220 10% 92%;
+    --primary: 220 10% 92%;
+    --primary-foreground: 220 15% 8%;
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 220 10% 92%;
+    --muted: 220 12% 14%;
+    --muted-foreground: 220 8% 55%;
+    --accent: 220 13% 16%;
+    --accent-foreground: 220 10% 92%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 212 14% 19%;
-    --input: 212 14% 22%;
-    --ring: 213 90% 62%;
+    --border: 220 12% 18%;
+    --input: 220 12% 16%;
+    --ring: 213 70% 55%;
     --radius: 0.5rem;
-    /* ATÖLYE PALETİ */
-    --neon: #4c8df6;  /* çelik mavisi: marka + aksiyon */
-    --cyan: #e0954a;  /* bakır: işlemde + ibre */
-    --gold: #e5b567;  /* amber: garanti + uyarı */
-    --ok: #2ebd85;    /* yeşil: SADECE hazır/tamam */
+
+    /* YENİ PALET — Çelik + Bakır + Ok Yeşili */
+    --neon: #4c8df6;      /* Çelik mavisi — marka, aksiyon */
+    --cyan: #e0954a;      /* Bakır — işlemde, ibre */
+    --gold: #e5b567;      /* Amber — uyarı, garanti */
+    --ok: #2ebd85;        /* Ok yeşili — SADECE hazır/tamam */
   }
 }
 
@@ -50,6 +53,7 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  
   --color-neon: var(--neon);
   --color-neon-foreground: #071120;
   --color-cyan: var(--cyan);
@@ -57,11 +61,11 @@
   --color-gold: var(--gold);
   --color-ok: var(--ok);
   --color-ok-foreground: #06170f;
-  --color-steel: var(--neon);
-  --color-copper: var(--cyan);
+  
   --color-plate: #f4f4f5;
   --color-plate-foreground: #101014;
   --color-plate-stripe: #003399;
+  
   --font-mono: var(--font-jbmono), ui-monospace, SFMono-Regular, monospace;
   --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
 }
@@ -76,7 +80,6 @@
   ::selection { background: color-mix(in srgb, var(--neon) 30%, transparent); }
 }
 
-/* Zemin: ince teknik grid (eskisinden daha sessiz) */
 .bg-grid {
   background-size: 32px 32px;
   background-image:
@@ -84,7 +87,7 @@
     linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
 }
 
-/* BLUR YOK. Paneller düz, mat, sağlam. */
+/* KURUMSAL PANEL — blur yok, düz, sağlam */
 .glass {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
@@ -94,7 +97,7 @@
   border: 1px solid hsl(var(--border));
 }
 
-/* İŞ FİŞİ: sol kenarı zımba delikli docket */
+/* İŞ FİŞİ METAĞORU — sol kenar zımba delikli */
 .docket {
   position: relative;
   background: hsl(var(--card));
@@ -112,11 +115,10 @@
   pointer-events: none;
 }
 
-/* Işıma: artık sadece ince bir halka + yumuşak gölge (lazer yok) */
+/* IŞIMA — ince halka + yumuşak gölge (lazer yok) */
 .glow-neon { box-shadow: 0 0 0 1px color-mix(in srgb, var(--neon) 35%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--neon) 55%, transparent); }
 .glow-cyan { box-shadow: 0 0 0 1px color-mix(in srgb, var(--cyan) 35%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--cyan) 50%, transparent); }
 .glow-ok   { box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 40%, transparent), 0 8px 24px -12px color-mix(in srgb, var(--ok) 55%, transparent); }
-.glow-neon-text, .text-glow-neon { text-shadow: 0 0 10px color-mix(in srgb, var(--neon) 25%, transparent); }
 
 @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
 .skeleton {

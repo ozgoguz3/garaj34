@@ -1,3 +1,4 @@
+// app/admin/[business]/layout.tsx
 import { getOrganizationBySlug } from '@/lib/data'
 import { getAuthedOrganization } from '@/lib/actions'
 import { AdminLogin } from '@/components/admin/admin-login'
@@ -9,6 +10,7 @@ type LayoutProps = { children: React.ReactNode; params: Promise<{ business: stri
 export default async function AdminLayout({ children, params }: LayoutProps) {
   const { business: slug } = await params
   const org = await getOrganizationBySlug(slug)
+
   if (!org) {
     return (
       <main className="bg-grid flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
@@ -17,9 +19,12 @@ export default async function AdminLayout({ children, params }: LayoutProps) {
       </main>
     )
   }
+
   const authState = await getAuthedOrganization(slug)
   if (!authState) return <AdminLogin slug={slug} businessName={org.name} />
+
   const bill = billingState(authState.organization)
   if (bill.status === 'expired') return <BillingGate organization={authState.organization} bill={bill} />
+
   return <>{children}</>
 }

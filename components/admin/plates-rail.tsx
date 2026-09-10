@@ -1,3 +1,4 @@
+// components/admin/plates-rail.tsx
 'use client'
 import { useState } from 'react'
 import { Eye, X } from 'lucide-react'
@@ -12,15 +13,14 @@ const STATUS_DOT: Record<string, string> = { queued: 'bg-muted-foreground', proc
 export function PlatesRail({ visits, businessName }: { visits: Visit[]; businessName: string }) {
   const [preview, setPreview] = useState<Visit | null>(null)
   if (visits.length === 0) return null
+
   return (
     <>
       <div className="border-t border-border/50 px-4 py-2">
         <div className="no-scrollbar flex items-center gap-2 overflow-x-auto">
           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Serviste {visits.length}</span>
           {visits.map((v) => (
-            <button key={v.id} onClick={() => setPreview(v)}
-              className="relative shrink-0 rounded-md transition-transform duration-150 hover:scale-105 active:scale-95"
-              aria-label={`${v.plate} müşteri ekranı`}>
+            <button key={v.id} onClick={() => setPreview(v)} className="relative shrink-0 rounded-md transition-transform duration-150 hover:scale-105 active:scale-95" aria-label={`${v.plate} müşteri ekranı`}>
               <LicensePlate plate={v.plate || ''} />
               <span className={cn('absolute -right-1 -top-1 size-2.5 rounded-full ring-2 ring-background', STATUS_DOT[v.status] || 'bg-muted-foreground')} />
             </button>

@@ -1,3 +1,4 @@
+// app/admin/[business]/page.tsx
 import { redirect } from 'next/navigation'
 import { getAuthedOrganization } from '@/lib/actions'
 import {
@@ -11,6 +12,7 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
   const auth = await getAuthedOrganization(business)
   if (!auth) redirect(`/admin/${business}`)
   const org = auth.organization
+
   const [activeVisits, completedVisits, insights, campaignInitial, services, weekdays, ratio, trend, behavior] = await Promise.all([
     listActiveVisits(org.id),
     listCompletedVisits(org.id),
@@ -22,6 +24,7 @@ export default async function AdminDashboardPage({ params }: { params: Promise<{
     getMonthlyVisitTrend(org.id),
     getBehaviorStats(org.id),
   ])
+
   return (
     <AdminApp
       organization={org}
